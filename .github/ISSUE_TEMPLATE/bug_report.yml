@@ -1,0 +1,26 @@
+name: Bug report / 问题反馈
+description: 报告可复现的问题，请勿上传真实账单。
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "只使用虚拟或彻底脱敏的数据。不要提交姓名、完整卡号、真实订单号、Cookie 或密钥。安全漏洞请使用私密漏洞报告。"
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 操作路径、预期结果和实际结果。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境
+      placeholder: 系统、浏览器版本、仓库 commit
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: 虚拟样本或错误信息
+      description: 导入问题请提供字段名和手工构造的数据，不要提供真实金融资料。

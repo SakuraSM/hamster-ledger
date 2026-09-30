@@ -1,0 +1,15 @@
+name: Feature request / 功能建议
+description: 描述要解决的问题。
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 想解决什么问题
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议行为与适用平台
+      description: 如涉及 App，请说明 iOS、Android 或其他平台。
