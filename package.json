@@ -1,0 +1,50 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "name": "hamster-ledger",
+  "description": "仓鼠记账：本地优先的账单导入、跨平台去重与收支汇总",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.14.0",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@10.8.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SakuraSM/hamster-ledger.git"
+  },
+  "scripts": {
+    "dev": "npm run build:packages && npm run dev --workspace @hamster-ledger/web --",
+    "build": "npm run build:packages && npm run build --workspace @hamster-ledger/web",
+    "build:packages": "npm run build --workspace @hamster-ledger/core && npm run build --workspace @hamster-ledger/importers",
+    "typecheck": "npm run build:packages && npm run typecheck --workspace @hamster-ledger/web && tsc --noEmit -p tsconfig.tests.json",
+    "lint": "eslint apps/web/src packages/ledger-core/src packages/statement-importers/src tests",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run build:packages && vitest run",
+    "check": "npm run format:check && npm run tokens:check && npm run typecheck && npm run lint && npm run check:boundaries && npm test && npm run build && npm run test:sites",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "test:sites": "npm run test:sites --workspace @hamster-ledger/web",
+    "tokens:generate": "node scripts/generate-tokens.mjs",
+    "tokens:check": "node scripts/generate-tokens.mjs --check"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^22.0.0",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "axe-core": "^4.13.0",
+    "eslint": "^9.39.4",
+    "jsdom": "^30.1.1",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^4.1.11"
+  }
+}

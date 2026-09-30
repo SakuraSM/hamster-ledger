@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "name": "@hamster-ledger/importers",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@hamster-ledger/core": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SakuraSM/hamster-ledger.git"
+  }
+}

@@ -1,0 +1,12 @@
+/* Generated from tokens.json. Run npm run tokens:generate. */
+:root {
+  --bg: #fffcf7;
+  --sidebar: #f6f0e7;
+  --ink: #39291f;
+  --muted: #75685d;
+  --primary: #a9552b;
+  --primary-hover: #8d4420;
+  --line: #eadfd3;
+  --apricot: #f5e3cf;
+  --positive: #456445;
+}
