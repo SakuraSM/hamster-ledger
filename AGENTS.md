@@ -10,7 +10,9 @@
 ## Architecture
 
 - Web UI and browser adapters live in `apps/web`.
-- Shared business logic lives in `packages/ledger-core`.
+- Shared business logic lives in `packages/ledger-core`, including asset accounts, balance baselines and record linkage.
+- Asset balances must only apply confirmed, nonduplicate movements after an explicit baseline. Transfers require both accounts and never count as income or expenses.
+- Preserve historical account IDs when account names or aliases change; never infer a funding account from the payment platform alone.
 - Statement normalization lives in `packages/statement-importers`.
 - Shared design values live in `packages/design-tokens`.
 - Shared packages must not import browser, React, Node filesystem or native platform APIs.

@@ -1,3 +1,7 @@
+const MILLISECONDS_PER_DAY = 86400000;
+const CENTS_PER_YUAN = 100;
+const CHART_TICK_INTERVAL = 5;
+const MONTH_DAY_START = 5;
 import { useState } from "react";
 import {
   BarChart,
@@ -10,36 +14,36 @@ import {
   Cell,
 } from "recharts";
 
-import type { BillRecord } from "@hamster-ledger/core";
-const DAY_START = 8;
-const DAY_END = 10;
-const PERCENT_SCALE = 100;
-const MONTH_START = 5;
-const MID_MONTH_TICK = 15;
-const LATE_MONTH_TICK = 20;
-const LAST_WEEK_TICK = 25;
+import {
+  type BillRecord,
+  cycleRange,
+  addDays,
+  summarize,
+} from "@hamster-ledger/core";
 const TWO_DIGITS = 2;
 export function DailyChart({
   records,
   month,
+  cycleStartDay = 1,
 }: {
   records: BillRecord[];
   month: string;
+  cycleStartDay?: number;
 }): React.JSX.Element {
   const [activeDay, setActiveDay] = useState<number | null>(null);
-  const [year, monthNumber] = month.split("-").map(Number);
-  const days = new Date(year, monthNumber, 0).getDate();
-  const daily = Array.from({ length: days }, (_, index) => ({
-    day: index + 1,
-    amount:
-      records
-        .filter(
-          (record) =>
-            Number(record.date.slice(DAY_START, DAY_END)) === index + 1 &&
-            record.kind === "支出",
-        )
-        .reduce((total, record) => total + record.amount, 0) / PERCENT_SCALE,
-  }));
+  const range = cycleRange(month, cycleStartDay);
+  const days = Math.round(
+    (Date.parse(range.end) - Date.parse(range.start)) / MILLISECONDS_PER_DAY,
+  );
+  const daily = Array.from({ length: days }, (_, index) => {
+    const date = addDays(range.start, index);
+    return {
+      day: date,
+      amount:
+        summarize(records.filter((record) => record.date.startsWith(date)))
+          .expense / CENTS_PER_YUAN,
+    };
+  });
   return (
     <div className="chart-container" role="group" aria-label="每日支出柱状图">
       <ResponsiveContainer width="100%" height="100%">
@@ -59,17 +63,9 @@ export function DailyChart({
             axisLine={false}
             tick={{ fill: "#86796e", fontSize: 12 }}
             interval={0}
-            tickFormatter={(day: number) =>
-              [
-                1,
-                MONTH_START,
-                DAY_END,
-                MID_MONTH_TICK,
-                LATE_MONTH_TICK,
-                LAST_WEEK_TICK,
-                days,
-              ].includes(day)
-                ? `${month.slice(MONTH_START)}.${String(day).padStart(TWO_DIGITS, "0")}`
+            tickFormatter={(day: string, index: number) =>
+              index % CHART_TICK_INTERVAL === 0 || index === days - 1
+                ? day.slice(MONTH_DAY_START).replace("-", ".")
                 : ""
             }
           />
@@ -91,7 +87,7 @@ export function DailyChart({
             }}
             itemStyle={{ color: "#fff" }}
             labelFormatter={(label) =>
-              `${month.slice(MONTH_START)}.${String(label).padStart(TWO_DIGITS, "0")}`
+              String(label).slice(MONTH_DAY_START).replace("-", ".")
             }
             formatter={(value) => [
               `¥${Number(value).toFixed(TWO_DIGITS)}`,
@@ -109,7 +105,7 @@ export function DailyChart({
               <Cell
                 key={day.day}
                 fill={
-                  activeDay === index || day.day === days
+                  activeDay === index || index === days - 1
                     ? "#aa613a"
                     : "#d6a587"
                 }

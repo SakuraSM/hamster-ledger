@@ -1,39 +1,82 @@
+import { RecordAccountFields } from "./RecordAccountFields";
 import { useState } from "react";
 import {
-  CATEGORIES,
+  categoryNames,
   KINDS,
   type BillRecord,
   type Category,
   type Kind,
   signedMoney,
+  resolveAssetAccount,
+  type Ledger,
 } from "@hamster-ledger/core";
 import { Dialog } from "./Dialog";
 import { CategoryIcon, Icons } from "./Icons";
 import type { LedgerController } from "../hooks/useLedger";
 interface RecordDetailProps {
+  onEdit?: () => void;
+  onDelete?: () => Promise<void>;
   record: BillRecord;
   onClose: () => void;
   onSave: LedgerController["editRecord"];
+  ledger: Ledger;
+  onRelated: (record: BillRecord) => void;
 }
 export function RecordDetail({
+  onEdit,
+  onDelete,
   record,
   onClose,
   onSave,
+  ledger,
+  onRelated,
 }: RecordDetailProps): React.JSX.Element {
+  const [isDeleting, setIsDeleting] = useState(false);
   const [category, setCategory] = useState<Category>(record.category);
   const [kind, setKind] = useState<Kind>(record.kind);
   const [account, setAccount] = useState(record.account);
+  const [accountId, setAccountId] = useState(
+    record.accountId === null
+      ? ""
+      : (record.accountId ??
+          resolveAssetAccount(record, ledger.accounts)?.id ??
+          ""),
+  );
+  const [transferToAccountId, setTransferToAccountId] = useState(
+    record.transferToAccountId ?? "",
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const related = ledger.records.filter(
+    (item) =>
+      item.id !== record.id &&
+      (item.duplicateOf === record.id ||
+        item.id === record.duplicateOf ||
+        (record.duplicateOf && item.duplicateOf === record.duplicateOf)),
+  );
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   async function handleSubmit(
     event: React.SubmitEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
+    setIsSaving(true);
     try {
-      await onSave({ id: record.id, category, kind, account, remember });
+      await onSave({
+        id: record.id,
+        expectedRecord: record,
+        category,
+        kind,
+        account,
+        remember,
+        accountId: accountId || null,
+        transferToAccountId:
+          kind === "转账" ? transferToAccountId || null : null,
+      });
       onClose();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "保存失败");
+    } finally {
+      setIsSaving(false);
     }
   }
   return (
@@ -65,9 +108,11 @@ export function RecordDetail({
               value={category}
               onChange={(event) => setCategory(event.target.value as Category)}
             >
-              {CATEGORIES.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
+              {[...new Set([category, ...categoryNames(ledger)])].map(
+                (item) => (
+                  <option key={item}>{item}</option>
+                ),
+              )}
             </select>
           </label>
           <label>
@@ -90,6 +135,15 @@ export function RecordDetail({
             />
           </label>
         </div>
+        <RecordAccountFields
+          record={record}
+          accounts={ledger.accounts}
+          kind={kind}
+          accountId={accountId}
+          transferToAccountId={transferToAccountId}
+          onAccount={setAccountId}
+          onDestination={setTransferToAccountId}
+        />
         <label className="checkbox-label">
           <input
             type="checkbox"
@@ -99,6 +153,24 @@ export function RecordDetail({
           记住“{record.merchant}”的分类，用于下次导入
         </label>
         <dl className="detail-meta">
+          <div>
+            <dt>交易说明</dt>
+            <dd>{record.description || record.merchant}</dd>
+          </div>
+          <div>
+            <dt>原始交易状态</dt>
+            <dd>{record.sourceStatus}</dd>
+          </div>
+          <div>
+            <dt>计入状态</dt>
+            <dd>
+              {record.status === "confirmed"
+                ? "已确认"
+                : record.status === "duplicate"
+                  ? "重复，未计入"
+                  : "待确认，未计入"}
+            </dd>
+          </div>
           <div>
             <dt>账单来源</dt>
             <dd>{[record.source, ...record.linkedSources].join(" + ")}</dd>
@@ -116,6 +188,32 @@ export function RecordDetail({
             <dd>账单字段提取与商户分类规则</dd>
           </div>
         </dl>
+        {related.length ? (
+          <section className="related-records">
+            <h3>同一交易的关联流水</h3>
+            {related.map((item) => (
+              <button
+                className="related-record"
+                type="button"
+                key={item.id}
+                onClick={() => onRelated(item)}
+              >
+                <span>
+                  {item.source} · {item.merchant}
+                  <small>
+                    {item.date} ·{" "}
+                    {item.status === "duplicate"
+                      ? "重复记录，不重复计算"
+                      : "主账单"}
+                  </small>
+                </span>
+                <span>
+                  {signedMoney(item)} <Icons.Caret size={16} />
+                </span>
+              </button>
+            ))}
+          </section>
+        ) : null}
         <details className="raw-details">
           <summary>查看原始字段</summary>
           <dl>
@@ -132,12 +230,36 @@ export function RecordDetail({
             {error}
           </p>
         ) : null}
+        <div className="button-row">
+          {onEdit ? (
+            <button type="button" className="secondary-button" onClick={onEdit}>
+              编辑金额、日期与备注
+            </button>
+          ) : null}
+          {onDelete ? (
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                if (!isDeleting) {
+                  setIsDeleting(true);
+                  return;
+                }
+                void onDelete().catch((cause) =>
+                  setError(cause instanceof Error ? cause.message : "删除失败"),
+                );
+              }}
+            >
+              {isDeleting ? "确认移入回收站" : "删除账单"}
+            </button>
+          ) : null}
+        </div>
         <div className="dialog-actions">
           <button type="button" className="secondary-button" onClick={onClose}>
             取消
           </button>
-          <button className="primary-button" type="submit">
-            保存修改
+          <button className="primary-button" type="submit" disabled={isSaving}>
+            {isSaving ? "保存中…" : "保存修改"}
           </button>
         </div>
       </form>

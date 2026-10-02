@@ -1,0 +1,382 @@
+.assets-page {
+  padding-bottom: 24px;
+}
+.asset-summary {
+  margin-top: 34px;
+}
+.asset-total-caption {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 12px 0 28px;
+}
+.asset-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 30px;
+}
+.asset-account-group h2 small {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.asset-account-group > .muted {
+  padding: 20px 0;
+  font-size: 13px;
+}
+.asset-account-list {
+  border-top: 1px solid var(--line);
+}
+.asset-account-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto 18px;
+  gap: 13px;
+  width: 100%;
+  align-items: center;
+  padding: 19px 3px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.asset-account-row:hover {
+  background: #fcf3e8;
+}
+.account-symbol {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--apricot);
+  color: var(--primary);
+}
+.account-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.account-name strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.account-name small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.account-row-balance {
+  font-size: 20px;
+  font-weight: 550;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.account-row-balance small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  text-align: right;
+}
+.account-link-reminder {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--primary);
+  padding: 13px 0;
+  font-size: 13px;
+}
+.asset-explanation {
+  max-width: 780px;
+  margin-top: 24px;
+  line-height: 1.8;
+}
+.asset-onboarding {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+  background: #faf1e4;
+  border-radius: 10px;
+  padding: 30px 20px;
+  color: var(--primary);
+}
+.asset-onboarding p {
+  max-width: 580px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.asset-onboarding h2 {
+  color: var(--ink);
+}
+.account-actions {
+  display: flex;
+  gap: 10px;
+}
+.account-back {
+  margin-bottom: 22px;
+}
+.account-balance-hero {
+  padding: 30px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+.account-balance-hero > span {
+  font-size: 15px;
+}
+.account-balance-hero > strong {
+  display: block;
+  font-size: 48px;
+  font-weight: 650;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  margin: 9px 0;
+}
+.account-balance-hero > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+.account-aliases {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 24px;
+}
+.account-flow-summary {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  margin: 18px 0 11px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.account-flow-summary strong {
+  color: var(--ink);
+  font-size: 24px;
+  display: block;
+  line-height: 1.8;
+}
+.account-flow-summary > span:last-child {
+  margin-left: auto;
+}
+.account-transactions > .small {
+  margin-bottom: 16px;
+}
+.account-transactions > .section-heading select {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.balance-history {
+  margin-top: 28px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.balance-history summary {
+  cursor: pointer;
+}
+.balance-history ol {
+  padding: 8px 0 0;
+  list-style: none;
+}
+.balance-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.balance-history li span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.archive-account {
+  margin: 17px 0 6px;
+}
+.account-form-help {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-top: 18px;
+}
+.form-grid textarea {
+  font: inherit;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  resize: vertical;
+  width: 100%;
+  color: var(--ink);
+}
+.record-account-fields {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 23px 0 0;
+  padding: 18px 0 0;
+}
+.record-account-fields legend {
+  font-size: 14px;
+  padding-right: 10px;
+}
+.record-account-fields > p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-top: 10px;
+}
+.related-records {
+  border-top: 1px solid var(--line);
+  margin: 22px 0 10px;
+  padding-top: 18px;
+}
+.related-records h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.related-record {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  width: 100%;
+  padding: 11px 0;
+  font-size: 12px;
+}
+.related-record small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.related-record > span:last-child {
+  white-space: nowrap;
+}
+.detail-cell {
+  width: 74px;
+  text-align: right;
+}
+.record-detail-button {
+  font-size: 12px;
+  gap: 2px;
+  white-space: nowrap;
+}
+.account-transactions .transaction-table {
+  font-size: 13px;
+}
+.account-transactions .table-scroll {
+  margin-top: 15px;
+}
+@media (max-width: 1100px) {
+  .asset-groups {
+    gap: 20px;
+  }
+  .account-row-balance {
+    font-size: 18px;
+  }
+  .asset-account-row {
+    gap: 9px;
+  }
+  .account-name strong {
+    font-size: 14px;
+  }
+}
+@media (max-width: 700px) {
+  .asset-groups {
+    display: block;
+  }
+  .asset-account-group {
+    margin-top: 25px;
+  }
+  .asset-summary strong {
+    font-size: 26px;
+  }
+  .asset-total-caption {
+    line-height: 1.8;
+    font-size: 11px;
+  }
+  .account-row-balance {
+    font-size: 20px;
+  }
+  .asset-account-row {
+    padding: 17px 0;
+    gap: 10px;
+  }
+  .account-name strong {
+    font-size: 14px;
+  }
+  .account-link-reminder {
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .account-actions {
+    width: 100%;
+  }
+  .account-actions button {
+    flex: 1;
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+  .account-balance-hero > strong {
+    font-size: 39px;
+  }
+  .account-balance-hero > p {
+    font-size: 11px;
+  }
+  .account-flow-summary {
+    gap: 17px;
+    flex-wrap: wrap;
+  }
+  .account-flow-summary strong {
+    font-size: 21px;
+  }
+  .account-flow-summary > span:last-child {
+    margin-left: 0;
+    font-size: 11px;
+    flex-basis: 100%;
+  }
+  .balance-history li {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .related-record {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .recent-section .detail-cell {
+    width: 36px;
+  }
+  .recent-section .record-detail-button {
+    font-size: 11px;
+  }
+  .recent-section .record-detail-button svg {
+    display: none;
+  }
+  .recent-section .merchant-copy strong {
+    max-width: 110px;
+  }
+  .recent-section .merchant-copy small {
+    max-width: 125px;
+  }
+  .asset-onboarding {
+    padding: 26px 15px;
+  }
+  .account-form-help {
+    font-size: 11px;
+  }
+}
+.account-cell small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

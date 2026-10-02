@@ -1,6 +1,13 @@
+const MAX_BOOK_NAME_LENGTH = 40;
+const DATE_KEY_LENGTH = 10;
+const RECURRING_INTERVAL_MS = 60000;
+import { localNow, newEntityId } from "../platform/browser/runtime";
 import { useEffect, useRef, useState } from "react";
 import {
   EMPTY_LEDGER,
+  DEFAULT_BOOKS,
+  applyRecurring,
+  type Book,
   resolveReview,
   type Ledger,
   type LedgerMode,
@@ -16,10 +23,14 @@ interface UndoEntry {
   mode: LedgerMode;
 }
 interface WorkspaceState {
+  books: Book[];
   ledgers: Record<LedgerMode, Ledger>;
   mode: LedgerMode;
 }
 export interface LedgerController {
+  books: Book[];
+  createBook: (name: string, initial?: Ledger) => Promise<LedgerMode>;
+  updateBooks: (books: Book[]) => Promise<void>;
   ledger: Ledger;
   personalLedger: Ledger;
   mode: LedgerMode;
@@ -34,11 +45,13 @@ export interface LedgerController {
   undo: () => void;
   editRecord: (input: RecordEdit) => Promise<void>;
   dismissNotice: () => void;
+  notify: (message: string) => void;
 }
 export function useLedger(
   repository: LedgerRepository = ledgerRepository,
 ): LedgerController {
   const [workspace, setWorkspace] = useState<WorkspaceState>(() => ({
+    books: DEFAULT_BOOKS,
     ledgers: { demo: createDemoLedger(), personal: EMPTY_LEDGER },
     mode: "demo",
   }));
@@ -50,19 +63,25 @@ export function useLedger(
   const isWriteInProgress = useRef(false);
   useEffect(() => {
     let isCancelled = false;
-    Promise.all([
-      repository.load("demo"),
-      repository.load("personal"),
-      repository.loadActiveMode(),
-    ])
-      .then(([demo, personal, mode]) => {
+    Promise.all([repository.listBooks(), repository.loadActiveMode()])
+      .then(async ([books, mode]) => {
+        const entries = await Promise.all(
+          books.map(async (book) => {
+            const id = book.id as LedgerMode;
+            return [
+              id,
+              (await repository.load(id)) ??
+                (id === "demo" ? createDemoLedger() : EMPTY_LEDGER),
+            ] as const;
+          }),
+        );
         if (isCancelled) return;
         setWorkspace({
-          ledgers: {
-            demo: demo ?? createDemoLedger(),
-            personal: personal ?? EMPTY_LEDGER,
-          },
-          mode,
+          books,
+          ledgers: Object.fromEntries(entries) as Record<LedgerMode, Ledger>,
+          mode: books.some((book) => book.id === mode && !book.isArchived)
+            ? mode
+            : "personal",
         });
         setIsLoading(false);
       })
@@ -103,14 +122,20 @@ export function useLedger(
     try {
       await repository.save(mode, next);
       setUndoEntry({ ledger: previous, mode });
+      setNotice("");
       setWorkspace((current) => ({
+        ...current,
         ledgers: { ...current.ledgers, [mode]: next },
         mode,
       }));
       setError("");
       await persistSelection(mode);
     } catch (cause) {
-      setError("账本未能保存，请检查浏览器存储空间。");
+      setError(
+        cause instanceof Error && cause.message.includes("另一个页面")
+          ? cause.message
+          : "账本未能保存，请检查浏览器存储空间。",
+      );
       throw cause;
     } finally {
       isWriteInProgress.current = false;
@@ -145,6 +170,7 @@ export function useLedger(
       .save(undoEntry.mode, undoEntry.ledger)
       .then(async () => {
         setWorkspace((current) => ({
+          ...current,
           ledgers: { ...current.ledgers, [undoEntry.mode]: undoEntry.ledger },
           mode: undoEntry.mode,
         }));
@@ -164,7 +190,76 @@ export function useLedger(
       input.remember ? "已保存修改，并记住此商户的分类。" : "已保存账单修改。",
     );
   }
+  async function updateBooks(books: Book[]): Promise<void> {
+    if (isLoading || isWriteInProgress.current)
+      throw new Error("账本正在读写，请稍后。");
+    isWriteInProgress.current = true;
+    setIsSaving(true);
+    try {
+      await repository.saveBooks(books);
+      setWorkspace((current) => ({ ...current, books }));
+    } finally {
+      isWriteInProgress.current = false;
+      setIsSaving(false);
+    }
+  }
+  async function createBook(
+    name: string,
+    initial: Ledger = EMPTY_LEDGER,
+  ): Promise<LedgerMode> {
+    if (isLoading || isWriteInProgress.current)
+      throw new Error("账本正在读写，请稍后。");
+    if (!name.trim() || name.trim().length > MAX_BOOK_NAME_LENGTH)
+      throw new Error("账本名称需为 1–40 字。");
+    isWriteInProgress.current = true;
+    setIsSaving(true);
+    try {
+      const id: LedgerMode = `book:${newEntityId()}`;
+      const books = [...workspace.books, { id, name: name.trim() }];
+      await repository.save(id, initial);
+      await repository.saveBooks(books);
+      setWorkspace((current) => ({
+        ...current,
+        books,
+        ledgers: { ...current.ledgers, [id]: initial },
+        mode: id,
+      }));
+      await persistSelection(id);
+      setUndoEntry(null);
+      return id;
+    } finally {
+      isWriteInProgress.current = false;
+      setIsSaving(false);
+    }
+  }
+  useEffect(() => {
+    if (isLoading) return;
+    let stopped = false;
+    const run = async (): Promise<void> => {
+      if (isWriteInProgress.current) return;
+      const previous = workspace.ledgers[workspace.mode];
+      try {
+        const next = applyRecurring(
+          previous,
+          localNow().slice(0, DATE_KEY_LENGTH),
+        );
+        if (next !== previous && !stopped) await commit(next);
+      } catch (cause) {
+        if (!stopped)
+          setError(cause instanceof Error ? cause.message : "周期记账失败");
+      }
+    };
+    void run();
+    const timer = setInterval(() => void run(), RECURRING_INTERVAL_MS);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [workspace, isLoading]);
   return {
+    books: workspace.books,
+    createBook,
+    updateBooks,
     ledger: workspace.ledgers[workspace.mode],
     personalLedger: workspace.ledgers.personal,
     mode: workspace.mode,
@@ -179,5 +274,6 @@ export function useLedger(
     undo,
     editRecord,
     dismissNotice: () => setNotice(""),
+    notify: setNotice,
   };
 }

@@ -19,14 +19,16 @@ import { Icons, SourceIcon } from "./Icons";
 import { FieldMapping } from "./FieldMapping";
 import { TransactionTable } from "./TransactionTable";
 interface ImportPageProps {
-  personalLedger: Ledger;
+  targetLedger: Ledger;
+  targetBookName: string;
   onCommit: (ledger: Ledger) => Promise<void>;
   onReview: () => void;
   onAll: () => void;
   onSelect: (record: BillRecord) => void;
 }
 export function ImportPage({
-  personalLedger,
+  targetLedger,
+  targetBookName,
   onCommit,
   onReview,
   onAll,
@@ -44,9 +46,9 @@ export function ImportPage({
     () =>
       files.map((file) => ({
         file,
-        ...parseStatement(file, personalLedger.rules),
+        ...parseStatement(file, targetLedger.rules),
       })),
-    [files, personalLedger.rules],
+    [files, targetLedger.rules],
   );
   const allRecords = useMemo(
     () => parsed.flatMap((result) => result.records),
@@ -56,15 +58,15 @@ export function ImportPage({
     result.errors.map((message) => `${result.file.name}：${message}`),
   );
   const plan = useMemo(
-    () => planImport(personalLedger, allRecords),
-    [personalLedger, allRecords],
+    () => planImport(targetLedger, allRecords),
+    [targetLedger, allRecords],
   );
   async function addFiles(incoming: File[]): Promise<void> {
     setIsLoading(true);
     setError("");
     setSuccess(null);
     const knownHashes = new Set([
-      ...personalLedger.files.map((file) => file.hash),
+      ...targetLedger.files.map((file) => file.hash),
       ...files.map((file) => file.hash),
     ]);
     const addedFiles: StatementFile[] = [];
@@ -103,7 +105,7 @@ export function ImportPage({
       await onCommit({
         ...plan.ledger,
         files: [
-          ...personalLedger.files,
+          ...targetLedger.files,
           ...files.map((file) => ({ name: file.name, hash: file.hash })),
         ],
       });
@@ -136,7 +138,10 @@ export function ImportPage({
     <section className="import-page">
       <div className="page-heading">
         <h1>账单放进来，收支理清楚</h1>
-        <p>导入到我的账本 · 文件在此浏览器解析，不上传服务器</p>
+        <p>
+          导入到{targetBookName} ·
+          原文件在本机解析，开启同步后账本数据会上传你的服务器。
+        </p>
       </div>
       <ol className="import-steps">
         <li className="complete">
@@ -266,6 +271,7 @@ export function ImportPage({
             <span>最多展示前 5 条</span>
           </div>
           <TransactionTable
+            accounts={targetLedger.accounts}
             records={allRecords.slice(0, RECORD_PREVIEW_LIMIT)}
             onSelect={onSelect}
           />

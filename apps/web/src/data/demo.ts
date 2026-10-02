@@ -1,3 +1,6 @@
+/* eslint no-magic-numbers: "off" */
+// Explicit synthetic fixture amounts and distribution weights.
+import { createDemoAccounts } from "./demo-accounts";
 import {
   type BillRecord,
   type Category,
@@ -155,5 +158,12 @@ export function createDemoLedger(): Ledger {
       reasons: ["金额相同", "付款账户一致", "交易时间相差 4 秒"],
     };
   });
-  return { version: 1, records, reviews, rules: {}, files: [] };
+  return {
+    version: 1,
+    records,
+    reviews,
+    rules: {},
+    files: [],
+    accounts: createDemoAccounts(),
+  };
 }

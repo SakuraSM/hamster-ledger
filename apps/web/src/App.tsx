@@ -1,15 +1,14 @@
+import { useCloudSync } from "./hooks/useCloudSync";
+import { AppPages } from "./components/AppPages";
+import { EntryEditor } from "./components/EntryEditor";
+import { usePreferences } from "./hooks/usePreferences";
+import { AppHeader } from "./components/AppHeader";
 import { DEFAULT_MONTH, type PageId } from "./app-config";
 const MONTH_KEY_LENGTH = 7;
-const YEAR_LENGTH = 4;
-const MONTH_START = 5;
 import { useState } from "react";
 import { Sidebar } from "./components/Sidebar";
-import { Overview } from "./components/Overview";
-import { Transactions, type BillFilter } from "./components/Transactions";
-import { ReviewPage } from "./components/ReviewPage";
-import { ImportPage } from "./components/ImportPage";
+import { type BillFilter } from "./components/Transactions";
 import { RecordDetail } from "./components/RecordDetail";
-import { LedgerSettings } from "./components/LedgerSettings";
 import { Icons } from "./components/Icons";
 import { Dialog } from "./components/Dialog";
 import { useLedger } from "./hooks/useLedger";
@@ -18,26 +17,34 @@ import {
   type Category,
   type BillRecord,
   type Ledger,
-  confirmedForMonth,
+  UNASSIGNED_ACCOUNT_FILTER,
+  saveEntry,
+  cycleMonthForDate,
+  deleteEntry,
 } from "@hamster-ledger/core";
 
-const PAGE_LABELS: Record<PageId, string> = {
-  overview: "总览",
-  transactions: "全部账单",
-  import: "导入账单",
-  review: "重复核对",
-};
 export function App(): React.JSX.Element {
   const controller = useLedger();
   const { ledger, mode } = controller;
+  const sync = useCloudSync(controller);
   const [page, setPage] = useState<PageId>("overview");
   const [month, setMonth] = useState(DEFAULT_MONTH);
+  const [recordMonth, setRecordMonth] = useState(DEFAULT_MONTH);
   const [filter, setFilter] = useState<BillFilter>({
     source: "",
     category: "",
   });
   const [selected, setSelected] = useState<BillRecord | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [editor, setEditor] = useState<{
+    record?: BillRecord;
+    date?: string;
+    revision?: number;
+  } | null>(() =>
+    new URLSearchParams(window.location.search).get("action") === "add"
+      ? {}
+      : null,
+  );
+  usePreferences({ ledger, mode, notify: controller.notify });
   const [previewRecord, setPreviewRecord] = useState<BillRecord | null>(null);
   const pending = ledger.reviews.filter(
     (review) => review.state === "pending",
@@ -45,75 +52,41 @@ export function App(): React.JSX.Element {
   const months = [
     ...new Set([
       DEFAULT_MONTH,
+      new Date().toLocaleDateString("sv-SE").slice(0, MONTH_KEY_LENGTH),
+      ...ledger.records.map((record) =>
+        cycleMonthForDate(record.date, ledger.preferences?.cycleStartDay ?? 1),
+      ),
       ...ledger.records.map((record) => record.date.slice(0, MONTH_KEY_LENGTH)),
     ]),
   ]
     .sort()
     .reverse();
-  const monthRecords = ledger.records.filter((record) =>
-    record.date.startsWith(month),
-  );
   function navigate(next: PageId): void {
+    if (next === "transactions") setRecordMonth(month);
     setPage(next);
     setFilter({ source: "", category: "" });
     window.scrollTo({ top: 0 });
   }
   function showSource(source: Source): void {
+    setRecordMonth(month);
     setFilter({ source, category: "" });
     setPage("transactions");
   }
   function showCategory(category: Category): void {
+    setRecordMonth(month);
     setFilter({ source: "", category });
     setPage("transactions");
   }
   async function commitImported(next: Ledger): Promise<void> {
-    await controller.commit(next, "personal");
+    await controller.commit(next, mode === "demo" ? "personal" : mode);
     const latest = [...next.records].sort((left, right) =>
       right.date.localeCompare(left.date),
     )[0];
-    if (latest) setMonth(latest.date.slice(0, MONTH_KEY_LENGTH));
+    if (latest)
+      setMonth(
+        cycleMonthForDate(latest.date, next.preferences?.cycleStartDay ?? 1),
+      );
   }
-  const content: Record<PageId, () => React.JSX.Element> = {
-    overview: () => (
-      <Overview
-        records={confirmedForMonth(ledger, month)}
-        month={month}
-        isDemo={mode === "demo"}
-        pending={pending}
-        onReview={() => navigate("review")}
-        onAll={() => navigate("transactions")}
-        onCategory={showCategory}
-        onSelect={setSelected}
-        onImport={() => navigate("import")}
-      />
-    ),
-    transactions: () => (
-      <Transactions
-        records={monthRecords}
-        filter={filter}
-        onFilter={setFilter}
-        onSelect={setSelected}
-      />
-    ),
-    review: () => (
-      <ReviewPage
-        ledger={ledger}
-        onDecide={controller.decide}
-        onSelect={setSelected}
-        canUndo={controller.canUndo}
-        onUndo={controller.undo}
-      />
-    ),
-    import: () => (
-      <ImportPage
-        personalLedger={controller.personalLedger}
-        onCommit={commitImported}
-        onReview={() => navigate("review")}
-        onAll={() => navigate("transactions")}
-        onSelect={setPreviewRecord}
-      />
-    ),
-  };
   if (controller.isLoading)
     return (
       <main className="loading-state" aria-busy={!controller.error}>
@@ -130,78 +103,108 @@ export function App(): React.JSX.Element {
         跳到主要内容
       </a>
       <Sidebar
+        bookName={
+          controller.books.find((book) => book.id === mode)?.name ?? "我的账本"
+        }
         page={page}
         pending={pending}
         mode={mode}
         onNavigate={navigate}
         onSource={showSource}
-        onSettings={() => setIsSettingsOpen(true)}
+        onSettings={() => navigate("tools")}
       />
       <main id="main-content" className="main-content" tabIndex={-1}>
-        <header className="topbar">
-          <div className="breadcrumb">
-            <button
-              aria-label="切换账本"
-              onClick={() => setIsSettingsOpen(true)}
-            >
-              {mode === "demo" ? "个人账本" : "我的账本"}
-            </button>
-            <span>/</span>
-            <strong>{PAGE_LABELS[page]}</strong>
-          </div>
-          <div className="top-actions">
-            {page === "overview" || page === "transactions" ? (
-              <label className="month-picker">
-                <Icons.Calendar size={20} />
-                <select
-                  aria-label="月份"
-                  value={month}
-                  onChange={(event) => setMonth(event.target.value)}
-                >
-                  {months.map((item) => (
-                    <option key={item} value={item}>
-                      {item.slice(0, YEAR_LENGTH)}年
-                      {Number(item.slice(MONTH_START))}月
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <span className="mode-label">
-                {mode === "demo" ? "示例数据" : "我的账本"}
-              </span>
-            )}
-            {page !== "import" ? (
-              <button
-                className="primary-button"
-                onClick={() => navigate("import")}
-              >
-                <Icons.Upload size={20} />
-                <span>导入账单</span>
-              </button>
-            ) : null}
-          </div>
-        </header>
+        <AppHeader
+          page={page}
+          mode={mode}
+          months={months}
+          month={page === "transactions" ? recordMonth : month}
+          onMonth={page === "transactions" ? setRecordMonth : setMonth}
+          onSettings={() => navigate("tools")}
+          bookName={
+            controller.books.find((book) => book.id === mode)?.name ?? "账本"
+          }
+          onAdd={() => setEditor({})}
+          onImport={() => navigate("import")}
+        />
         {controller.error ? (
           <p className="error-message" role="alert">
             {controller.error}
           </p>
         ) : null}
-        {content[page]()}
+        <AppPages
+          sync={sync}
+          controller={controller}
+          page={page}
+          month={month}
+          recordMonth={recordMonth}
+          filter={filter}
+          onFilter={setFilter}
+          onMonth={setMonth}
+          onNavigate={navigate}
+          onSelect={setSelected}
+          onPreview={setPreviewRecord}
+          onCategory={showCategory}
+          onUnassigned={() => {
+            setRecordMonth("");
+            setFilter({
+              source: "",
+              category: "",
+              accountId: UNASSIGNED_ACCOUNT_FILTER,
+            });
+            setPage("transactions");
+          }}
+          onImport={commitImported}
+          onAdd={(date) => setEditor({ date })}
+        />
       </main>
       {selected ? (
         <RecordDetail
+          key={selected.id}
+          ledger={ledger}
+          onRelated={setSelected}
           record={selected}
           onClose={() => setSelected(null)}
           onSave={controller.editRecord}
+          onEdit={() => {
+            setEditor({ record: selected });
+            setSelected(null);
+          }}
+          onDelete={async () => {
+            await controller.commit(deleteEntry(ledger, selected.id));
+            setSelected(null);
+            controller.notify("账单已移入回收站，关联流水一同保留。");
+          }}
         />
       ) : null}
-      {isSettingsOpen ? (
-        <LedgerSettings
-          mode={mode}
+      {editor ? (
+        <EntryEditor
+          key={editor.revision ?? 0}
+          onReload={() => {
+            const latest = ledger.records.find(
+              (record) => record.id === editor.record?.id && !record.isDeleted,
+            );
+            if (!latest) {
+              setEditor(null);
+              controller.notify("账单已被删除，请从回收站查看。");
+              return;
+            }
+            setEditor({ record: latest, revision: (editor.revision ?? 0) + 1 });
+          }}
           ledger={ledger}
-          onSwitch={controller.switchMode}
-          onClose={() => setIsSettingsOpen(false)}
+          record={editor.record}
+          date={editor.date}
+          onClose={() => setEditor(null)}
+          onSave={async (input) => {
+            await controller.commit(saveEntry(ledger, input));
+            setMonth(
+              cycleMonthForDate(
+                input.date,
+                ledger.preferences?.cycleStartDay ?? 1,
+              ),
+            );
+            controller.notify("账单已保存。");
+          }}
         />
       ) : null}
       {previewRecord ? (

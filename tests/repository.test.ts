@@ -63,3 +63,19 @@ describe("portable asynchronous persistence contract", () => {
     expect(await repository.loadActiveMode()).toBe("personal");
   });
 });
+it("rejects duplicate book ids and archived built-in books", async () => {
+  const repository = createLedgerRepository(memoryStore());
+  await expect(
+    repository.saveBooks([
+      { id: "demo", name: "示例" },
+      { id: "personal", name: "个人" },
+      { id: "personal", name: "重复" },
+    ]),
+  ).rejects.toThrow("重复");
+  await expect(
+    repository.saveBooks([
+      { id: "demo", name: "示例", isArchived: true },
+      { id: "personal", name: "个人" },
+    ]),
+  ).rejects.toThrow("默认");
+});
