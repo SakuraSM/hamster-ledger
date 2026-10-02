@@ -1,6 +1,8 @@
+@import "./assets.css";
 @import "@hamster-ledger/design-tokens/theme.css";
 @import "./forms.css";
 @import "./workflow.css";
+@import "./planning.css";
 :root {
   font-family:
     Inter,
@@ -928,7 +930,7 @@ main:focus {
   .main-nav {
     margin: 0;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 4px;
   }
   .nav-item {

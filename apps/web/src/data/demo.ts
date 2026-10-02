@@ -1,5 +1,6 @@
 /* eslint no-magic-numbers: "off" */
 // Explicit synthetic fixture amounts and distribution weights.
+import { createDemoAccounts } from "./demo-accounts";
 import {
   type BillRecord,
   type Category,
@@ -160,5 +161,6 @@ export function createDemoLedger(): Ledger {
     reviews,
     rules: {},
     files: [],
+    accounts: createDemoAccounts(),
   };
 }

@@ -5,10 +5,17 @@ import { SOURCES, type Source, type LedgerMode } from "@hamster-ledger/core";
 const NAV_ITEMS = [
   { id: "overview", label: "总览", icon: Icons.House },
   { id: "transactions", label: "全部账单", icon: Icons.List },
+  { id: "assets", label: "资产管理", icon: Icons.Wallet },
+  { id: "reports", label: "收支报表", icon: Icons.Chart },
+  { id: "tools", label: "更多功能", icon: Icons.Settings },
+  { id: "calendar", label: "账单日历", icon: Icons.Calendar },
+  { id: "budgets", label: "预算管理", icon: Icons.Wallet },
+  { id: "recurring", label: "周期记账", icon: Icons.Undo },
   { id: "import", label: "导入账单", icon: Icons.Upload },
   { id: "review", label: "重复核对", icon: Icons.Link },
 ] as const;
 interface SidebarProps {
+  bookName: string;
   page: PageId;
   pending: number;
   mode: LedgerMode;
@@ -17,9 +24,9 @@ interface SidebarProps {
   onSettings: () => void;
 }
 export function Sidebar({
+  bookName,
   page,
   pending,
-  mode,
   onNavigate,
   onSource,
   onSettings,
@@ -39,7 +46,7 @@ export function Sidebar({
             key={id}
             aria-label={label}
             onClick={() => onNavigate(id)}
-            className={page === id ? "nav-item active" : "nav-item"}
+            className={`${page === id ? "nav-item active" : "nav-item"} ${["import", "review", "calendar", "budgets", "recurring"].includes(id) ? "desktop-nav" : ""}`}
             aria-current={page === id ? "page" : undefined}
           >
             <Icon size={25} weight={page === id ? "fill" : "regular"} />
@@ -62,7 +69,7 @@ export function Sidebar({
       <div className="sidebar-footer">
         <button onClick={onSettings}>
           <Icons.Book size={25} />
-          <span>{mode === "demo" ? "示例账本" : "我的账本"}</span>
+          <span>{bookName}</span>
           <Icons.Caret size={18} />
         </button>
         <p>账单保存在此浏览器</p>

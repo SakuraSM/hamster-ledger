@@ -5,6 +5,9 @@ import {
   type BillRecord,
   type Category,
   type Source,
+  type AssetAccount,
+  resolveAssetAccount,
+  UNASSIGNED_ACCOUNT_FILTER,
 } from "@hamster-ledger/core";
 import { Icons } from "./Icons";
 import { TransactionTable } from "./TransactionTable";
@@ -13,15 +16,18 @@ const PAGE_SIZE = 20;
 export interface BillFilter {
   source: Source | "";
   category: Category | "";
+  accountId?: string;
 }
 interface TransactionsProps {
   records: BillRecord[];
+  accounts: AssetAccount[];
   filter: BillFilter;
   onFilter: (filter: BillFilter) => void;
   onSelect: (record: BillRecord) => void;
 }
 export function Transactions({
   records,
+  accounts,
   filter,
   onFilter,
   onSelect,
@@ -32,13 +38,25 @@ export function Transactions({
   const filtered = records
     .filter(
       (record) =>
+        !record.isDeleted &&
         (!filter.source ||
           record.source === filter.source ||
           record.linkedSources.includes(filter.source)) &&
         (!filter.category || record.category === filter.category) &&
+        (!filter.accountId ||
+          (filter.accountId === UNASSIGNED_ACCOUNT_FILTER
+            ? !resolveAssetAccount(record, accounts)
+            : resolveAssetAccount(record, accounts)?.id === filter.accountId ||
+              record.transferToAccountId === filter.accountId)) &&
         (!status ? record.status !== "duplicate" : record.status === status) &&
         (!query ||
-          [record.merchant, record.description, record.account, record.orderId]
+          [
+            record.merchant,
+            record.description,
+            record.account,
+            record.orderId,
+            ...(record.tags ?? []),
+          ]
             .join(" ")
             .toLowerCase()
             .includes(query.toLowerCase())),
@@ -67,7 +85,7 @@ export function Transactions({
           <Icons.Search size={20} />
           <input
             aria-label="搜索账单"
-            placeholder="搜索商户、备注或流水号"
+            placeholder="搜索商户、备注、标签或流水号"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -100,8 +118,30 @@ export function Transactions({
           }}
         >
           <option value="">全部分类</option>
-          {CATEGORIES.map((category) => (
+          {[
+            ...new Set([
+              ...CATEGORIES,
+              ...records.map((record) => record.category),
+            ]),
+          ].map((category) => (
             <option key={category}>{category}</option>
+          ))}
+        </select>
+        <select
+          aria-label="关联资产账户"
+          value={filter.accountId ?? ""}
+          onChange={(event) => {
+            onFilter({ ...filter, accountId: event.target.value });
+            setPageIndex(0);
+          }}
+        >
+          <option value="">全部账户</option>
+          <option value={UNASSIGNED_ACCOUNT_FILTER}>未关联账户</option>
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name}
+              {account.isArchived ? "（已归档）" : ""}
+            </option>
           ))}
         </select>
         <select
@@ -119,9 +159,11 @@ export function Transactions({
         </select>
       </div>
       <p className="list-caption">
-        共 {filtered.length} 条记录 <span>点击商户查看原始流水与识别信息</span>
+        共 {filtered.length} 条记录{" "}
+        <span>点击“详情”查看原始流水与账户关联</span>
       </p>
       <TransactionTable
+        accounts={accounts}
         records={filtered.slice(
           safePage * PAGE_SIZE,
           (safePage + 1) * PAGE_SIZE,

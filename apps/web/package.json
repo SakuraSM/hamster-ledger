@@ -6,7 +6,7 @@
   "name": "@hamster-ledger/web",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/prepare-sites-build.mjs",
+    "build": "tsc --noEmit && vite build && node scripts/prepare-sites-build.mjs && node scripts/generate-pwa.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test:sites": "node --test tests/sites-worker.test.mjs"

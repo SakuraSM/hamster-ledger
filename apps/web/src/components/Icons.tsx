@@ -1,3 +1,5 @@
+import { ChartPieIcon } from "@phosphor-icons/react/dist/csr/ChartPie";
+import { CreditCardIcon } from "@phosphor-icons/react/dist/csr/CreditCard";
 import { HouseIcon } from "@phosphor-icons/react/dist/csr/House";
 import { ListBulletsIcon } from "@phosphor-icons/react/dist/csr/ListBullets";
 import { UploadSimpleIcon } from "@phosphor-icons/react/dist/csr/UploadSimple";
@@ -29,6 +31,7 @@ import { ArrowsLeftRightIcon } from "@phosphor-icons/react/dist/csr/ArrowsLeftRi
 import type { Category, Source } from "@hamster-ledger/core";
 
 export const Icons = {
+  Chart: ChartPieIcon,
   House: HouseIcon,
   List: ListBulletsIcon,
   Upload: UploadSimpleIcon,
@@ -54,6 +57,7 @@ export const Icons = {
   Wechat: WechatLogoIcon,
   Bank: BankIcon,
   Wallet: WalletIcon,
+  Credit: CreditCardIcon,
   Plus: PlusIcon,
   Edit: PencilSimpleIcon,
   Transfer: ArrowsLeftRightIcon,

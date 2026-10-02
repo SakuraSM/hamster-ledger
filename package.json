@@ -27,11 +27,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run build:packages && vitest run",
-    "check": "npm run format:check && npm run tokens:check && npm run typecheck && npm run lint && npm run check:boundaries && npm test && npm run build && npm run test:sites",
+    "check": "npm run format:check && npm run tokens:check && npm run typecheck && npm run lint && npm run check:boundaries && npm test && npm run build && npm run test:sites && npm run test:server",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "test:sites": "npm run test:sites --workspace @hamster-ledger/web",
     "tokens:generate": "node scripts/generate-tokens.mjs",
-    "tokens:check": "node scripts/generate-tokens.mjs --check"
+    "tokens:check": "node scripts/generate-tokens.mjs --check",
+    "start": "node apps/server/src/index.mjs",
+    "test:server": "npm run test --workspace @hamster-ledger/server"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
