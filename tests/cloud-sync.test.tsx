@@ -1,3 +1,4 @@
+import { AuthProvider } from "../apps/web/src/auth/AuthProvider";
 // @vitest-environment jsdom
 import { webcrypto } from "node:crypto";
 import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
@@ -36,6 +37,8 @@ beforeEach(() => {
   };
   vi.mocked(cloud.me).mockResolvedValue({
     user: { id: "user", username: "qa" },
+    csrfToken: "synthetic-csrf",
+    session: { id: "session", expiresAt: 9999999999999, remember: false },
   });
   vi.mocked(cloud.books).mockImplementation(async () => ({
     books: [{ ...remote }],
@@ -61,7 +64,7 @@ function useWorkspace() {
   return { controller, sync };
 }
 async function linkedWorkspace() {
-  const hook = renderHook(useWorkspace);
+  const hook = renderHook(useWorkspace, { wrapper: AuthProvider });
   await waitFor(() =>
     expect(hook.result.current.controller.isLoading).toBe(false),
   );

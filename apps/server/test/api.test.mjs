@@ -1,57 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { createLedgerServer } from "../src/server.mjs";
-const EMPTY = {
-  version: 1,
-  records: [],
-  reviews: [],
-  rules: {},
-  files: [],
-  accounts: [],
-};
-async function setup(context) {
-  const directory = await mkdtemp(join(tmpdir(), "hamster-test-"));
-  const server = createLedgerServer({
-    databasePath: join(directory, "ledger.sqlite"),
-  });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  context.after(async () => {
-    await new Promise((resolve) => server.close(resolve));
-    await rm(directory, { recursive: true, force: true });
-  });
-  const origin = `http://127.0.0.1:${server.address().port}`;
-  return {
-    server,
-    origin,
-    request: async (
-      path,
-      { method = "GET", body, cookie, originOverride = origin } = {},
-    ) =>
-      fetch(origin + path, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Hamster-Client": "1",
-          Origin: originOverride,
-          ...(cookie ? { Cookie: cookie } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      }),
-  };
-}
-async function register(client, username) {
-  const response = await client.request("/api/auth/register", {
-    method: "POST",
-    body: { username, password: "synthetic-test-password-123" },
-  });
-  assert.equal(response.status, 201);
-  const cookie = response.headers.get("set-cookie");
-  assert.match(cookie, /HttpOnly/);
-  return cookie.split(";")[0];
-}
+import { setup, register, EMPTY } from "./helpers.mjs";
 test("isolates users, rejects stale writes, and invalidates logout sessions", async (context) => {
   const client = await setup(context);
   const alice = await register(client, "test.alice");

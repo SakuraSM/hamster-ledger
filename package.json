@@ -33,7 +33,8 @@
     "tokens:generate": "node scripts/generate-tokens.mjs",
     "tokens:check": "node scripts/generate-tokens.mjs --check",
     "start": "node apps/server/src/index.mjs",
-    "test:server": "npm run test --workspace @hamster-ledger/server"
+    "test:server": "npm run test --workspace @hamster-ledger/server",
+    "auth:reset": "node apps/server/src/reset-password.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",

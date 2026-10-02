@@ -19,12 +19,28 @@ export function createLedgerServer({
   webRoot = "apps/web/dist/client",
   publicOrigin,
   allowRegistration = true,
+  now = Date.now,
 } = {}) {
+  validateOrigin(publicOrigin);
   const database = openDatabase(databasePath);
-  const api = createApi({ database, publicOrigin, allowRegistration });
+  const api = createApi({ database, publicOrigin, allowRegistration, now });
   const root = resolve(webRoot);
   const server = createServer(async (request, response) => {
     try {
+      response.setHeader("X-Frame-Options", "DENY");
+      response.setHeader("Referrer-Policy", "same-origin");
+      response.setHeader(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=()",
+      );
+      if (publicOrigin?.startsWith("https:"))
+        response.setHeader("Strict-Transport-Security", "max-age=31536000");
+      if (!publicOrigin && !isLoopbackHost(request.headers.host))
+        throw new HttpError(
+          403,
+          "非本机访问必须配置 HTTPS PUBLIC_ORIGIN。",
+          "origin_not_configured",
+        );
       if (request.url?.startsWith("/api/")) {
         await api(request, response);
         return;
@@ -56,20 +72,55 @@ export function createLedgerServer({
         "Referrer-Policy": "same-origin",
         "Cache-Control": "no-cache",
         "Content-Security-Policy":
-          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
       });
       response.end(request.method === "HEAD" ? undefined : content);
     } catch (error) {
       if (!response.headersSent)
-        json(response, error instanceof HttpError ? error.status : 500, {
-          error:
-            error instanceof HttpError
-              ? error.message
-              : "服务处理失败，请稍后重试。",
-        });
+        json(
+          response,
+          error instanceof HttpError ? error.status : 500,
+          {
+            error:
+              error instanceof HttpError
+                ? error.message
+                : "服务处理失败，请稍后重试。",
+            code: error instanceof HttpError ? error.code : "server_error",
+          },
+          error instanceof HttpError ? error.headers : {},
+        );
       else response.end();
     }
   });
+  server.requestTimeout = 30000;
+  server.headersTimeout = 15000;
+  server.keepAliveTimeout = 5000;
+  server.maxHeadersCount = 100;
   server.on("close", () => database.close());
   return server;
+}
+
+function isLoopbackHost(host) {
+  try {
+    return ["127.0.0.1", "localhost", "[::1]"].includes(
+      new URL("http://" + host).hostname,
+    );
+  } catch {
+    return false;
+  }
+}
+function validateOrigin(origin) {
+  if (!origin) return;
+  const parsed = new URL(origin);
+  if (
+    parsed.origin !== origin ||
+    parsed.username ||
+    parsed.password ||
+    !["http:", "https:"].includes(parsed.protocol)
+  )
+    throw new Error(
+      "PUBLIC_ORIGIN 必须是完整的 Origin，不含路径、凭据或末尾斜杠。",
+    );
+  if (parsed.protocol !== "https:" && !isLoopbackHost(parsed.host))
+    throw new Error("非本机部署必须使用 HTTPS PUBLIC_ORIGIN。");
 }

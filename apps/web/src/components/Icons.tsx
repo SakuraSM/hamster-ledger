@@ -1,3 +1,7 @@
+import { EyeIcon } from "@phosphor-icons/react/dist/csr/Eye";
+import { EyeSlashIcon } from "@phosphor-icons/react/dist/csr/EyeSlash";
+import { ShieldCheckIcon } from "@phosphor-icons/react/dist/csr/ShieldCheck";
+import { SignOutIcon } from "@phosphor-icons/react/dist/csr/SignOut";
 import { ChartPieIcon } from "@phosphor-icons/react/dist/csr/ChartPie";
 import { CreditCardIcon } from "@phosphor-icons/react/dist/csr/CreditCard";
 import { HouseIcon } from "@phosphor-icons/react/dist/csr/House";
@@ -31,6 +35,10 @@ import { ArrowsLeftRightIcon } from "@phosphor-icons/react/dist/csr/ArrowsLeftRi
 import type { Category, Source } from "@hamster-ledger/core";
 
 export const Icons = {
+  Eye: EyeIcon,
+  EyeOff: EyeSlashIcon,
+  Shield: ShieldCheckIcon,
+  SignOut: SignOutIcon,
   Chart: ChartPieIcon,
   House: HouseIcon,
   List: ListBulletsIcon,

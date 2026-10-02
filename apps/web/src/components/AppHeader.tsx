@@ -1,3 +1,5 @@
+import { useAuth } from "../auth/auth-context";
+import { loginPath, navigateAuth } from "../platform/browser/auth-navigation";
 import type { LedgerMode } from "@hamster-ledger/core";
 import type { PageId } from "../app-config";
 import { Icons } from "./Icons";
@@ -37,6 +39,7 @@ export function AppHeader({
   onSettings,
   onImport,
 }: AppHeaderProps): React.JSX.Element {
+  const auth = useAuth();
   return (
     <header className="topbar">
       <div className="breadcrumb">
@@ -47,6 +50,13 @@ export function AppHeader({
         <strong>{PAGE_LABELS[page]}</strong>
       </div>
       <div className="top-actions">
+        <button
+          className="header-account"
+          onClick={() => (auth.user ? onSettings() : navigateAuth(loginPath()))}
+        >
+          <Icons.Shield size={19} />
+          <span>{auth.user?.username ?? "登录"}</span>
+        </button>
         <button className="primary-button" onClick={onAdd}>
           <Icons.Plus size={20} />
           <span>记一笔</span>

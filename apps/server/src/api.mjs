@@ -1,13 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { ledgerSchema } from "@hamster-ledger/core";
-import { authenticate, getSession, requireSession, logout } from "./auth.mjs";
-import {
-  json,
-  readJson,
-  HttpError,
-  verifyWriteOrigin,
-  createLimiter,
-} from "./http.mjs";
+import { createAuthApi } from "./auth.mjs";
+import { requireSession } from "./sessions.mjs";
+import { json, readJson, HttpError, verifyWriteOrigin } from "./http.mjs";
 function parseBook(body) {
   const parsed = ledgerSchema.safeParse(body.ledger);
   if (!parsed.success) throw new HttpError(400, "账本格式不正确。");
@@ -20,11 +15,15 @@ export function createApi({
   database,
   publicOrigin,
   allowRegistration = true,
+  now = Date.now,
 }) {
-  const limit = createLimiter();
+  const auth = createAuthApi({ database, allowRegistration, now });
   return async (request, response) => {
     const origin = publicOrigin ?? `http://${request.headers.host}`;
     const isSecure = origin.startsWith("https:");
+    request.authCookieName = isSecure
+      ? "__Host-hamster_session"
+      : "hamster_session";
     verifyWriteOrigin(request, origin);
     const path = new URL(request.url, origin).pathname;
     const method = request.method;
@@ -32,42 +31,12 @@ export function createApi({
       json(response, 200, { ok: true, storage: "sqlite" });
       return;
     }
-    if (path === "/api/auth/me" && method === "GET") {
-      json(response, 200, { user: getSession(request, database) });
-      return;
-    }
-    if (
-      ["/api/auth/register", "/api/auth/login"].includes(path) &&
-      method === "POST"
-    ) {
-      limit(request);
-      const isRegister = path.endsWith("register");
-      if (isRegister && !allowRegistration)
-        throw new HttpError(403, "此服务已关闭注册。");
-      const result = await authenticate({
-        database,
-        body: await readJson(request),
-        isRegister,
-        isSecure,
-      });
-      json(
-        response,
-        isRegister ? 201 : 200,
-        { user: result.user },
-        { "Set-Cookie": result.cookie },
-      );
-      return;
-    }
-    if (path === "/api/auth/logout" && method === "POST") {
-      json(
-        response,
-        200,
-        { ok: true },
-        { "Set-Cookie": logout(request, database, isSecure) },
-      );
-      return;
-    }
-    const user = requireSession(request, database);
+    if (await auth(request, response, { path, isSecure })) return;
+    const session = requireSession(request, database, {
+      write: !["GET", "HEAD"].includes(method),
+      now: now(),
+    });
+    const user = { id: session.user_id };
     if (path === "/api/books" && method === "GET") {
       json(response, 200, {
         books: database
@@ -80,12 +49,13 @@ export function createApi({
     }
     if (path === "/api/books" && method === "POST") {
       const book = parseBook(await readJson(request));
+      requireSession(request, database, { write: true, now: now() });
       const id = randomUUID();
-      const now = new Date().toISOString();
+      const updatedAt = new Date(now()).toISOString();
       database
         .prepare("INSERT INTO books VALUES(?,?,?,?,?,?)")
-        .run(id, user.id, book.name, 1, book.serialized, now);
-      json(response, 201, { id, name: book.name, revision: 1, updatedAt: now });
+        .run(id, user.id, book.name, 1, book.serialized, updatedAt);
+      json(response, 201, { id, name: book.name, revision: 1, updatedAt });
       return;
     }
     const match = path.match(/^\/api\/books\/([a-z0-9-]+)$/);
@@ -106,21 +76,29 @@ export function createApi({
       }
       const body = await readJson(request);
       const book = parseBook(body);
+      requireSession(request, database, { write: true, now: now() });
       if (!Number.isSafeInteger(body.revision) || body.revision < 1)
         throw new HttpError(400, "缺少有效的账本版本。");
-      const now = new Date().toISOString();
+      const updatedAt = new Date(now()).toISOString();
       const result = database
         .prepare(
           "UPDATE books SET name=?,ledger=?,revision=revision+1,updated_at=? WHERE id=? AND user_id=? AND revision=?",
         )
-        .run(book.name, book.serialized, now, row.id, user.id, body.revision);
+        .run(
+          book.name,
+          book.serialized,
+          updatedAt,
+          row.id,
+          user.id,
+          body.revision,
+        );
       if (result.changes === 0)
         throw new HttpError(409, "云端已有更新，请先保留或下载云端版本。");
       json(response, 200, {
         id: row.id,
         name: book.name,
         revision: body.revision + 1,
-        updatedAt: now,
+        updatedAt,
       });
       return;
     }
