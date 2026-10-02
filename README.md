@@ -39,7 +39,7 @@ npm run build
 npm start
 ```
 
-打开 http://127.0.0.1:4190 。首次进入示例账本；在示例账本导入时写入“我的账本”，其他账本导入时写入当前账本。需要同步时，在“更多功能”中注册账号并连接账本。服务器数据默认保存在 `data/ledger.sqlite`。开发页面可单独运行 `npm run dev -- --host 127.0.0.1 --port 4187 --strictPort`，该 Vite 服务不提供同步 API。
+打开 http://127.0.0.1:4190 。首次进入登录页，可登录或选择“仅在本机使用”；在示例账本导入时写入“我的账本”，其他账本导入时写入当前账本。需要同步时，通过登录页注册或登录，再在“更多功能”中连接账本。服务器数据默认保存在 `data/ledger.sqlite`。开发页面可单独运行 `npm run dev -- --host 127.0.0.1 --port 4187 --strictPort`，该 Vite 服务不提供同步 API。
 
 ```sh
 npm run check       # 类型、边界、测试、构建与静态托管打包
@@ -64,6 +64,7 @@ npm run build       # Web 产物位于 apps/web/dist/client
 
 - [鲨鱼记账能力对齐与验证范围](docs/shark-parity.md)
 - [自托管部署](docs/self-hosting.md)
+- [登录与认证策略](docs/authentication.md)
 - [架构与依赖边界](docs/architecture.md)
 - [资产账户与账单关联](docs/assets.md)
 - [后续 App 开发准备](docs/mobile-readiness.md)

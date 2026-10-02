@@ -143,10 +143,14 @@ export async function enableVault(password: string): Promise<void> {
       localStorage.removeItem(entryKey);
   });
 }
-export async function lockVault(): Promise<void> {
+export async function clearVaultSession(): Promise<void> {
   await queue;
   unlockedKey = null;
   unlockedEntries = null;
+  envelopeSnapshot = null;
+}
+export async function lockVault(): Promise<void> {
+  await clearVaultSession();
   window.location.reload();
 }
 export const protectedStore: KeyValueStore = {

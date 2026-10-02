@@ -1,3 +1,4 @@
+import { AccountSecurityPanel } from "../auth/AccountSecurityPanel";
 const DATE_KEY_LENGTH = 10;
 import type { CloudController } from "../../hooks/useCloudSync";
 import { useState } from "react";
@@ -63,6 +64,7 @@ export function ToolsPage({
           onCommit={controller.commit}
         />
         <SyncPanel sync={sync} />
+        <AccountSecurityPanel />
         <BackupPanel
           ledger={ledger}
           name={

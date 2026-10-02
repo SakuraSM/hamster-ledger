@@ -1,4 +1,4 @@
-import { useCloudBootstrap } from "./useCloudBootstrap";
+import { useAuth } from "../auth/auth-context";
 const CONFLICT_STATUS = 409;
 const SYNC_DEBOUNCE_MS = 1200;
 import { useEffect, useRef, useState } from "react";
@@ -7,7 +7,6 @@ import {
   CloudError,
   type CloudBook,
   type CloudSnapshot,
-  type CloudUser,
 } from "../platform/browser/cloud";
 import { protectedStore } from "../platform/browser/vault";
 import type { LedgerController } from "./useLedger";
@@ -16,12 +15,12 @@ import { fingerprint, linkKey, type Link } from "../platform/browser/sync-link";
 import type { CloudController } from "./cloud-controller";
 export type { CloudController } from "./cloud-controller";
 export function useCloudSync(controller: LedgerController): CloudController {
-  const [user, setUser] = useState<CloudUser | null>(null);
+  const auth = useAuth();
+  const { user } = auth;
   const [books, setBooks] = useState<CloudBook[]>([]);
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [authError, setAuthError] = useState("");
   const [preview, setPreview] = useState<CloudSnapshot | null>(null);
   const [isLinked, setIsLinked] = useState(false);
   const current = useRef(controller);
@@ -30,12 +29,35 @@ export function useCloudSync(controller: LedgerController): CloudController {
   currentUser.current = user;
   const lock = useRef(false);
   const conflict = useRef(false);
-  useCloudBootstrap({
-    onUser: setUser,
-    onBooks: setBooks,
-    onError: setAuthError,
-  });
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    setBooks([]);
+    if (user)
+      void cloud
+        .books(user.id)
+        .then((result) => {
+          if (!cancelled) setBooks(result.books);
+        })
+        .catch((cause) => {
+          if (!cancelled)
+            setError(
+              cause instanceof Error ? cause.message : "读取云端账本失败。",
+            );
+        });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
   async function guarded(action: () => Promise<void>): Promise<void> {
+    if (auth.isOffline)
+      throw new CloudError(0, "同步服务暂时不可用，请重新连接。 ");
     if (lock.current) return;
     lock.current = true;
     setIsBusy(true);
@@ -56,7 +78,13 @@ export function useCloudSync(controller: LedgerController): CloudController {
     }
   }
   async function sync(): Promise<void> {
-    if (!user || current.current.isLoading || current.current.isSaving) return;
+    if (
+      !user ||
+      auth.isOffline ||
+      current.current.isLoading ||
+      current.current.isSaving
+    )
+      return;
     await guarded(async () => {
       const original = current.current;
       const mode = original.mode;
@@ -72,8 +100,9 @@ export function useCloudSync(controller: LedgerController): CloudController {
         ledger: original.ledger,
         name: original.books.find((book) => book.id === original.mode)?.name,
       });
-      const remote = await cloud.load(link.id);
+      const remote = await cloud.load(link.id, userId);
       if (
+        !active.current ||
         currentUser.current?.id !== userId ||
         current.current.mode !== mode ||
         (await fingerprint({
@@ -119,6 +148,7 @@ export function useCloudSync(controller: LedgerController): CloudController {
         setMessage("已获取云端更新。");
       } else if (hasLocalChange) {
         const saved = await cloud.save({
+          userId,
           id: link.id,
           revision: link.revision,
           name: original.books.find((book) => book.id === mode)?.name ?? "账本",
@@ -131,12 +161,13 @@ export function useCloudSync(controller: LedgerController): CloudController {
         };
         setMessage("修改已同步到云端。");
       } else setMessage("当前账本已同步。");
+      if (!active.current || currentUser.current?.id !== userId) return;
       await protectedStore.setItem(
         linkKey(userId, mode),
         JSON.stringify(nextLink),
       );
       conflict.current = false;
-      setBooks((await cloud.books()).books);
+      setBooks((await cloud.books(user?.id)).books);
     });
   }
   useEffect(() => {
@@ -178,39 +209,18 @@ export function useCloudSync(controller: LedgerController): CloudController {
     controller.isLoading,
     isLinked,
   ]);
-  async function authenticate(input: {
-    username: string;
-    password: string;
-    isRegister: boolean;
-  }): Promise<void> {
-    await guarded(async () => {
-      const result = await cloud.authenticate(input);
-      setUser(result.user);
-      setBooks((await cloud.books()).books);
-      setMessage("已登录。选择要同步的账本。");
-      conflict.current = false;
-    });
-  }
-  async function logout(): Promise<void> {
-    await guarded(async () => {
-      await cloud.logout();
-      setUser(null);
-      setBooks([]);
-      setPreview(null);
-      setIsLinked(false);
-      setMessage("已退出，账本仍保存在本机。");
-    });
-  }
   async function upload(): Promise<void> {
     if (!user) return;
     await guarded(async () => {
       const original = current.current;
       const saved = await cloud.save({
+        userId: user.id,
         name:
           original.books.find((book) => book.id === original.mode)?.name ??
           "账本",
         ledger: original.ledger,
       });
+      if (!active.current || currentUser.current?.id !== user.id) return;
       await protectedStore.setItem(
         linkKey(user.id, original.mode),
         JSON.stringify({
@@ -224,13 +234,18 @@ export function useCloudSync(controller: LedgerController): CloudController {
         }),
       );
       if (current.current.mode === original.mode) setIsLinked(true);
-      setBooks((await cloud.books()).books);
+      setBooks((await cloud.books(user?.id)).books);
       setMessage("已创建云端副本，打开此账本时自动同步。");
       conflict.current = false;
     });
   }
   async function inspect(id: string): Promise<void> {
-    await guarded(async () => setPreview(await cloud.load(id)));
+    if (!user) return;
+    await guarded(async () => {
+      const snapshot = await cloud.load(id, user.id);
+      if (active.current && currentUser.current?.id === user.id)
+        setPreview(snapshot);
+    });
   }
   async function restore(): Promise<void> {
     if (!preview || !user) return;
@@ -267,11 +282,11 @@ export function useCloudSync(controller: LedgerController): CloudController {
     books,
     isBusy,
     message,
-    error: error || authError,
+    error: error || auth.error,
     preview,
     isLinked,
-    authenticate,
-    logout,
+    authenticate: auth.authenticate,
+    logout: auth.logout,
     upload,
     sync,
     inspect,

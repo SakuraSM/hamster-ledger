@@ -1,27 +1,18 @@
-import { useState } from "react";
+import { useAuth } from "../../auth/auth-context";
 import type { CloudController } from "../../hooks/useCloudSync";
+import {
+  loginPath,
+  navigateAuth,
+} from "../../platform/browser/auth-navigation";
 export function SyncPanel({
   sync,
 }: {
   sync: CloudController;
 }): React.JSX.Element {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
+  const auth = useAuth();
   const run = (action: () => Promise<void>): void => {
     void action().catch(() => undefined);
   };
-  async function login(
-    event: React.SubmitEvent<HTMLFormElement>,
-  ): Promise<void> {
-    event.preventDefault();
-    try {
-      await sync.authenticate({ username, password, isRegister });
-      setPassword("");
-    } catch {
-      /* Error is shown through the sync controller. */
-    }
-  }
   return (
     <section className="panel sync-panel">
       <h2>账号与云端同步</h2>
@@ -92,50 +83,15 @@ export function SyncPanel({
           ) : null}
         </>
       ) : (
-        <form onSubmit={login}>
-          <p className="muted">
-            连接自托管服务后，可在多台设备间同步。账号独立于本机解锁密码。
-          </p>
-          <div className="form-grid">
-            <label>
-              账号
-              <input
-                required
-                minLength={3}
-                maxLength={64}
-                autoComplete="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="字母、数字或邮箱"
-              />
-            </label>
-            <label>
-              密码
-              <input
-                type="password"
-                required
-                minLength={12}
-                maxLength={256}
-                autoComplete={isRegister ? "new-password" : "current-password"}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="至少 12 位"
-              />
-            </label>
-          </div>
-          <div className="button-row">
-            <button className="primary-button" disabled={sync.isBusy}>
-              {isRegister ? "注册并登录" : "登录"}
-            </button>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => setIsRegister(!isRegister)}
-            >
-              {isRegister ? "已有账号，去登录" : "创建账号"}
-            </button>
-          </div>
-        </form>
+        <div className="sync-login-prompt">
+          <p>当前仅在本机使用。登录后可选择需要同步的账本。</p>
+          <button
+            className="primary-button"
+            onClick={() => navigateAuth(loginPath())}
+          >
+            登录并使用同步
+          </button>
+        </div>
       )}
       {sync.preview ? (
         <div className="restore-preview">
@@ -162,6 +118,11 @@ export function SyncPanel({
             </button>
           </div>
         </div>
+      ) : null}
+      {auth.isOffline ? (
+        <button className="text-button" onClick={() => void auth.refresh()}>
+          重新连接同步服务
+        </button>
       ) : null}
       {sync.error ? (
         <p role="alert" className="error-message">

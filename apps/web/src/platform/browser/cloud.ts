@@ -1,8 +1,9 @@
+import { parseAuthReceipt } from "./auth-receipt";
 import { ledgerSchema, type Ledger } from "@hamster-ledger/core";
-export interface CloudUser {
-  id: string;
-  username: string;
-}
+import { cloudRequest as request } from "./cloud-request";
+import type { AuthReceipt, AuthInput, DeviceSession } from "./auth-model";
+export { CloudError } from "./cloud-request";
+export type { CloudUser } from "./auth-model";
 export interface CloudBook {
   id: string;
   name: string;
@@ -12,76 +13,94 @@ export interface CloudBook {
 export interface CloudSnapshot extends CloudBook {
   ledger: Ledger;
 }
-export class CloudError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch("/api" + path, {
-    ...options,
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Hamster-Client": "1",
-      ...options.headers,
-    },
-  });
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    throw new CloudError(
-      response.status,
-      "当前预览未连接同步服务。请打开自托管服务地址。",
-    );
-  }
-  if (!response.ok)
-    throw new CloudError(
-      response.status,
-      body && typeof body === "object" && "error" in body
-        ? String(body.error)
-        : "同步请求失败。",
-    );
-  return body as T;
-}
 export const cloud = {
-  me: () => request<{ user: CloudUser | null }>("/auth/me"),
-  authenticate: (input: {
-    username: string;
-    password: string;
-    isRegister: boolean;
-  }) =>
-    request<{ user: CloudUser }>(
-      "/auth/" + (input.isRegister ? "register" : "login"),
-      {
+  me: async (): Promise<AuthReceipt> =>
+    parseAuthReceipt(await request<unknown>("/auth/me")),
+  authenticate: async (input: AuthInput): Promise<AuthReceipt> =>
+    parseAuthReceipt(
+      await request<unknown>(
+        "/auth/" + (input.isRegister ? "register" : "login"),
+        {
+          method: "POST",
+          body: JSON.stringify({
+            username: input.username,
+            password: input.password,
+            remember: input.remember ?? false,
+          }),
+        },
+      ),
+    ),
+  logout: (expectedUserId?: string) =>
+    request<{ ok: boolean }>("/auth/logout", {
+      method: "POST",
+      body: "{}",
+      expectedUserId,
+    }),
+  activity: (expectedUserId: string) =>
+    request<{ ok: boolean }>("/auth/activity", {
+      method: "POST",
+      body: "{}",
+      expectedUserId,
+    }),
+  sessions: (expectedUserId: string) =>
+    request<{ sessions: DeviceSession[] }>("/auth/sessions", {
+      expectedUserId,
+    }),
+  changePassword: async (
+    input: { currentPassword: string; newPassword: string },
+    expectedUserId: string,
+  ): Promise<AuthReceipt> =>
+    parseAuthReceipt(
+      await request<unknown>("/auth/password", {
         method: "POST",
-        body: JSON.stringify({
-          username: input.username,
-          password: input.password,
-        }),
+        body: JSON.stringify(input),
+        expectedUserId,
+      }),
+      false,
+    ),
+  revokeOthers: (currentPassword: string, expectedUserId: string) =>
+    request<{ ok: boolean; revoked: number }>("/auth/logout-others", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword }),
+      expectedUserId,
+    }),
+  revokeSession: (
+    input: { id: string; currentPassword: string },
+    expectedUserId: string,
+  ) =>
+    request<{ ok: boolean; isCurrent: boolean }>(
+      "/auth/sessions/" + encodeURIComponent(input.id),
+      {
+        method: "DELETE",
+        body: JSON.stringify({ currentPassword: input.currentPassword }),
+        expectedUserId,
       },
     ),
-  logout: () =>
-    request<{ ok: boolean }>("/auth/logout", { method: "POST", body: "{}" }),
-  books: () => request<{ books: CloudBook[] }>("/books"),
-  async load(id: string): Promise<CloudSnapshot> {
+  books: (expectedUserId?: string) =>
+    request<{ books: CloudBook[] }>("/books", { expectedUserId }),
+  async load(id: string, expectedUserId?: string): Promise<CloudSnapshot> {
     const snapshot = await request<CloudSnapshot>(
       "/books/" + encodeURIComponent(id),
+      { expectedUserId },
     );
     return { ...snapshot, ledger: ledgerSchema.parse(snapshot.ledger) };
   },
-  save: (input: {
+  save: ({
+    userId,
+    ...input
+  }: {
     id?: string;
     name: string;
     ledger: Ledger;
     revision?: number;
+    userId?: string;
   }) =>
     request<CloudBook>(
       "/books" + (input.id ? "/" + encodeURIComponent(input.id) : ""),
-      { method: input.id ? "PUT" : "POST", body: JSON.stringify(input) },
+      {
+        method: input.id ? "PUT" : "POST",
+        body: JSON.stringify(input),
+        expectedUserId: userId,
+      },
     ),
 };

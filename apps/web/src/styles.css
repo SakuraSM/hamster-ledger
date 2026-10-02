@@ -3,6 +3,7 @@
 @import "./forms.css";
 @import "./workflow.css";
 @import "./planning.css";
+@import "./auth.css";
 :root {
   font-family:
     Inter,

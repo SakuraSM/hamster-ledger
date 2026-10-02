@@ -15,6 +15,7 @@ export interface CloudController {
     username: string;
     password: string;
     isRegister: boolean;
+    remember?: boolean;
   }) => Promise<void>;
   logout: () => Promise<void>;
   upload: () => Promise<void>;

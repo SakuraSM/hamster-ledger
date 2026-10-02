@@ -1,3 +1,5 @@
+import { useAuth } from "./auth/auth-context";
+import { loginPath, navigateAuth } from "./platform/browser/auth-navigation";
 import { useCloudSync } from "./hooks/useCloudSync";
 import { AppPages } from "./components/AppPages";
 import { EntryEditor } from "./components/EntryEditor";
@@ -24,10 +26,15 @@ import {
 } from "@hamster-ledger/core";
 
 export function App(): React.JSX.Element {
+  const auth = useAuth();
   const controller = useLedger();
   const { ledger, mode } = controller;
   const sync = useCloudSync(controller);
-  const [page, setPage] = useState<PageId>("overview");
+  const [page, setPage] = useState<PageId>(() =>
+    new URLSearchParams(location.search).get("page") === "tools"
+      ? "tools"
+      : "overview",
+  );
   const [month, setMonth] = useState(DEFAULT_MONTH);
   const [recordMonth, setRecordMonth] = useState(DEFAULT_MONTH);
   const [filter, setFilter] = useState<BillFilter>({
@@ -127,6 +134,17 @@ export function App(): React.JSX.Element {
           onAdd={() => setEditor({})}
           onImport={() => navigate("import")}
         />
+        {!auth.user && !auth.isLocalOnly && auth.error ? (
+          <div className="auth-session-notice" role="status">
+            <span>{auth.error}</span>
+            <button
+              className="text-button"
+              onClick={() => navigateAuth(loginPath())}
+            >
+              重新登录
+            </button>
+          </div>
+        ) : null}
         {controller.error ? (
           <p className="error-message" role="alert">
             {controller.error}
