@@ -1,3 +1,5 @@
+import { openApi } from "./open-api.mjs";
+import { tokensApi } from "./open-tokens.mjs";
 import { modelsApi } from "./models.mjs";
 import { attachmentsApi } from "./attachments.mjs";
 import { aiApi } from "./ai-api.mjs";
@@ -32,6 +34,19 @@ export function createApi({
       ? "__Host-hamster_session"
       : "hamster_session";
     const requestedPath = new URL(request.url, origin).pathname;
+    if (requestedPath.startsWith("/api/open/")) {
+      if (!requestedPath.startsWith("/api/open/v1/"))
+        throw new HttpError(404, "开放 API 版本不存在。");
+      await openApi({
+        database,
+        request,
+        response,
+        now,
+        modelTransport,
+        secrets,
+      });
+      return;
+    }
     request.authTransport = requestedPath.startsWith("/api/native/")
       ? "native"
       : "cookie";
@@ -65,7 +80,11 @@ export function createApi({
     });
     const user = { id: session.user_id };
     if (path === "/api/capabilities" && method === "GET") {
-      json(response, 200, { ledgerVersions: [1, 2], networkBooks: true });
+      json(response, 200, {
+        ledgerVersions: [1, 2],
+        networkBooks: true,
+        openApiVersions: ["v1"],
+      });
       return;
     }
     const context = {
@@ -86,6 +105,7 @@ export function createApi({
       },
     };
     if (
+      (await tokensApi(context)) ||
       (await modelsApi(context)) ||
       (await attachmentsApi(context)) ||
       (await aiApi(context))

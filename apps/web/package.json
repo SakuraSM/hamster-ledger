@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -12,11 +12,11 @@
     "test:sites": "node --test tests/sites-worker.test.mjs"
   },
   "dependencies": {
-    "@hamster-ledger/core": "0.1.0",
-    "@hamster-ledger/design-tokens": "0.1.0",
-    "@hamster-ledger/fixtures": "0.1.0",
-    "@hamster-ledger/importers": "0.1.0",
-    "@hamster-ledger/ledger-react": "0.1.0",
+    "@hamster-ledger/core": "0.2.0",
+    "@hamster-ledger/design-tokens": "0.2.0",
+    "@hamster-ledger/fixtures": "0.2.0",
+    "@hamster-ledger/importers": "0.2.0",
+    "@hamster-ledger/ledger-react": "0.2.0",
     "@mantine/core": "^9.6.3",
     "@mantine/dates": "^9.6.3",
     "@mantine/hooks": "^9.6.3",

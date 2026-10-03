@@ -1,3 +1,4 @@
+import { OpenTokensPanel } from "./OpenTokensPanel";
 import { browserAttachments } from "../../platform/browser/attachments";
 import { newEntityId } from "../../platform/browser/runtime";
 import { NetworkOwnership } from "./NetworkOwnership";
@@ -66,6 +67,9 @@ export function NetworkPanel({
       };
     },
   });
+  const cloud = controller.books.find(
+    (item) => item.id === controller.mode,
+  )?.cloud;
   const currentRole = controller.network?.role;
   const canManage = currentRole === "owner" || currentRole === "admin";
   return (
@@ -265,6 +269,14 @@ export function NetworkPanel({
                 manager={manager}
                 currentRole={currentRole}
                 userId={auth.user.id}
+              />
+            ) : null}
+            {cloud && controller.network?.isConnected ? (
+              <OpenTokensPanel
+                key={`${cloud.id}:${auth.user.id}`}
+                client={client}
+                bookId={cloud.id}
+                isViewer={currentRole === "viewer"}
               />
             ) : null}
             {manager.history.length ? (

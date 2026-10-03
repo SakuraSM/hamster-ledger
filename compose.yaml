@@ -1,13 +1,16 @@
 services:
   ledger:
+    image: ${HAMSTER_IMAGE:-ghcr.io/sakurasm/hamster-ledger:0.2.0}
     build: .
     ports:
-      - "127.0.0.1:4190:4190"
+      - "127.0.0.1:${LEDGER_PORT:-4180}:4180"
     environment:
-      PUBLIC_ORIGIN: "http://127.0.0.1:4190"
-      ALLOW_REGISTRATION: "true"
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://127.0.0.1:4180}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      LEDGER_TIMEZONE: ${LEDGER_TIMEZONE:-Asia/Shanghai}
     volumes:
       - ledger-data:/data
     restart: unless-stopped
+    stop_grace_period: 30s
 volumes:
   ledger-data:

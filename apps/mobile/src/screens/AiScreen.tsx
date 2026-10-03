@@ -69,6 +69,7 @@ export function AiScreen({
       </Text>
       <TextInput
         label="账单描述"
+        accessibilityLabel="账单描述"
         multiline
         value={ai.text}
         onChangeText={ai.setText}
