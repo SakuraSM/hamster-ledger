@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 const DATE_KEY_LENGTH = 10;
 import { useState } from "react";
 import {
@@ -52,9 +53,14 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
           <h1>固定的支出，交给日历</h1>
           <p>打开账本时自动补记到期账单，每个日期只生成一次。</p>
         </div>
-        <button className="primary-button" onClick={add}>
+        <Button
+          variant="filled"
+          type="submit"
+          className="primary-button"
+          onClick={add}
+        >
           新建周期规则
-        </button>
+        </Button>
       </div>
       <p className="notice">
         月末和闰日自动落在当月最后一天。暂停期间不生成；恢复后会补记暂停期间的到期账单。关联账户归档时停止生成。
@@ -77,13 +83,17 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
               {rule.startDate} 起{rule.endDate ? `，至 ${rule.endDate}` : ""}
             </p>
             <div className="button-row">
-              <button
+              <Button
+                variant="outline"
+                type="submit"
                 className="secondary-button"
                 onClick={() => setEditing(rule)}
               >
                 编辑
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                type="submit"
                 className="secondary-button"
                 onClick={() =>
                   void commit(
@@ -95,8 +105,10 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
                 }
               >
                 {rule.isPaused ? "恢复" : "暂停"}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="subtle"
+                type="submit"
                 className="text-button"
                 onClick={() =>
                   void commit({
@@ -108,7 +120,7 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
                 }
               >
                 删除规则
-              </button>
+              </Button>
             </div>
           </article>
         ))}

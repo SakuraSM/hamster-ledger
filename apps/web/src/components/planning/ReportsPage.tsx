@@ -1,3 +1,6 @@
+import { Button } from "@mantine/core";
+import { Choice } from "../../ui/Choice";
+import { DateField } from "../../ui/DateField";
 const MILLISECONDS_PER_DAY = 86400000;
 const DATE_KEY_LENGTH = 10;
 const CENTS_PER_YUAN = 100;
@@ -71,31 +74,28 @@ export function ReportsPage({ ledger, month }: Props): React.JSX.Element {
         <p>查看任意时间段的收支、分类与标签。</p>
       </div>
       <div className="report-controls">
-        <label>
-          开始日期
-          <input
-            type="date"
-            required
-            value={start}
-            onChange={(event) =>
-              event.target.value && setStart(event.target.value)
-            }
-          />
-        </label>
-        <label>
-          结束日期
-          <input
-            type="date"
-            required
-            value={end}
-            onChange={(event) =>
-              event.target.value && setEnd(event.target.value)
-            }
-          />
-        </label>
-        <button className="secondary-button" onClick={selectYear}>
+        <DateField
+          label={<>开始日期</>}
+          type="date"
+          required
+          value={start}
+          onChange={(value) => value && setStart(value)}
+        />
+        <DateField
+          label={<>结束日期</>}
+          type="date"
+          required
+          value={end}
+          onChange={(value) => value && setEnd(value)}
+        />
+        <Button
+          variant="outline"
+          type="submit"
+          className="secondary-button"
+          onClick={selectYear}
+        >
           查看全年
-        </button>
+        </Button>
       </div>
       {start > end ? (
         <p role="alert" className="error-message">
@@ -121,28 +121,26 @@ export function ReportsPage({ ledger, month }: Props): React.JSX.Element {
           <div className="section-heading">
             <h2>收支分布</h2>
             <div className="report-controls">
-              <select
+              <Choice
                 aria-label="统计方向"
                 value={kind}
-                onChange={(event) =>
-                  setKind(event.target.value === "收入" ? "收入" : "支出")
+                onChange={(value) =>
+                  setKind(value === "收入" ? "收入" : "支出")
                 }
               >
                 <option>支出</option>
                 <option>收入</option>
-              </select>
-              <select
+              </Choice>
+              <Choice
                 aria-label="统计维度"
                 value={dimension}
-                onChange={(event) =>
-                  setDimension(
-                    event.target.value === "tag" ? "tag" : "category",
-                  )
+                onChange={(value) =>
+                  setDimension(value === "tag" ? "tag" : "category")
                 }
               >
                 <option value="category">分类</option>
                 <option value="tag">标签</option>
-              </select>
+              </Choice>
             </div>
           </div>
           <div

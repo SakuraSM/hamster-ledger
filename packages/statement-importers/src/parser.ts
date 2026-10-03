@@ -3,7 +3,6 @@ export { parseAmount, parseDate } from "./parseValues.js";
 import {
   type BillRecord,
   type Category,
-  type Source,
   RECORD_STATUS,
 } from "@hamster-ledger/core";
 import {
@@ -13,122 +12,19 @@ import {
   normalizeAccount,
 } from "@hamster-ledger/core";
 
-export const FIELD_LABELS = {
-  date: "交易时间",
-  merchant: "交易对方",
-  amount: "金额",
-  direction: "收支方向",
-  account: "付款账户",
-  orderId: "交易单号",
-  description: "商品说明",
-  category: "分类",
-  status: "交易状态",
-  income: "收入金额",
-  expense: "支出金额",
-  currency: "币种",
-} as const;
-export type Field = keyof typeof FIELD_LABELS;
-export type FieldMap = Partial<Record<Field, number>>;
-const ALIASES: Record<Field, string[]> = {
-  date: [
-    "交易时间",
-    "交易创建时间",
-    "交易日期",
-    "记账日期",
-    "日期",
-    "入账时间",
-    "date",
-  ],
-  merchant: [
-    "交易对方",
-    "对方户名",
-    "对方名称",
-    "商户名称",
-    "收款方",
-    "交易地点",
-    "merchant",
-    "payee",
-  ],
-  amount: ["金额", "交易金额", "金额(元)", "交易金额(元)", "amount"],
-  direction: [
-    "收/支",
-    "收支",
-    "收支类型",
-    "借贷标志",
-    "收支方向",
-    "direction",
-    "type",
-  ],
-  account: [
-    "收/付款方式",
-    "支付方式",
-    "付款方式",
-    "收付款方式",
-    "交易账户",
-    "账户",
-    "account",
-  ],
-  orderId: ["交易单号", "交易订单号", "交易号", "流水号", "订单号", "orderid"],
-  description: [
-    "商品",
-    "商品说明",
-    "备注",
-    "说明",
-    "摘要",
-    "交易类型",
-    "description",
-  ],
-  category: ["交易分类", "分类", "category"],
-  status: ["当前状态", "交易状态", "状态", "status"],
-  income: ["收入", "收入金额", "收入金额(元)", "存入"],
-  expense: ["支出", "支出金额", "支出金额(元)", "支取"],
-  currency: ["币种", "交易币种", "currency"],
-};
-export const MAX_FILE_ROWS = 15000;
-const HEADER_SEARCH_ROWS = 100;
-export interface StatementFile {
-  name: string;
-  hash: string;
-  rows: string[][];
-  headerIndex: number;
-  mapping: FieldMap;
-  source: Source;
-  account: string;
-}
-export interface ParseResult {
-  records: BillRecord[];
-  errors: string[];
-}
-function cleanHeader(value: string): string {
-  return value
-    .replace(/[\s\uFEFF]/g, "")
-    .replaceAll("（", "(")
-    .replaceAll("）", ")")
-    .toLowerCase();
-}
-export function mapHeaders(headers: string[]): FieldMap {
-  const mapping: FieldMap = {};
-  for (const field of Object.keys(ALIASES) as Field[]) {
-    const index = headers.findIndex((header) =>
-      ALIASES[field].some(
-        (alias) => cleanHeader(alias) === cleanHeader(header),
-      ),
-    );
-    if (index >= 0) mapping[field] = index;
-  }
-  return mapping;
-}
-function findHeader(rows: string[][]): number {
-  return rows.slice(0, HEADER_SEARCH_ROWS).findIndex((row) => {
-    const mapping = mapHeaders(row);
-    return (
-      mapping.date !== undefined &&
-      (mapping.amount !== undefined ||
-        mapping.income !== undefined ||
-        mapping.expense !== undefined)
-    );
-  });
-}
+import { cleanHeader, type Field } from "./fields.js";
+import { detectStatementLayout } from "./detection.js";
+import { mappingNeedsReview, validateMapping } from "./mapping.js";
+import {
+  MAX_FILE_ROWS,
+  type StatementFile,
+  type ParseResult,
+} from "./statement-model.js";
+export {
+  MAX_FILE_ROWS,
+  type StatementFile,
+  type ParseResult,
+} from "./statement-model.js";
 export function createStatement(input: {
   name: string;
   hash: string;
@@ -137,9 +33,9 @@ export function createStatement(input: {
   const { name, hash, rows } = input;
   if (rows.length > MAX_FILE_ROWS)
     throw new Error("单次最多读取 15,000 行，请拆分账单。");
-  if (!rows.length) throw new Error("文件没有可读取的内容。");
-  const detected = findHeader(rows);
-  const headerIndex = Math.max(0, detected);
+  if (!rows.some((row) => row.some((value) => value.trim())))
+    throw new Error("文件没有可读取的内容。");
+  const { headerIndex, mapping, reviewFields } = detectStatementLayout(rows);
   const source = identifySource(
     name +
       " " +
@@ -153,7 +49,9 @@ export function createStatement(input: {
     hash,
     rows,
     headerIndex,
-    mapping: mapHeaders(rows[headerIndex]),
+    mapping,
+    reviewFields,
+    mappingConfirmed: reviewFields.length === 0,
     source,
     account: "",
   };
@@ -199,14 +97,26 @@ function parseRow(input: {
     text: merchant + " " + description,
     hint: field("category"),
     rules,
+    preserveHint: true,
   });
   const raw = Object.fromEntries(
-    file.rows[file.headerIndex].map((header, column) => [
-      header || `列${column + 1}`,
-      row[column] ?? "",
-    ]),
+    Array.from(
+      { length: Math.max(file.rows[file.headerIndex].length, row.length) },
+      (_, column) => {
+        const header =
+          file.rows[file.headerIndex][column]?.trim() || `列${column + 1}`;
+        const duplicate =
+          file.rows[file.headerIndex].filter((value) => value.trim() === header)
+            .length > 1;
+        return [
+          duplicate ? `${header}（第${column + 1}列）` : header,
+          row[column] ?? "",
+        ];
+      },
+    ),
   );
-  const isPending = identifiedKind === null;
+  const needsMappingReview = mappingNeedsReview(file);
+  const isPending = identifiedKind === null || needsMappingReview;
   return {
     id: `${file.hash}-${index}`,
     date,
@@ -224,7 +134,19 @@ function parseRow(input: {
     fileName: file.name,
     raw,
     linkedSources: [],
-    reason: isPending ? "收支方向未识别，请确认交易类型" : undefined,
+    tags: [
+      ...new Set(
+        field("tags")
+          .split(/[,，;；、\n]/)
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ],
+    reason: needsMappingReview
+      ? "字段映射尚未确认"
+      : isPending
+        ? "收支方向未识别，请确认交易类型"
+        : undefined,
   };
 }
 export function parseStatement(
@@ -233,18 +155,23 @@ export function parseStatement(
 ): ParseResult {
   const records: BillRecord[] = [];
   const errors: string[] = [];
-  if (
-    file.mapping.date === undefined ||
-    (file.mapping.amount === undefined &&
-      file.mapping.income === undefined &&
-      file.mapping.expense === undefined)
-  )
-    return { records, errors: ["请设置交易时间和金额字段。"] };
+  const mappingError = validateMapping(file);
+  if (mappingError) return { records, errors: [mappingError] };
   file.rows.slice(file.headerIndex + 1).forEach((row, offset) => {
-    if (
-      row.every((value) => !value.trim()) ||
-      /^-{3,}|共\d+笔|导出时间|统计时间|收入.*笔.*支出/.test(row.join(" "))
-    )
+    const headers = file.rows[file.headerIndex];
+    const isRepeatedHeader =
+      headers.every(
+        (header, column) =>
+          cleanHeader(header) === cleanHeader(row[column] ?? ""),
+      ) && row.slice(headers.length).every((value) => !value.trim());
+    const firstCell = row.find((value) => value.trim())?.trim() ?? "";
+    const hasDate = parseDate(row[file.mapping.date ?? 0] ?? "") !== null;
+    const isSummary =
+      !hasDate &&
+      /^(?:[-—_]{3,}$|(?:合计|总计|导出时间|统计时间)(?:\s|[:：]|$)|共\s*\d+\s*笔|收入.*笔.*支出)/.test(
+        firstCell,
+      );
+    if (row.every((value) => !value.trim()) || isRepeatedHeader || isSummary)
       return;
     const index = file.headerIndex + offset + 1;
     try {

@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/auth-context";
 import {
@@ -38,9 +39,14 @@ export function AuthEntry(): React.JSX.Element {
         <img src="/assets/hamster-logo.png" width="64" alt="" />
         <h1>仓鼠记账</h1>
         <p role="status">正在检查登录状态…</p>
-        <button className="secondary-button" onClick={auth.continueLocal}>
+        <Button
+          variant="outline"
+          type="submit"
+          className="secondary-button"
+          onClick={auth.continueLocal}
+        >
           仅在本机使用
-        </button>
+        </Button>
       </main>
     );
   if (auth.user?.mustChangePassword) return <PasswordChangePage />;

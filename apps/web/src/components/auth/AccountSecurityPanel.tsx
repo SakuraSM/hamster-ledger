@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/auth-context";
 import { cloud } from "../../platform/browser/cloud";
@@ -64,25 +65,29 @@ export function AccountSecurityPanel(): React.JSX.Element | null {
     <section className="panel account-security">
       <div className="section-heading">
         <h2>账号安全</h2>
-        <button
+        <Button
+          variant="outline"
+          type="submit"
           className="secondary-button"
           onClick={() => setShowPassword(true)}
         >
           修改登录密码
-        </button>
+        </Button>
       </div>
       <p className="muted">
         当前账号：{auth.user.username}。登录密码与本机解锁密码互相独立。
       </p>
       <div className="section-heading">
         <h3>登录设备</h3>
-        <button
+        <Button
+          variant="subtle"
+          type="submit"
           className="text-button"
           disabled={isLoading}
           onClick={() => void load()}
         >
           刷新
-        </button>
+        </Button>
       </div>
       {isLoading ? <p role="status">正在读取登录设备…</p> : null}
       <ul className="session-list">
@@ -100,23 +105,27 @@ export function AccountSecurityPanel(): React.JSX.Element | null {
               </small>
             </div>
             {!session.isCurrent ? (
-              <button
+              <Button
+                variant="outline"
+                type="submit"
                 className="secondary-button"
                 onClick={() => setRevokeTarget(session)}
               >
                 退出此设备
-              </button>
+              </Button>
             ) : null}
           </li>
         ))}
       </ul>
-      <button
+      <Button
+        variant="subtle"
+        type="submit"
         className="text-button"
         disabled={!sessions.some((session) => !session.isCurrent)}
         onClick={() => setRevokeTarget("others")}
       >
         退出其他所有设备
-      </button>
+      </Button>
       {message ? <p role="status">{message}</p> : null}
       {error ? (
         <p role="alert" className="error-message">
@@ -194,9 +203,14 @@ function RevokeDialog({
             {error}
           </p>
         ) : null}
-        <button className="primary-button" disabled={isBusy}>
+        <Button
+          variant="filled"
+          type="submit"
+          className="primary-button"
+          disabled={isBusy}
+        >
           {isBusy ? "处理中…" : "确认退出"}
-        </button>
+        </Button>
       </form>
     </Dialog>
   );

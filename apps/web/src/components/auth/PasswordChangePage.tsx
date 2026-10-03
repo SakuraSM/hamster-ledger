@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useAuth } from "../../auth/auth-context";
 import { AuthLayout } from "./AuthLayout";
 import { PasswordChangeForm } from "./PasswordChangeForm";
@@ -10,13 +11,15 @@ export function PasswordChangePage(): React.JSX.Element {
         <p>你正在使用管理员重置的临时密码，设置新密码后即可继续同步。</p>
       </div>
       <PasswordChangeForm />
-      <button
+      <Button
+        variant="subtle"
+        type="submit"
         className="text-button auth-retry"
         disabled={auth.isBusy}
         onClick={() => void auth.logout().catch(() => undefined)}
       >
         退出当前账号
-      </button>
+      </Button>
     </AuthLayout>
   );
 }

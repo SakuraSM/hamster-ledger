@@ -1,3 +1,5 @@
+import { Button } from "@mantine/core";
+import { LedgerNotice } from "./ui/LedgerNotice";
 import { useAuth } from "./auth/auth-context";
 import { loginPath, navigateAuth } from "./platform/browser/auth-navigation";
 import { useCloudSync } from "./hooks/useCloudSync";
@@ -11,7 +13,6 @@ import { useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { type BillFilter } from "./components/Transactions";
 import { RecordDetail } from "./components/RecordDetail";
-import { Icons } from "./components/Icons";
 import { Dialog } from "./components/Dialog";
 import { useLedger } from "./hooks/useLedger";
 import {
@@ -137,12 +138,14 @@ export function App(): React.JSX.Element {
         {!auth.user && !auth.isLocalOnly && auth.error ? (
           <div className="auth-session-notice" role="status">
             <span>{auth.error}</span>
-            <button
+            <Button
+              variant="subtle"
+              type="button"
               className="text-button"
               onClick={() => navigateAuth(loginPath())}
             >
               重新登录
-            </button>
+            </Button>
           </div>
         ) : null}
         {controller.error ? (
@@ -241,22 +244,12 @@ export function App(): React.JSX.Element {
           <p className="muted">导入完成后可编辑分类与账户。</p>
         </Dialog>
       ) : null}
-      {controller.notice ? (
-        <div className="toast" role="status">
-          <Icons.Check size={21} />
-          <span>{controller.notice}</span>
-          {controller.canUndo ? (
-            <button onClick={controller.undo}>撤销</button>
-          ) : null}
-          <button
-            aria-label="关闭提示"
-            className="icon-button"
-            onClick={controller.dismissNotice}
-          >
-            <Icons.Close size={18} />
-          </button>
-        </div>
-      ) : null}
+      <LedgerNotice
+        message={controller.notice}
+        canUndo={controller.canUndo}
+        onUndo={controller.undo}
+        onDismiss={controller.dismissNotice}
+      />
     </>
   );
 }

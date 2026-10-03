@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useAuth } from "../../auth/auth-context";
 import type { CloudController } from "../../hooks/useCloudSync";
 import {
@@ -20,13 +21,15 @@ export function SyncPanel({
         <>
           <div className="section-heading">
             <p>已登录 {sync.user.username}</p>
-            <button
+            <Button
+              variant="subtle"
+              type="submit"
               className="text-button"
               disabled={sync.isBusy}
               onClick={() => run(sync.logout)}
             >
               退出账号
-            </button>
+            </Button>
           </div>
           <p className="muted">
             {sync.isLinked
@@ -37,29 +40,35 @@ export function SyncPanel({
           <div className="button-row">
             {sync.isLinked ? (
               <>
-                <button
+                <Button
+                  variant="outline"
+                  type="submit"
                   className="secondary-button"
                   disabled={sync.isBusy}
                   onClick={() => run(sync.sync)}
                 >
                   立即同步
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="subtle"
+                  type="submit"
                   className="text-button"
                   disabled={sync.isBusy}
                   onClick={() => run(sync.disconnect)}
                 >
                   断开同步
-                </button>
+                </Button>
               </>
             ) : (
-              <button
+              <Button
+                variant="filled"
+                type="submit"
                 className="primary-button"
                 disabled={sync.isBusy}
                 onClick={() => run(sync.upload)}
               >
                 上传当前账本并同步
-              </button>
+              </Button>
             )}
           </div>
           <h3>云端账本</h3>
@@ -69,13 +78,15 @@ export function SyncPanel({
                 {book.name}
                 <small> · 版本 {book.revision}</small>
               </span>
-              <button
+              <Button
+                variant="subtle"
+                type="submit"
                 className="text-button"
                 disabled={sync.isBusy}
                 onClick={() => run(() => sync.inspect(book.id))}
               >
                 查看与恢复
-              </button>
+              </Button>
             </div>
           ))}
           {!sync.books.length ? (
@@ -85,12 +96,14 @@ export function SyncPanel({
       ) : (
         <div className="sync-login-prompt">
           <p>当前仅在本机使用。登录后可选择需要同步的账本。</p>
-          <button
+          <Button
+            variant="filled"
+            type="submit"
             className="primary-button"
             onClick={() => navigateAuth(loginPath())}
           >
             登录并使用同步
-          </button>
+          </Button>
         </div>
       )}
       {sync.preview ? (
@@ -106,23 +119,35 @@ export function SyncPanel({
           </p>
           <p>恢复到新账本，保留当前本机版本。</p>
           <div className="button-row">
-            <button
+            <Button
+              variant="filled"
+              type="submit"
               className="primary-button"
               disabled={sync.isBusy}
               onClick={() => run(sync.restore)}
             >
               恢复为新账本并同步
-            </button>
-            <button className="text-button" onClick={sync.dismissPreview}>
+            </Button>
+            <Button
+              variant="subtle"
+              type="submit"
+              className="text-button"
+              onClick={sync.dismissPreview}
+            >
               关闭预览
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
       {auth.isOffline ? (
-        <button className="text-button" onClick={() => void auth.refresh()}>
+        <Button
+          variant="subtle"
+          type="submit"
+          className="text-button"
+          onClick={() => void auth.refresh()}
+        >
           重新连接同步服务
-        </button>
+        </Button>
       ) : null}
       {sync.error ? (
         <p role="alert" className="error-message">

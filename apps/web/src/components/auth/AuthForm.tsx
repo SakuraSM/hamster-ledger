@@ -1,5 +1,7 @@
+import { TextInput, Checkbox, Button } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/auth-context";
+import { newPasswordHint } from "../../auth/password-hint";
 import {
   loginPath,
   navigateAuth,
@@ -99,7 +101,7 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
       <form className="auth-form" onSubmit={submit} noValidate>
         <div className="auth-field">
           <label htmlFor="auth-username">账号</label>
-          <input
+          <TextInput
             id="auth-username"
             name="username"
             autoComplete="username"
@@ -131,8 +133,8 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
           error={fieldErrors.password}
           description={
             isRegister
-              ? `至少 ${auth.policy.minimumPasswordLength} 个字符，建议使用独特的长密码。`
-              : undefined
+              ? newPasswordHint(auth.policy)
+              : "请输入登录密码，区分大小写，空格也计入密码。"
           }
         />
         {isRegister ? (
@@ -146,23 +148,23 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
           />
         ) : null}
         <div className="auth-options">
-          <label className="auth-checkbox">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(event) => setRemember(event.target.checked)}
-            />
-            记住登录 {auth.policy.rememberDays} 天
-          </label>
+          <Checkbox
+            label={<>记住登录 {auth.policy.rememberDays} 天</>}
+            className="auth-checkbox"
+
+            checked={remember}
+            onChange={(event) => setRemember(event.target.checked)}
+          />
           {!isRegister ? (
-            <button
+            <Button
+              variant="subtle"
               type="button"
               className="text-button"
               aria-expanded={showRecovery}
               onClick={() => setShowRecovery(!showRecovery)}
             >
               忘记密码？
-            </button>
+            </Button>
           ) : null}
         </div>
         <p className="auth-device-note">记住登录仅适用于你的个人设备。</p>
@@ -185,7 +187,9 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
             {error || auth.error}
           </p>
         ) : null}
-        <button
+        <Button
+          variant="filled"
+          type="submit"
           className="primary-button auth-submit"
           disabled={auth.isBusy || cooldown > 0}
         >
@@ -197,14 +201,19 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
                 ? "创建账号"
                 : "登录"}
           {!auth.isBusy && !cooldown ? <Icons.Arrow size={20} /> : null}
-        </button>
+        </Button>
       </form>
       {(!isRegister && auth.policy.allowRegistration) || isRegister ? (
         <p className="auth-switch">
           {isRegister ? "已有账号？" : "还没有账号？"}
-          <button className="text-button" onClick={changeMode}>
+          <Button
+            variant="subtle"
+            type="submit"
+            className="text-button"
+            onClick={changeMode}
+          >
             {isRegister ? "去登录" : "创建账号"}
-          </button>
+          </Button>
         </p>
       ) : (
         <p className="auth-switch muted">

@@ -1,3 +1,6 @@
+import { TextInput, Textarea, Button } from "@mantine/core";
+import { Choice } from "../../ui/Choice";
+import { DateField } from "../../ui/DateField";
 import { useState } from "react";
 import {
   ASSET_TYPES,
@@ -104,81 +107,70 @@ export function AccountEditor({
     >
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label className="full-width">
-            账户名称
-            <input
-              required
-              maxLength={60}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="如：招商银行 · 6628、现金、房贷"
-            />
-          </label>
-          <label>
-            账户性质
-            <select
-              value={kind}
-              disabled={!!account}
-              onChange={(event) => {
-                const next = event.target.value as AccountKind;
-                setKind(next);
-                setType(next === "asset" ? "银行卡" : "信用卡");
-              }}
-            >
-              <option value="asset">资产账户</option>
-              <option value="liability">负债账户</option>
-            </select>
-          </label>
-          <label>
-            账户类型
-            <select
-              value={type}
-              onChange={(event) =>
-                setType(event.target.value as AssetAccount["type"])
-              }
-            >
-              {types.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {kind === "asset" ? "基准余额（元）" : "基准负债（元）"}
-            <input
-              required
-              inputMode="decimal"
-              value={balance}
-              onChange={(event) => setBalance(event.target.value)}
-              placeholder="0.00"
-            />
-          </label>
-          <label>
-            余额确认时间
-            <input
-              required
-              type="datetime-local"
-              step="1"
-              value={balanceAt}
-              onChange={(event) => setBalanceAt(event.target.value)}
-            />
-          </label>
-          <label className="full-width">
-            账单账户别名
-            <textarea
-              value={aliases}
-              onChange={(event) => setAliases(event.target.value)}
-              rows={3}
-              placeholder="每行一个，如：招商银行 · 6628\n用于匹配导入账单的实际付款账户"
-            />
-          </label>
-          <label className="full-width">
-            余额维护说明
-            <input
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="如：核对银行余额、更新投资估值"
-            />
-          </label>
+          <TextInput
+            label={<>账户名称</>}
+            className="full-width"
+            required
+            maxLength={60}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="如：招商银行 · 6628、现金、房贷"
+          />
+          <Choice
+            label={<>账户性质</>}
+            value={kind}
+            disabled={!!account}
+            onChange={(value) => {
+              const next = value as AccountKind;
+              setKind(next);
+              setType(next === "asset" ? "银行卡" : "信用卡");
+            }}
+          >
+            <option value="asset">资产账户</option>
+            <option value="liability">负债账户</option>
+          </Choice>
+          <Choice
+            label={<>账户类型</>}
+            value={type}
+            onChange={(value) => setType(value as AssetAccount["type"])}
+          >
+            {types.map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </Choice>
+          <TextInput
+            label={
+              <>{kind === "asset" ? "基准余额（元）" : "基准负债（元）"}</>
+            }
+            required
+            inputMode="decimal"
+            value={balance}
+            onChange={(event) => setBalance(event.target.value)}
+            placeholder="0.00"
+          />
+          <DateField
+            label={<>余额确认时间</>}
+            required
+            type="datetime-local"
+
+            value={balanceAt}
+            onChange={(value) => setBalanceAt(value)}
+          />
+          <Textarea
+            label={<>账单账户别名</>}
+            className="full-width"
+            value={aliases}
+            onChange={(event) => setAliases(event.target.value)}
+            rows={3}
+            placeholder="每行一个，如：招商银行 · 6628\n用于匹配导入账单的实际付款账户"
+          />
+          <TextInput
+            label={<>余额维护说明</>}
+            className="full-width"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="如：核对银行余额、更新投资估值"
+          />
         </div>
         <p className="account-form-help">
           只累计余额确认时间之后的已确认流水。过去的工资、支出不会再次叠加到你填写的当前余额中。负债按正数填写，信用卡预存余额可填负数。
@@ -189,12 +181,22 @@ export function AccountEditor({
           </p>
         ) : null}
         <div className="dialog-actions">
-          <button className="secondary-button" type="button" onClick={onClose}>
+          <Button
+            variant="outline"
+            className="secondary-button"
+            type="button"
+            onClick={onClose}
+          >
             取消
-          </button>
-          <button className="primary-button" disabled={isSaving} type="submit">
+          </Button>
+          <Button
+            variant="filled"
+            className="primary-button"
+            disabled={isSaving}
+            type="submit"
+          >
             {isSaving ? "保存中…" : "保存账户"}
-          </button>
+          </Button>
         </div>
       </form>
     </Dialog>

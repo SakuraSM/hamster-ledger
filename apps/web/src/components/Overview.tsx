@@ -1,3 +1,4 @@
+import { UnstyledButton, Button } from "@mantine/core";
 const PERCENT_SCALE = 100;
 const MONTH_START = 5;
 const CATEGORY_LIMIT = 4;
@@ -117,13 +118,17 @@ export function Overview({
       </section>
       <p className="summary-caption">已确认账单 · 转账与还款不计入收支</p>
       {pending ? (
-        <button className="review-callout" onClick={onReview}>
+        <UnstyledButton
+          type="submit"
+          className="review-callout"
+          onClick={onReview}
+        >
           <Icons.Warning weight="fill" size={21} />
           <span>{pending} 组疑似重复待核对</span>
           <span className="underlined">
             去核对 <Icons.Arrow size={18} />
           </span>
-        </button>
+        </UnstyledButton>
       ) : (
         <div className="review-clear">
           <Icons.Check size={19} />
@@ -137,10 +142,15 @@ export function Overview({
           <Icons.Book size={48} weight="duotone" />
           <h2>从第一份账单开始</h2>
           <p>把分散的流水整理到一起，慢慢看清自己的收支。</p>
-          <button className="primary-button" onClick={onImport}>
+          <Button
+            variant="filled"
+            type="submit"
+            className="primary-button"
+            onClick={onImport}
+          >
             <Icons.Upload size={20} />
             导入账单
-          </button>
+          </Button>
         </div>
       ) : (
         <>
@@ -164,7 +174,8 @@ export function Overview({
               </div>
               <div className="category-list">
                 {categories.map(([category, amount], index) => (
-                  <button
+                  <UnstyledButton
+                    type="submit"
                     key={category}
                     className="category-row"
                     onClick={() => onCategory(category)}
@@ -183,7 +194,7 @@ export function Overview({
                     <span className="category-percent">
                       {((amount / grossExpense) * PERCENT_SCALE).toFixed(1)}%
                     </span>
-                  </button>
+                  </UnstyledButton>
                 ))}
               </div>
             </div>
@@ -193,9 +204,14 @@ export function Overview({
               <h2>
                 最近账单 <small>{isDemo ? "（示例数据）" : ""}</small>
               </h2>
-              <button className="text-button" onClick={onAll}>
+              <Button
+                variant="subtle"
+                type="submit"
+                className="text-button"
+                onClick={onAll}
+              >
                 查看全部 <Icons.Arrow size={18} />
-              </button>
+              </Button>
             </div>
             <TransactionTable
               accounts={accounts}

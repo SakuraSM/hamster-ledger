@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { beforeAll, afterEach, it, expect, vi } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  act,
-} from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act } from "./helpers/render";
 import {
   EMPTY_LEDGER,
   saveEntry,
@@ -68,10 +62,10 @@ it("uses a renamed default category for a new bill and deducts its category budg
       }}
     />,
   );
-  fireEvent.change(screen.getByLabelText("金额（元）"), {
+  fireEvent.change(screen.getByRole("textbox", { name: "金额（元）" }), {
     target: { value: "42" },
   });
-  fireEvent.change(screen.getByLabelText("商户 / 交易名称"), {
+  fireEvent.change(screen.getByRole("textbox", { name: "商户 / 交易名称" }), {
     target: { value: "新午餐" },
   });
   await act(async () => fireEvent.click(screen.getByText("保存账单")));
@@ -103,16 +97,16 @@ it("keeps the remote amount and the local draft when saving a stale open editor"
       }}
     />,
   );
-  fireEvent.change(screen.getByLabelText("备注"), {
+  fireEvent.change(screen.getByRole("combobox", { name: "备注" }), {
     target: { value: "本机草稿" },
   });
   await act(async () => fireEvent.click(screen.getByText("保存账单")));
   expect(persisted.records[0].amount).toBe(20000);
   expect(close).not.toHaveBeenCalled();
   expect(screen.getByRole("alert").textContent).toContain("已发生变化");
-  expect((screen.getByLabelText("备注") as HTMLInputElement).value).toBe(
-    "本机草稿",
-  );
+  expect(
+    (screen.getByRole("combobox", { name: "备注" }) as HTMLInputElement).value,
+  ).toBe("本机草稿");
 });
 it("does not reinsert an archived default category for a new bill", () => {
   const ledger = saveCategory(EMPTY_LEDGER, {
@@ -125,9 +119,10 @@ it("does not reinsert an archived default category for a new bill", () => {
   render(
     <EntryEditor ledger={ledger} onClose={() => {}} onSave={async () => {}} />,
   );
-  const select = screen.getByLabelText("分类") as HTMLSelectElement;
-  expect(
-    Array.from(select.options).map((option) => option.value),
-  ).not.toContain("餐饮");
+  const select = screen.getByRole("combobox", {
+    name: "分类",
+  }) as HTMLInputElement;
+  fireEvent.click(select);
+  expect(screen.queryByRole("option", { name: "餐饮" })).toBeNull();
   expect(select.value).not.toBe("餐饮");
 });

@@ -1,3 +1,4 @@
+import { Button, UnstyledButton } from "@mantine/core";
 const MONTH_START = 5;
 const MINUTE_END = 16;
 import { useState } from "react";
@@ -38,10 +39,15 @@ export function ReviewPage({
           <p>关联原始流水，让收支只计算一次</p>
         </div>
         {canUndo ? (
-          <button className="secondary-button" onClick={onUndo}>
+          <Button
+            variant="outline"
+            type="submit"
+            className="secondary-button"
+            onClick={onUndo}
+          >
             <Icons.Undo size={19} />
             撤销上一步
-          </button>
+          </Button>
         ) : null}
       </div>
       {selected && left && right ? (
@@ -55,7 +61,8 @@ export function ReviewPage({
                 (item) => item.id === review.leftId,
               );
               return record ? (
-                <button
+                <UnstyledButton
+                  type="submit"
                   key={review.id}
                   className={review.id === selected.id ? "selected" : ""}
                   onClick={() => setSelectedId(review.id)}
@@ -66,7 +73,7 @@ export function ReviewPage({
                   </span>
                   <small>{record.source} · 跨平台疑似重复</small>
                   <small>{record.date.slice(MONTH_START, MINUTE_END)}</small>
-                </button>
+                </UnstyledButton>
               ) : null;
             })}
           </aside>
@@ -132,24 +139,33 @@ export function ReviewPage({
             <div className="merge-preview">
               <h3>关联后只计一笔支出</h3>
               <p>保留两份原始流水，采用支付平台的商户信息。</p>
-              <button className="text-button" onClick={() => onSelect(left)}>
+              <Button
+                variant="subtle"
+                type="submit"
+                className="text-button"
+                onClick={() => onSelect(left)}
+              >
                 查看原始记录 <Icons.Arrow size={17} />
-              </button>
+              </Button>
             </div>
             <div className="review-actions">
-              <button
+              <Button
+                variant="outline"
+                type="submit"
                 className="secondary-button"
                 onClick={() => onDecide(selected, "separate")}
               >
                 保留为两笔
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="filled"
+                type="submit"
                 className="primary-button"
                 onClick={() => onDecide(selected, "linked")}
               >
                 <Icons.Link size={19} />
                 确认关联
-              </button>
+              </Button>
             </div>
             <p className="muted small">
               操作后可撤销。已确认的历史支出在核对期间继续计入汇总。

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PasswordInput } from "@mantine/core";
 import { Icons } from "../Icons";
 interface Props {
   label: string;
@@ -20,38 +21,28 @@ export function PasswordField({
 }: Props): React.JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
   return (
-    <div className="auth-field">
-      <label htmlFor={name}>{label}</label>
-      <span className="password-control">
-        <input
-          id={name}
-          name={name}
-          type={isVisible ? "text" : "password"}
-          autoComplete={autoComplete}
-          required
-          maxLength={512}
-          value={value}
-          aria-invalid={Boolean(error)}
-          aria-describedby={
-            error ? name + "-error" : description ? name + "-help" : undefined
-          }
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <button
-          type="button"
-          aria-label={(isVisible ? "隐藏" : "显示") + label}
-          aria-pressed={isVisible}
-          onClick={() => setIsVisible(!isVisible)}
-        >
-          {isVisible ? <Icons.EyeOff size={20} /> : <Icons.Eye size={20} />}
-        </button>
-      </span>
-      {description ? <small id={name + "-help"}>{description}</small> : null}
-      {error ? (
-        <small id={name + "-error"} className="field-error">
-          {error}
-        </small>
-      ) : null}
-    </div>
+    <PasswordInput
+      className="auth-field"
+      id={name}
+      name={name}
+      label={label}
+      description={description}
+      error={error}
+      required
+      maxLength={512}
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+      autoComplete={autoComplete}
+      visibilityToggleFocusable
+      visible={isVisible}
+      onVisibilityChange={setIsVisible}
+      visibilityToggleIcon={({ reveal }) =>
+        reveal ? <Icons.EyeOff size={20} /> : <Icons.Eye size={20} />
+      }
+      visibilityToggleButtonProps={{
+        "aria-label": (isVisible ? "隐藏" : "显示") + label,
+        "aria-pressed": isVisible,
+      }}
+    />
   );
 }

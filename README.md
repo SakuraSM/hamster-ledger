@@ -3,15 +3,15 @@
 [![CI](https://github.com/SakuraSM/hamster-ledger/actions/workflows/ci.yml/badge.svg)](https://github.com/SakuraSM/hamster-ledger/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-在浏览器里记账、整理支付宝与银行流水、管理资产和预算。支持多账本、周期记账、日历和收支报表。桌面 Web 优先，同时适配手机。
+在 Web 和 Android 上记账、整理支付宝与银行流水、管理资产和预算。支持多账本、周期记账、日历和收支报表；两端共享账务规则。
 
-> 项目处于早期开发阶段。当前提供 Web 应用、共享业务包和可自托管的同步服务，没有已发布的原生手机 App 或银行直连。示例数据均为虚构。
+> 项目处于早期开发阶段。当前提供 Web、Expo / React Native Android 工程和自托管同步服务。Android 可本地构建安装，尚未上架应用商店；没有银行直连。示例数据均为虚构。
 
 ![仓鼠记账桌面总览](docs/images/desktop.png)
 
 ## 主要功能
 
-- 导入 CSV、XLSX、XLS，识别常见账单字段，支持表头与字段映射调整。
+- 导入 CSV、XLSX、XLS，自动寻找表头并建议字段映射，支持查看样例、手动改列和确认推断结果。
 - 区分支付平台与实际付款账户。重复文件和有明确流水号的同源重复自动识别，跨平台疑似重复交由用户核对。
 - 自动归类常见商户，支持修改分类并保存规则。
 - 按月汇总收支，按来源、分类和处理状态筛选，搜索商户或流水号。
@@ -21,8 +21,8 @@
 - 手动新增、编辑、删除和恢复账单；管理分类、标签与常用备注。
 - 多账本、账单日历、自定义账期、月度及分类预算、日/周/月/年周期记账。
 - 任意日期范围、全年收支、分类/标签饼图与每日趋势。
-- 三种主题、首页金额隐藏、前台记账提醒与可离线打开的 PWA。
-- 本机密码加密、CSV/Excel 导出、JSON 备份预览与恢复为新账本。
+- 三种主题、首页金额隐藏；Web 支持前台提醒和离线 PWA，Android 支持系统通知。
+- Web 支持本机密码加密；Android 使用 SQLCipher 与设备 Keystore。两端支持 Excel 导出、JSON 备份预览和恢复为新账本。
 - 自托管账号与账本同步，发现冲突后保留两边数据。
 
 当前仅支持人民币和单工作表 Excel。账单兼容性依据虚拟样本验证，不代表所有银行的所有导出版本都已适配。详细边界见 [能力说明](docs/capabilities.md)。
@@ -48,26 +48,44 @@ npm run build       # Web 产物位于 apps/web/dist/client
 
 默认仅在当前浏览器保存。启用账号同步后才会上传账本；换设备后可登录并恢复云端账本，也可从 JSON 备份恢复。JSON 文件和服务端数据库包含明文账务数据，本机解锁密码只保护浏览器中的存储。自托管与备份方式见 [部署说明](docs/self-hosting.md)。
 
+## Android 开发
+
+需要 Android Studio / SDK 36、JDK 17 和已启动的模拟器或真机。使用原生构建，SQLCipher 不能在 Expo Go 中运行。
+
+```sh
+npm run android:run     # 生成原生工程、构建并安装开发版
+npm run android:dev     # 后续启动 Metro
+npm run android:export  # 验证 Android JavaScript 与资源打包
+npm run android:apk     # 可独立安装的 arm64 APK，默认开发签名
+```
+
+详细构建、文件交互、认证与发布边界见 [Android 开发说明](docs/mobile-readiness.md)。Web 组件使用 Mantine，Android 使用 React Native Paper；共享暖色主题、图标和仓鼠标志。
+
 ## 项目目录
 
 | 目录                           | 职责                                              |
 | ------------------------------ | ------------------------------------------------- |
 | `apps/server`                  | Node.js HTTP API、账号会话、SQLite 与静态页面服务 |
+| `apps/mobile`                  | Expo、原生页面、SQLCipher、文件选择与分享         |
 | `apps/web`                     | React 页面、浏览器文件读取、存储和导出            |
 | `packages/ledger-core`         | 数据模型、分类、去重、收支计算与异步存储协议      |
 | `packages/statement-importers` | 表头映射、日期金额解析、交易标准化                |
-| `packages/design-tokens`       | 可供 Web 与未来 App 使用的 JSON 设计变量          |
+| `packages/design-tokens`       | Web 与 Android 的 JSON 设计变量                   |
+| `packages/fixtures`            | 两端共用的虚拟演示账本                            |
+| `packages/ledger-react`        | 注入平台适配器的共享 React 账本控制器             |
 | `tests`                        | 账务行为、共享包契约和 Web 异步存储测试           |
 | `docs`                         | 架构、设计依据、能力边界及 App 开发准备           |
 
-共享包在不提供 DOM 类型的配置下独立编译。后续 App 可复用业务规则，并以平台适配器接入文件选择、原生存储和导出。
+业务包在不提供 DOM 类型的配置下独立编译；`ledger-react` 仅依赖 React 和共享协议，Web 与 Android 各自注入存储、时间及 ID 适配器。
 
 - [鲨鱼记账能力对齐与验证范围](docs/shark-parity.md)
 - [自托管部署](docs/self-hosting.md)
 - [登录与认证策略](docs/authentication.md)
 - [架构与依赖边界](docs/architecture.md)
 - [资产账户与账单关联](docs/assets.md)
-- [后续 App 开发准备](docs/mobile-readiness.md)
+- [账单导入与手动调整](docs/importing.md)
+- [Android 开发与验证](docs/mobile-readiness.md)
+- [现代组件与 Android 方案](docs/adr/0002-modern-ui-and-android.md)
 - [架构决策记录](docs/adr/0001-workspace-and-platform-boundaries.md)
 - [设计与验证范围](docs/design/qa.md)
 
