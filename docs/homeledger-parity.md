@@ -10,7 +10,7 @@
 | 联网账本   | 显式转换、角色、邀请、操作历史             | 两端已接入；AA 表单与报表已补齐，权限、幂等与缓存测试通过                |
 | 规划报表   | 订阅、借贷、目标、预算、通知、报表         | 两端已接入；核心、调度、Web、Android 模拟器与系统通知均有证据            |
 | AI 与附件  | 文本/图片草稿、可选自动入账、凭证与归档    | 两端已接入；自动入账、权限、加密及归档恢复已测，真实模型识别未验证       |
-| API 与分发 | 专用令牌、幂等、OpenAPI、双架构 Docker     | 两端令牌和 API 已验证，双架构容器重启与恢复通过，远端镜像待发布          |
+| API 与分发 | 专用令牌、幂等、OpenAPI、双架构 Docker     | 两端令牌和 API 已验证；0.2.0 / latest 双架构镜像已发布，可匿名拉取       |
 
 ## 兼容边界
 
@@ -86,7 +86,7 @@ Web 附件以 AES-GCM 密文存入 IndexedDB，数据密钥由现有密码保险
 | 访问与重试 | 6 组 HTTP 行为测试：浏览器凭据隔离、跨账本附件拒绝、重复请求、重启回执恢复、同键不同内容、过期、限流、角色调整及退出自动吊销、识别进行中撤销令牌          |
 | 接入资料   | [OpenAPI 3.1](../apps/web/public/openapi.json)、[调用示例和机器人接入](open-api.md)；没有连接用户的聊天平台                                               |
 | Docker     | Node 24，非 root、持久化 `/data` 和健康检查；AMD64、ARM64 均在本机完成构建、容器重启和独立数据卷恢复                                                      |
-| 版本发布   | 工作区与 Android 为 0.2.0；分支 CI 只构建验证，正式版本标签经完整检查后发布双架构版本镜像与 `latest`。远端发布结果在发布后补记                            |
+| 版本发布   | 工作区与 Android 为 0.2.0；分支 CI 只构建验证，正式版本标签经完整检查后发布双架构版本镜像与 `latest`，远端发布已成功                                      |
 
 Web 在桌面 1440×1000 和手机 390×844 视口实测令牌创建、隐藏明文及撤销，手机无横向溢出；截图 `openapi-desktop.png`、`openapi-mobile.png` 均不包含令牌明文。
 
@@ -99,7 +99,7 @@ Android 使用本任务的 API 36 ARM64 模拟器，所有账单和账号均为�
 - 创建每月 15 元订阅并记录本期扣费，下次日期推进到 2026-11-03；为 500 元储蓄目标分配 500 元后，流水仍为 2 笔。授权系统通知后收到“储蓄目标已达成 / GoalQA”。
 - 从原生界面导出 `.hamster`，系统文件选择器选回该归档，预览为 2 笔、1 个账户、1 张图片；恢复为新本地账本。重新安装正式 APK 并重启，汇总仍为 27.50 元，原图再次打开成功。
 
-截图均在 `docs/evidence/homeledger-parity/`：`android-attachment.png`、`android-planning.png`、`android-openapi.png`、`android-notification.png`、`android-backup-preview.png`、`android-restored-ledger.png`、`android-restored-attachment.png`。发现的新图标映射缺失已修正。
+截图均在 `docs/evidence/homeledger-parity/`：`android-attachment.png`、`android-planning.png`、`android-openapi.png`、`android-notification.png`、`android-backup-preview.png`、`android-restored-ledger.png`、`android-restored-attachment.png`、`android-tools.png`。发现的新图标映射缺失已修正，最终 APK 的工具页已再次目视检查。
 
 容器验证脚本为 `scripts/test-container.mjs`。它在独立测试卷中创建虚构账号、联网账本、1 笔交易及 1 张图片；验证重启后重复请求仍只有 1 笔，再停机打包整个 `/data` 并恢复到新卷。两个架构均确认原图哈希、令牌、幂等回执和 `.model-key` 保留，测试结束只删除本脚本创建的容器和卷。默认端口改为 4180，规避原 4190 被 Fetch 受限端口检查拒绝；健康检查改用本地 HTTP 请求。操作步骤见 [容器运维说明](container-operations.md)。
 
@@ -108,3 +108,21 @@ Android 发布构建与 `android:export` 均通过。APK 版本名 `0.2.0`、版
 仍未验证的边界：没有真实模型配置，未用实际提供商识别虚拟账单；没有真机、商店签名、公网多实例或长期负载验收。开发构建通过回环 HTTP 验证的联网流程，不等于正式 APK 的公网 HTTPS 端到端验收。上述边界不以模拟测试、构建或容器健康状态替代。
 
 最终本地 `npm run check` 通过：158 项 Vitest、4 项 Sites、46 项服务端测试，共 208 项；格式、类型、ESLint、架构边界、Web 构建均通过。`git diff --check` 和 Compose 配置校验通过。新增检查没有使用真实账单或模型凭据。
+
+## 2026-10-03：正式发布
+
+`v0.2.0` 指向 `81efc8fa3a6807fb3789cbb501ed05202438a0bf`，源码位于 `feat/homeledger-parity`。没有合并或修改 `main`。
+
+| 阶段                   | 提交      |
+| ---------------------- | --------- |
+| v2 账务与迁移          | `8957dd7` |
+| 联网账本与家庭共享     | `69e1810` |
+| 多币种交易、规划与报表 | `0eb1a13` |
+| AI 草稿与附件归档      | `03a3ac0` |
+| 开放 API 与容器分发    | `81efc8f` |
+
+- [分支 CI](https://github.com/SakuraSM/hamster-ledger/actions/runs/37120643959) 的 Node 22、24 检查均通过；[分支容器构建](https://github.com/SakuraSM/hamster-ledger/actions/runs/37120643963) 通过，未推送镜像。
+- [正式版本发布工作流](https://github.com/SakuraSM/hamster-ledger/actions/runs/37120792998) 通过：版本一致性、完整检查、Android 导出和双架构镜像发布。
+- `ghcr.io/sakurasm/hamster-ledger:0.2.0` 与 `latest` 的索引摘要相同：`sha256:5f009ec0280a8ea1aef68ba7b18669154ef4b1aedcf16b8ea314b0e440eaa943`。AMD64、ARM64 的 OCI 源码标签均为上述提交；匿名访问已通过。[清单与平台摘要](evidence/homeledger-parity/release-manifest.json)。
+- 两种架构的正式远端镜像均已拉取，在独立卷中重新通过健康检查、重启、整卷备份及恢复；1 笔账单、1 张凭证、令牌、幂等回执和模型主密钥保持一致。[正式镜像运行结果](evidence/homeledger-parity/release-container-check.json)。
+- [GitHub Release v0.2.0](https://github.com/SakuraSM/hamster-ledger/releases/tag/v0.2.0) 已发布；含 ARM64 APK 和 SHA-256 文件，远端 APK 摘要与本地一致。
