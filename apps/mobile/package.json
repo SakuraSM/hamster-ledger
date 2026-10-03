@@ -12,7 +12,7 @@
     "@hamster-ledger/importers": "0.1.0",
     "@hamster-ledger/ledger-react": "0.1.0",
     "@kayahr/text-encoding": "^2.2.0",
-    "@react-native-community/datetimepicker": "9.1.0",
+    "@react-native-community/datetimepicker": "9.2.1",
     "expo": "~57.0.26",
     "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.20",
@@ -31,8 +31,7 @@
     "react-native": "0.86.3",
     "react-native-paper": "^5.15.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0",
-    "react-native-svg": "15.15.4",
+    "react-native-svg": "15.15.5",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "scripts": {
