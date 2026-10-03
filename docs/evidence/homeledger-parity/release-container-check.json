@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-10-03T11:53:15.249Z",
+  "results": [
+    {
+      "architecture": "amd64",
+      "image": "ghcr.io/sakurasm/hamster-ledger@sha256:2e640b7a27993aafbcc5612315842d4f02267f42c8cf943e76f0b08aa6d677a5",
+      "result": {
+        "image": "ghcr.io/sakurasm/hamster-ledger@sha256:2e640b7a27993aafbcc5612315842d4f02267f42c8cf943e76f0b08aa6d677a5",
+        "architecture": "amd64",
+        "health": "passed",
+        "restart": "passed",
+        "isolatedVolumeRestore": "passed",
+        "records": 1,
+        "attachments": 1,
+        "tokenAndIdempotency": "preserved",
+        "modelMasterKey": "preserved"
+      }
+    },
+    {
+      "architecture": "arm64",
+      "image": "ghcr.io/sakurasm/hamster-ledger@sha256:7e6cd866766d66c15f61485f115f7a7b2388f96bffeac218581e0e88a7a34aaf",
+      "result": {
+        "image": "ghcr.io/sakurasm/hamster-ledger@sha256:7e6cd866766d66c15f61485f115f7a7b2388f96bffeac218581e0e88a7a34aaf",
+        "architecture": "arm64",
+        "health": "passed",
+        "restart": "passed",
+        "isolatedVolumeRestore": "passed",
+        "records": 1,
+        "attachments": 1,
+        "tokenAndIdempotency": "preserved",
+        "modelMasterKey": "preserved"
+      }
+    }
+  ]
+}
