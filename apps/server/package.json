@@ -1,6 +1,6 @@
 {
   "name": "@hamster-ledger/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@hamster-ledger/core": "0.1.0"
+    "@hamster-ledger/core": "0.2.0"
   },
   "engines": {
     "node": ">=22.14.0"

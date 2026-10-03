@@ -136,6 +136,7 @@ export async function recognizeAi(context, bookId, body) {
       "revision_conflict",
     );
   const autoPost =
+    !context.forceDrafts &&
     database
       .prepare("SELECT ai_auto_post FROM book_options WHERE book_id=?")
       .get(bookId)?.ai_auto_post === 1;
@@ -150,7 +151,7 @@ export async function recognizeAi(context, bookId, body) {
     bookId,
     userId,
     now,
-    source: autoPost ? "ai-auto" : "ai",
+    source: context.source ?? (autoPost ? "ai-auto" : "ai"),
     body: {
       key: body.key,
       revision: body.revision,
@@ -185,6 +186,8 @@ export function confirmNetworkDraft(context, bookId, body) {
   if (previous && previous.digest !== digest({ command }))
     throw new HttpError(409, "幂等键已用于另一项操作。");
   if (draft.state === "confirmed") return snapshot(access);
+  if (!body.entry || typeof body.entry !== "object")
+    throw new HttpError(400, "确认草稿时请提交核对后的完整交易 entry。");
   let next;
   try {
     next = confirmAiDraft(ledger, body.draftId, body.entry);
@@ -196,7 +199,7 @@ export function confirmNetworkDraft(context, bookId, body) {
     bookId,
     userId,
     now,
-    source: "ai-confirm",
+    source: context.source ?? "ai-confirm",
     command,
     body: {
       key: body.key,
