@@ -20,6 +20,6 @@
     "@hamster-ledger/core": "0.1.0"
   },
   "peerDependencies": {
-    "react": "^19.2.0"
+    "react": "^19.2.8"
   }
 }
