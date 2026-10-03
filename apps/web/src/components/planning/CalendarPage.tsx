@@ -1,3 +1,5 @@
+import { UnstyledButton, Button } from "@mantine/core";
+import { DateField } from "../../ui/DateField";
 const MONDAY_OFFSET = 6;
 const DAYS_PER_WEEK = 7;
 const DATE_DIGITS = 2;
@@ -42,16 +44,12 @@ export function CalendarPage({
           <h1>日子翻过，账目留下</h1>
           <p>按自然月查看每天的收入与支出。</p>
         </div>
-        <label>
-          日历月份
-          <input
-            type="month"
-            value={month}
-            onChange={(event) =>
-              event.target.value && onMonth(event.target.value)
-            }
-          />
-        </label>
+        <DateField
+          label={<>日历月份</>}
+          type="month"
+          value={month}
+          onChange={(value) => value && onMonth(value)}
+        />
       </div>
       <div className="calendar-grid" role="group" aria-label="账单日历">
         {["一", "二", "三", "四", "五", "六", "日"].map((name) => (
@@ -69,7 +67,8 @@ export function CalendarPage({
             records.filter((record) => record.date.startsWith(date)),
           );
           return (
-            <button
+            <UnstyledButton
+              type="submit"
               className={
                 date === day ? "calendar-day selected" : "calendar-day"
               }
@@ -84,7 +83,7 @@ export function CalendarPage({
               {total.income !== 0 ? (
                 <small className="income">收 {money(total.income)}</small>
               ) : null}
-            </button>
+            </UnstyledButton>
           );
         })}
       </div>
@@ -95,9 +94,14 @@ export function CalendarPage({
             支出 ¥{money(totals.expense)} · 收入 ¥{money(totals.income)}
           </p>
         </div>
-        <button className="primary-button" onClick={() => onAdd(day)}>
+        <Button
+          variant="filled"
+          type="submit"
+          className="primary-button"
+          onClick={() => onAdd(day)}
+        >
           当天记一笔
-        </button>
+        </Button>
       </div>
       <TransactionTable
         accounts={ledger.accounts}

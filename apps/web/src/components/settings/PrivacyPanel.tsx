@@ -1,3 +1,4 @@
+import { Button, TextInput } from "@mantine/core";
 import { useState } from "react";
 import { enableVault, hasVault, lockVault } from "../../platform/browser/vault";
 export function PrivacyPanel(): React.JSX.Element {
@@ -32,9 +33,14 @@ export function PrivacyPanel(): React.JSX.Element {
       {isEnabled ? (
         <>
           <p>本机账本已加密保存。关闭页面后再次打开需要解锁。</p>
-          <button className="secondary-button" onClick={() => void lockVault()}>
+          <Button
+            variant="outline"
+            type="submit"
+            className="secondary-button"
+            onClick={() => void lockVault()}
+          >
             立即锁定
-          </button>
+          </Button>
         </>
       ) : (
         <form onSubmit={enable}>
@@ -42,32 +48,33 @@ export function PrivacyPanel(): React.JSX.Element {
             为本浏览器的所有账本设置解锁密码。忘记密码无法直接找回，请先导出备份。云端账号使用独立密码。
           </p>
           <div className="form-grid">
-            <label>
-              解锁密码
-              <input
-                required
-                minLength={8}
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </label>
-            <label>
-              再次输入
-              <input
-                required
-                minLength={8}
-                type="password"
-                autoComplete="new-password"
-                value={confirmation}
-                onChange={(event) => setConfirmation(event.target.value)}
-              />
-            </label>
+            <TextInput
+              label={<>解锁密码</>}
+              required
+              minLength={8}
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <TextInput
+              label={<>再次输入</>}
+              required
+              minLength={8}
+              type="password"
+              autoComplete="new-password"
+              value={confirmation}
+              onChange={(event) => setConfirmation(event.target.value)}
+            />
           </div>
-          <button className="secondary-button" disabled={isSaving}>
+          <Button
+            variant="outline"
+            type="submit"
+            className="secondary-button"
+            disabled={isSaving}
+          >
             启用加密保护
-          </button>
+          </Button>
         </form>
       )}
       {error ? (

@@ -1,3 +1,4 @@
+import { Checkbox } from "@mantine/core";
 const ERROR_PREVIEW_LIMIT = 10;
 interface ImportErrorsProps {
   errors: string[];
@@ -23,14 +24,13 @@ export function ImportErrors({
           <p>另有 {errors.length - ERROR_PREVIEW_LIMIT} 行错误</p>
         ) : null}
       </details>
-      <label className="checkbox-label">
-        <input
-          type="checkbox"
-          checked={skipErrors}
-          onChange={(event) => onSkip(event.target.checked)}
-        />
-        跳过错误行，仅导入有效记录
-      </label>
+      <Checkbox
+        label={<>跳过错误行，仅导入有效记录</>}
+        className="checkbox-label"
+
+        checked={skipErrors}
+        onChange={(event) => onSkip(event.target.checked)}
+      />
     </div>
   );
 }

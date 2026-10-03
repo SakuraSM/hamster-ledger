@@ -1,5 +1,7 @@
+import { Button } from "@mantine/core";
 import { useState } from "react";
 import { useAuth } from "../../auth/auth-context";
+import { newPasswordHint } from "../../auth/password-hint";
 import { PasswordField } from "./PasswordField";
 export function PasswordChangeForm({
   onSuccess,
@@ -57,7 +59,7 @@ export function PasswordChangeForm({
         value={newPassword}
         onChange={setNewPassword}
         autoComplete="new-password"
-        description={`至少 ${auth.policy.minimumPasswordLength} 个字符，支持空格和短语。`}
+        description={newPasswordHint(auth.policy)}
       />
       <PasswordField
         label="确认新密码"
@@ -73,9 +75,14 @@ export function PasswordChangeForm({
         </p>
       ) : null}
       {message ? <p role="status">{message}</p> : null}
-      <button className="primary-button" disabled={auth.isBusy}>
+      <Button
+        variant="filled"
+        type="submit"
+        className="primary-button"
+        disabled={auth.isBusy}
+      >
         {auth.isBusy ? "保存中…" : "更新密码"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -1,3 +1,5 @@
+import { UnstyledButton, Button } from "@mantine/core";
+import { Choice } from "../ui/Choice";
 import { useAuth } from "../auth/auth-context";
 import { loginPath, navigateAuth } from "../platform/browser/auth-navigation";
 import type { LedgerMode } from "@hamster-ledger/core";
@@ -43,31 +45,42 @@ export function AppHeader({
   return (
     <header className="topbar">
       <div className="breadcrumb">
-        <button aria-label="切换账本" onClick={onSettings}>
+        <UnstyledButton
+          type="submit"
+          aria-label="切换账本"
+          onClick={onSettings}
+        >
           {bookName}
-        </button>
+        </UnstyledButton>
         <span>/</span>
         <strong>{PAGE_LABELS[page]}</strong>
       </div>
       <div className="top-actions">
-        <button
+        <UnstyledButton
+          type="submit"
           className="header-account"
+          aria-label={auth.user ? `账号 ${auth.user.username}` : "登录账号"}
           onClick={() => (auth.user ? onSettings() : navigateAuth(loginPath()))}
         >
           <Icons.Shield size={19} />
           <span>{auth.user?.username ?? "登录"}</span>
-        </button>
-        <button className="primary-button" onClick={onAdd}>
+        </UnstyledButton>
+        <Button
+          variant="filled"
+          type="submit"
+          className="primary-button"
+          onClick={onAdd}
+        >
           <Icons.Plus size={20} />
           <span>记一笔</span>
-        </button>
+        </Button>
         {page === "overview" || page === "transactions" ? (
           <label className="month-picker">
             <Icons.Calendar size={20} />
-            <select
+            <Choice
               aria-label="月份"
               value={month}
-              onChange={(event) => onMonth(event.target.value)}
+              onChange={(value) => onMonth(value)}
             >
               {page === "transactions" ? (
                 <option value="">全部账期</option>
@@ -78,7 +91,7 @@ export function AppHeader({
                   {Number(item.slice(MONTH_START))}月
                 </option>
               ))}
-            </select>
+            </Choice>
           </label>
         ) : (
           <span className="mode-label">
@@ -86,10 +99,15 @@ export function AppHeader({
           </span>
         )}
         {page !== "import" ? (
-          <button className="secondary-button header-import" onClick={onImport}>
+          <Button
+            variant="outline"
+            type="submit"
+            className="secondary-button header-import"
+            onClick={onImport}
+          >
             <Icons.Upload size={20} />
             <span>导入账单</span>
-          </button>
+          </Button>
         ) : null}
       </div>
     </header>

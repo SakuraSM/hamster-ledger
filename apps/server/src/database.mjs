@@ -53,6 +53,7 @@ function migrateAuth(database) {
       csrf_token: "TEXT",
       credential_version: "INTEGER",
       device_name: "TEXT",
+      transport: "TEXT NOT NULL DEFAULT 'cookie'",
     }))
       addColumn(database, "sessions", name, type);
     database.exec(

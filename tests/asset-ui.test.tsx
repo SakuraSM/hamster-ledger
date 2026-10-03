@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { beforeAll, afterEach, describe, it, expect, vi } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  waitFor,
-} from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "./helpers/render";
 import { TransactionTable } from "../apps/web/src/components/TransactionTable";
 import { AccountEditor } from "../apps/web/src/components/assets/AccountEditor";
 import { AssetsPage } from "../apps/web/src/components/assets/AssetsPage";
@@ -97,19 +91,19 @@ describe("single-record and asset account UI", () => {
   });
   it("saves a liability account in integer cents with its explicit baseline", async () => {
     const save = vi.fn().mockResolvedValue(undefined);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 1));
     render(<AccountEditor onSave={save} onClose={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText("账户名称"), {
+    vi.useRealTimers();
+    fireEvent.change(screen.getByRole("textbox", { name: "账户名称" }), {
       target: { value: "信用卡 · 8899" },
     });
-    fireEvent.change(screen.getByLabelText("账户性质"), {
-      target: { value: "liability" },
-    });
-    fireEvent.change(screen.getByLabelText("基准负债（元）"), {
+    fireEvent.click(screen.getByRole("combobox", { name: "账户性质" }));
+    fireEvent.click(screen.getByRole("option", { name: "负债账户" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "基准负债（元）" }), {
       target: { value: "6500.80" },
     });
-    fireEvent.change(screen.getByLabelText("余额确认时间"), {
-      target: { value: "2026-09-01T00:00:00" },
-    });
+
     fireEvent.click(screen.getByRole("button", { name: "保存账户" }));
     await waitFor(() => expect(save).toHaveBeenCalledOnce());
     expect(save.mock.calls[0][0].account).toMatchObject({
@@ -130,9 +124,8 @@ describe("single-record and asset account UI", () => {
         onRelated={vi.fn()}
       />,
     );
-    fireEvent.change(screen.getByLabelText("关联资产账户"), {
-      target: { value: "bank" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: "关联资产账户" }));
+    fireEvent.click(screen.getByRole("option", { name: /招行工资卡/ }));
     fireEvent.click(screen.getByRole("button", { name: "保存修改" }));
     await waitFor(() => expect(save).toHaveBeenCalledOnce());
     expect(save.mock.calls[0][0].accountId).toBe("bank");

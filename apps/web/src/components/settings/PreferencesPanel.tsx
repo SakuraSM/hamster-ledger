@@ -1,3 +1,6 @@
+import { TextInput, Checkbox, Button } from "@mantine/core";
+import { Choice } from "../../ui/Choice";
+import { DateField } from "../../ui/DateField";
 import { useState } from "react";
 import {
   DEFAULT_PREFERENCES,
@@ -41,68 +44,60 @@ export function PreferencesPanel({
       <h2>记账偏好</h2>
       <form onSubmit={save}>
         <div className="form-grid">
-          <label>
-            每月账期开始日
-            <input
-              type="number"
-              min="1"
-              max="31"
-              required
-              value={draft.cycleStartDay}
-              onChange={(event) =>
-                update({ cycleStartDay: Number(event.target.value) })
-              }
-            />
-          </label>
-          <label>
-            主题
-            <select
-              value={draft.theme}
-              onChange={(event) =>
-                update({
-                  theme: event.target.value as LedgerPreferences["theme"],
-                })
-              }
-            >
-              <option value="warm">奶油暖棕</option>
-              <option value="sage">鼠尾草绿</option>
-              <option value="night">深夜账本</option>
-            </select>
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={draft.hideAmounts}
-              onChange={(event) =>
-                update({ hideAmounts: event.target.checked })
-              }
-            />
-            隐藏首页金额
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={draft.reminderEnabled}
-              onChange={(event) =>
-                update({ reminderEnabled: event.target.checked })
-              }
-            />
-            开启每日记账提醒
-          </label>
-          <label>
-            提醒时间
-            <input
-              type="time"
-              required
-              value={draft.reminderTime}
-              onChange={(event) => update({ reminderTime: event.target.value })}
-            />
-          </label>
+          <TextInput
+            label={<>每月账期开始日</>}
+            type="number"
+            min="1"
+            max="31"
+            required
+            value={draft.cycleStartDay}
+            onChange={(event) =>
+              update({ cycleStartDay: Number(event.target.value) })
+            }
+          />
+          <Choice
+            label={<>主题</>}
+            value={draft.theme}
+            onChange={(value) =>
+              update({
+                theme: value as LedgerPreferences["theme"],
+              })
+            }
+          >
+            <option value="warm">奶油暖棕</option>
+            <option value="sage">鼠尾草绿</option>
+            <option value="night">深夜账本</option>
+          </Choice>
+          <Checkbox
+            label={<>隐藏首页金额</>}
+            className="checkbox-label"
+
+            checked={draft.hideAmounts}
+            onChange={(event) => update({ hideAmounts: event.target.checked })}
+          />
+          <Checkbox
+            label={<>开启每日记账提醒</>}
+            className="checkbox-label"
+
+            checked={draft.reminderEnabled}
+            onChange={(event) =>
+              update({ reminderEnabled: event.target.checked })
+            }
+          />
+          <DateField
+            label={<>提醒时间</>}
+            type="time"
+            required
+            value={draft.reminderTime}
+            onChange={(value) => update({ reminderTime: value })}
+          />
         </div>
         <p className="muted">
           提醒在页面打开且可见时出现。关闭网页后的系统通知需要原生客户端或推送服务。
         </p>
-        <button className="secondary-button">保存偏好</button>
+        <Button variant="outline" type="submit" className="secondary-button">
+          保存偏好
+        </Button>
         {message ? <p role="status">{message}</p> : null}
         {error ? (
           <p className="error-message" role="alert">

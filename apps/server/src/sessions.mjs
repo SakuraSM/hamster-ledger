@@ -11,6 +11,13 @@ const cookieName = (isSecure) =>
   isSecure ? "__Host-hamster_session" : COOKIE_NAME;
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
 export function sessionToken(request) {
+  if (request.authTransport === "native") {
+    const authorization = request.headers.authorization;
+    return typeof authorization === "string" &&
+      /^Bearer [A-Za-z0-9_-]{43}$/.test(authorization)
+      ? authorization.slice(7)
+      : null;
+  }
   const name = request.authCookieName ?? COOKIE_NAME;
   return (
     request.headers.cookie
@@ -43,7 +50,8 @@ export function getSession(request, database, now = Date.now()) {
       "SELECT sessions.*,users.username,users.must_change_password,users.credential_version AS current_version FROM sessions JOIN users ON users.id=sessions.user_id WHERE token_hash=?",
     )
     .get(tokenHash(token));
-  if (!session) return null;
+  if (!session || session.transport !== (request.authTransport ?? "cookie"))
+    return null;
   if (
     session.expires_at <= now ||
     session.last_seen_at + session.idle_seconds * 1000 <= now ||
@@ -136,11 +144,11 @@ export function createSession({
   const previous = sessionToken(request);
   if (previous)
     database
-      .prepare("DELETE FROM sessions WHERE token_hash=?")
-      .run(tokenHash(previous));
+      .prepare("DELETE FROM sessions WHERE token_hash=? AND transport=?")
+      .run(tokenHash(previous), request.authTransport ?? "cookie");
   database
     .prepare(
-      "INSERT INTO sessions(token_hash,user_id,expires_at,id,created_at,last_seen_at,idle_seconds,remember,csrf_token,credential_version,device_name) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO sessions(token_hash,user_id,expires_at,id,created_at,last_seen_at,idle_seconds,remember,csrf_token,credential_version,device_name,transport) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
     )
     .run(
       tokenHash(token),
@@ -153,7 +161,10 @@ export function createSession({
       remember ? 1 : 0,
       csrfToken,
       user.credential_version,
-      deviceName(request.headers["user-agent"]),
+      request.authTransport === "native"
+        ? "Android 应用"
+        : deviceName(request.headers["user-agent"]),
+      request.authTransport ?? "cookie",
     );
   database
     .prepare(
@@ -162,6 +173,7 @@ export function createSession({
     .run(user.id, user.id, AUTH_POLICY.maximumSessions);
   return {
     body: {
+      ...(request.authTransport === "native" ? { accessToken: token } : {}),
       user: {
         id: user.id,
         username: user.username,
@@ -170,16 +182,21 @@ export function createSession({
       csrfToken,
       session: { id, expiresAt: now + seconds * 1000, remember },
     },
-    cookie: cookie(token, isSecure, remember),
+    cookie:
+      request.authTransport === "native"
+        ? null
+        : cookie(token, isSecure, remember),
   };
 }
 export function logout(request, database, isSecure) {
   const token = sessionToken(request);
   if (token)
     database
-      .prepare("DELETE FROM sessions WHERE token_hash=?")
-      .run(tokenHash(token));
-  return clearSessionCookie(isSecure);
+      .prepare("DELETE FROM sessions WHERE token_hash=? AND transport=?")
+      .run(tokenHash(token), request.authTransport ?? "cookie");
+  return request.authTransport === "native"
+    ? null
+    : clearSessionCookie(isSecure);
 }
 export function listSessions(database, session, now = Date.now()) {
   return database

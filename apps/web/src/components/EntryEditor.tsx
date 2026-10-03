@@ -1,3 +1,11 @@
+import {
+  SegmentedControl,
+  Autocomplete,
+  TextInput,
+  Button,
+} from "@mantine/core";
+import { Choice } from "../ui/Choice";
+import { DateField } from "../ui/DateField";
 const CENTS_PER_YUAN = 100;
 const NOTE_SUGGESTION_LIMIT = 12;
 const MINUTE_TIMESTAMP_LENGTH = 16;
@@ -117,134 +125,112 @@ export function EntryEditor({
   return (
     <Dialog title={record ? "编辑账单" : "记一笔"} onClose={onClose}>
       <form onSubmit={submit}>
-        <div className="entry-kind" role="group" aria-label="收支类型">
-          {(["支出", "收入", "转账", "退款"] as Kind[]).map((item) => (
-            <button
-              type="button"
-              key={item}
-              className={kind === item ? "selected" : ""}
-              onClick={() => {
-                setKind(item);
-                const names = categoryNames(ledger, item);
-                if (!names.includes(category))
-                  setCategory(defaultCategory(ledger, { kind: item }));
-              }}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <label className="entry-amount">
-          金额（元）
-          <input
-            autoFocus
-            inputMode="decimal"
-            required
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            placeholder="0.00"
-          />
-        </label>
+        <SegmentedControl
+          fullWidth
+          aria-label="收支类型"
+          value={kind}
+          data={["支出", "收入", "转账", "退款"]}
+          onChange={(value) => {
+            const nextKind = value as Kind;
+            setKind(nextKind);
+            if (!categoryNames(ledger, nextKind).includes(category))
+              setCategory(defaultCategory(ledger, { kind: nextKind }));
+          }}
+        />
+        <TextInput
+          label={<>金额（元）</>}
+          className="entry-amount"
+          autoFocus
+          inputMode="decimal"
+          required
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder="0.00"
+        />
         <div className="form-grid">
-          <label>
-            商户 / 交易名称
-            <input
-              required
-              value={merchant}
-              onChange={(event) => setMerchant(event.target.value)}
-              placeholder="如：午餐、工资"
-            />
-          </label>
-          <label>
-            分类
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-            >
-              {!category ? <option value="">请先添加分类</option> : null}
-              {!categoryNames(ledger, kind).includes(category) &&
-              category &&
-              !(baseline?.category === category && baseline?.kind === kind) ? (
-                <option value={category} disabled>
-                  {category}（分类已变更，请重新选择）
+          <TextInput
+            label={<>商户 / 交易名称</>}
+            required
+            value={merchant}
+            onChange={(event) => setMerchant(event.target.value)}
+            placeholder="如：午餐、工资"
+          />
+          <Choice
+            label={<>分类</>}
+            value={category}
+            onChange={(value) => setCategory(value)}
+          >
+            {!category ? <option value="">请先添加分类</option> : null}
+            {!categoryNames(ledger, kind).includes(category) &&
+            category &&
+            !(baseline?.category === category && baseline?.kind === kind) ? (
+              <option value={category} disabled>
+                {category}（分类已变更，请重新选择）
+              </option>
+            ) : null}
+            {[
+              ...new Set([
+                ...(baseline?.kind === kind ? [baseline.category] : []),
+                ...categoryNames(ledger, kind),
+              ]),
+            ].map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </Choice>
+          <DateField
+            label={<>交易时间</>}
+            className="full-width"
+            required
+            type="datetime-local"
+
+            value={timestamp}
+            onChange={(value) => setTimestamp(value)}
+          />
+          <Choice
+            label={<>收付款账户</>}
+            value={accountId}
+            onChange={(value) => setAccountId(value)}
+          >
+            <option value="">不关联资产</option>
+            {ledger.accounts
+              .filter((item) => !item.isArchived)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
                 </option>
-              ) : null}
-              {[
-                ...new Set([
-                  ...(baseline?.kind === kind ? [baseline.category] : []),
-                  ...categoryNames(ledger, kind),
-                ]),
-              ].map((item) => (
-                <option key={item}>{item}</option>
               ))}
-            </select>
-          </label>
-          <label className="full-width">
-            交易时间
-            <input
-              required
-              type="datetime-local"
-              step="1"
-              value={timestamp}
-              onChange={(event) => setTimestamp(event.target.value)}
-            />
-          </label>
-          <label>
-            收付款账户
-            <select
-              value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
+          </Choice>
+          {kind === "转账" ? (
+            <Choice
+              label={<>转入账户</>}
+              value={destination}
+              onChange={(value) => setDestination(value)}
             >
-              <option value="">不关联资产</option>
+              <option value="">请选择</option>
               {ledger.accounts
-                .filter((item) => !item.isArchived)
+                .filter((item) => !item.isArchived && item.id !== accountId)
                 .map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
                   </option>
                 ))}
-            </select>
-          </label>
-          {kind === "转账" ? (
-            <label>
-              转入账户
-              <select
-                value={destination}
-                onChange={(event) => setDestination(event.target.value)}
-              >
-                <option value="">请选择</option>
-                {ledger.accounts
-                  .filter((item) => !item.isArchived && item.id !== accountId)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            </Choice>
           ) : null}
-          <label className="full-width">
-            备注
-            <input
-              list="note-suggestions"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="记录用途，或选用历史备注"
-            />
-            <datalist id="note-suggestions">
-              {suggestions.map((note) => (
-                <option key={note} value={note} />
-              ))}
-            </datalist>
-          </label>
-          <label className="full-width">
-            标签
-            <input
-              value={tags}
-              onChange={(event) => setTags(event.target.value)}
-              placeholder="旅行，家庭，报销"
-            />
-          </label>
+          <Autocomplete
+            className="full-width"
+            label="备注"
+            data={suggestions}
+            value={description}
+            onChange={setDescription}
+            placeholder="记录用途，或选用历史备注"
+          />
+          <TextInput
+            label={<>标签</>}
+            className="full-width"
+            value={tags}
+            onChange={(event) => setTags(event.target.value)}
+            placeholder="旅行，家庭，报销"
+          />
         </div>
         {error ? (
           <p role="alert" className="error-message">
@@ -254,18 +240,33 @@ export function EntryEditor({
         {hasConflict && onReload ? (
           <p className="notice warning">
             加载最新账单会替换当前草稿。
-            <button type="button" className="text-button" onClick={onReload}>
+            <Button
+              variant="subtle"
+              type="button"
+              className="text-button"
+              onClick={onReload}
+            >
               加载最新账单
-            </button>
+            </Button>
           </p>
         ) : null}
         <div className="dialog-actions">
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <Button
+            variant="outline"
+            type="button"
+            className="secondary-button"
+            onClick={onClose}
+          >
             取消
-          </button>
-          <button className="primary-button" disabled={busy}>
+          </Button>
+          <Button
+            variant="filled"
+            type="submit"
+            className="primary-button"
+            loading={busy}
+          >
             {busy ? "保存中…" : "保存账单"}
-          </button>
+          </Button>
         </div>
       </form>
     </Dialog>

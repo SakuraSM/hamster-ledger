@@ -1,3 +1,4 @@
+import { Button, FileInput } from "@mantine/core";
 const MAX_BACKUP_MEGABYTES = 20;
 const BYTES_PER_KIBIBYTE = 1024;
 const JSON_INDENT = 2;
@@ -54,7 +55,9 @@ export function BackupPanel({
         完整备份包含账户、分类、预算、周期规则与回收站。备份文件为明文，请自行妥善保存。
       </p>
       <div className="button-row">
-        <button
+        <Button
+          variant="outline"
+          type="submit"
           className="secondary-button"
           onClick={() =>
             downloadFile({
@@ -65,8 +68,10 @@ export function BackupPanel({
           }
         >
           导出完整备份
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
+          type="submit"
           className="secondary-button"
           onClick={() =>
             void exportExcel(
@@ -75,16 +80,15 @@ export function BackupPanel({
           }
         >
           导出 Excel
-        </button>
+        </Button>
       </div>
-      <label className="file-label">
-        恢复 JSON 备份
-        <input
-          type="file"
-          accept=".json,application/json"
-          onChange={(event) => void load(event.target.files?.[0])}
-        />
-      </label>
+      <FileInput
+        label="恢复 JSON 备份"
+        accept=".json,application/json"
+        placeholder="选择完整备份文件"
+        clearable
+        onChange={(file) => void load(file ?? undefined)}
+      />
       {preview ? (
         <div className="restore-preview">
           <h3>恢复预览</h3>
@@ -94,13 +98,15 @@ export function BackupPanel({
             {preview.budgets?.length ?? 0} 项预算
           </p>
           <p>将创建一个新账本，当前账本保留。</p>
-          <button
+          <Button
+            variant="filled"
+            type="submit"
             className="primary-button"
             disabled={isSaving}
             onClick={() => void restore()}
           >
             恢复为新账本
-          </button>
+          </Button>
         </div>
       ) : null}
       {error ? (

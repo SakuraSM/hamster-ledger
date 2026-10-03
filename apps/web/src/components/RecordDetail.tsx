@@ -1,3 +1,5 @@
+import { TextInput, Checkbox, UnstyledButton, Button } from "@mantine/core";
+import { Choice } from "../ui/Choice";
 import { RecordAccountFields } from "./RecordAccountFields";
 import { useState } from "react";
 import {
@@ -102,38 +104,31 @@ export function RecordDetail({
           </p>
         ) : null}
         <div className="form-grid">
-          <label>
-            分类
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value as Category)}
-            >
-              {[...new Set([category, ...categoryNames(ledger)])].map(
-                (item) => (
-                  <option key={item}>{item}</option>
-                ),
-              )}
-            </select>
-          </label>
-          <label>
-            交易类型
-            <select
-              value={kind}
-              onChange={(event) => setKind(event.target.value as Kind)}
-            >
-              {KINDS.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-          <label className="full-width">
-            实际付款 / 收款账户
-            <input
-              value={account}
-              onChange={(event) => setAccount(event.target.value)}
-              placeholder="如：招商银行 · 6628"
-            />
-          </label>
+          <Choice
+            label={<>分类</>}
+            value={category}
+            onChange={(value) => setCategory(value as Category)}
+          >
+            {[...new Set([category, ...categoryNames(ledger)])].map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </Choice>
+          <Choice
+            label={<>交易类型</>}
+            value={kind}
+            onChange={(value) => setKind(value as Kind)}
+          >
+            {KINDS.map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </Choice>
+          <TextInput
+            label={<>实际付款 / 收款账户</>}
+            className="full-width"
+            value={account}
+            onChange={(event) => setAccount(event.target.value)}
+            placeholder="如：招商银行 · 6628"
+          />
         </div>
         <RecordAccountFields
           record={record}
@@ -144,14 +139,13 @@ export function RecordDetail({
           onAccount={setAccountId}
           onDestination={setTransferToAccountId}
         />
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={(event) => setRemember(event.target.checked)}
-          />
-          记住“{record.merchant}”的分类，用于下次导入
-        </label>
+        <Checkbox
+          label={<>记住“{record.merchant}”的分类，用于下次导入</>}
+          className="checkbox-label"
+
+          checked={remember}
+          onChange={(event) => setRemember(event.target.checked)}
+        />
         <dl className="detail-meta">
           <div>
             <dt>交易说明</dt>
@@ -192,7 +186,7 @@ export function RecordDetail({
           <section className="related-records">
             <h3>同一交易的关联流水</h3>
             {related.map((item) => (
-              <button
+              <UnstyledButton
                 className="related-record"
                 type="button"
                 key={item.id}
@@ -210,7 +204,7 @@ export function RecordDetail({
                 <span>
                   {signedMoney(item)} <Icons.Caret size={16} />
                 </span>
-              </button>
+              </UnstyledButton>
             ))}
           </section>
         ) : null}
@@ -232,12 +226,18 @@ export function RecordDetail({
         ) : null}
         <div className="button-row">
           {onEdit ? (
-            <button type="button" className="secondary-button" onClick={onEdit}>
+            <Button
+              variant="outline"
+              type="button"
+              className="secondary-button"
+              onClick={onEdit}
+            >
               编辑金额、日期与备注
-            </button>
+            </Button>
           ) : null}
           {onDelete ? (
-            <button
+            <Button
+              variant="subtle"
               type="button"
               className="text-button"
               onClick={() => {
@@ -251,16 +251,26 @@ export function RecordDetail({
               }}
             >
               {isDeleting ? "确认移入回收站" : "删除账单"}
-            </button>
+            </Button>
           ) : null}
         </div>
         <div className="dialog-actions">
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <Button
+            variant="outline"
+            type="button"
+            className="secondary-button"
+            onClick={onClose}
+          >
             取消
-          </button>
-          <button className="primary-button" type="submit" disabled={isSaving}>
+          </Button>
+          <Button
+            variant="filled"
+            className="primary-button"
+            type="submit"
+            disabled={isSaving}
+          >
             {isSaving ? "保存中…" : "保存修改"}
-          </button>
+          </Button>
         </div>
       </form>
     </Dialog>

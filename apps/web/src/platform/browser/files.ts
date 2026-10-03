@@ -33,7 +33,7 @@ export async function readStatement(file: File): Promise<StatementFile> {
     const text = utf8.includes("\uFFFD")
       ? new TextDecoder("gb18030").decode(buffer)
       : utf8;
-    const result = Papa.parse<string[]>(text, { skipEmptyLines: "greedy" });
+    const result = Papa.parse<string[]>(text, { skipEmptyLines: false });
     if (result.errors.some((error) => error.type === "Quotes"))
       throw new Error("CSV 引号格式有误，请重新导出账单。");
     rows = result.data.map((row) => row.map((value) => value.trim()));

@@ -3,8 +3,9 @@ import { CloudError } from "./cloud-request";
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
+const INCOMPATIBLE_SERVICE_STATUS = 502;
 function invalid(): never {
-  throw new CloudError(502, {
+  throw new CloudError(INCOMPATIBLE_SERVICE_STATUS, {
     message: "同步服务的登录协议不兼容，请更新并重启服务。",
     code: "service_unavailable",
   });

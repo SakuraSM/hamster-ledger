@@ -173,7 +173,7 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
         response,
         isRegister ? 201 : 200,
         { ...result.body, policy: publicAuthPolicy(allowRegistration) },
-        { "Set-Cookie": result.cookie },
+        result.cookie ? { "Set-Cookie": result.cookie } : {},
       );
       return true;
     }
@@ -184,11 +184,12 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
           now: now(),
           allowTemporary: true,
         });
+      const cleared = logout(request, database, isSecure);
       json(
         response,
         200,
         { ok: true },
-        { "Set-Cookie": logout(request, database, isSecure) },
+        cleared ? { "Set-Cookie": cleared } : {},
       );
       return true;
     }
@@ -243,7 +244,12 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
           now: now(),
         });
       });
-      json(response, 200, result.body, { "Set-Cookie": result.cookie });
+      json(
+        response,
+        200,
+        result.body,
+        result.cookie ? { "Set-Cookie": result.cookie } : {},
+      );
       return true;
     }
     if (path === "/api/auth/logout-others" && method === "POST") {
@@ -268,7 +274,7 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
         response,
         200,
         { ok: true, isCurrent: match[1] === session.id },
-        match[1] === session.id
+        match[1] === session.id && request.authTransport !== "native"
           ? { "Set-Cookie": clearSessionCookie(isSecure) }
           : {},
       );

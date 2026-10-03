@@ -1,3 +1,5 @@
+import { Button, TextInput } from "@mantine/core";
+import { Choice } from "../ui/Choice";
 import { useState } from "react";
 import {
   CATEGORIES,
@@ -71,19 +73,21 @@ export function Transactions({
           <h1>每一笔，都有来处</h1>
           <p>查找、筛选和整理你的全部账单</p>
         </div>
-        <button
+        <Button
+          variant="outline"
+          type="submit"
           className="secondary-button"
           onClick={() => exportRecords(filtered)}
           disabled={!filtered.length}
         >
           <Icons.Download size={19} />
           导出账单
-        </button>
+        </Button>
       </div>
       <div className="filter-bar">
         <label className="search-field">
           <Icons.Search size={20} />
-          <input
+          <TextInput
             aria-label="搜索账单"
             placeholder="搜索商户、备注、标签或流水号"
             value={query}
@@ -93,11 +97,11 @@ export function Transactions({
             }}
           />
         </label>
-        <select
+        <Choice
           aria-label="账单来源"
           value={filter.source}
-          onChange={(event) => {
-            onFilter({ ...filter, source: event.target.value as Source | "" });
+          onChange={(value) => {
+            onFilter({ ...filter, source: value as Source | "" });
             setPageIndex(0);
           }}
         >
@@ -105,14 +109,14 @@ export function Transactions({
           {SOURCES.map((source) => (
             <option key={source}>{source}</option>
           ))}
-        </select>
-        <select
+        </Choice>
+        <Choice
           aria-label="账单分类"
           value={filter.category}
-          onChange={(event) => {
+          onChange={(value) => {
             onFilter({
               ...filter,
-              category: event.target.value as Category | "",
+              category: value as Category | "",
             });
             setPageIndex(0);
           }}
@@ -126,12 +130,12 @@ export function Transactions({
           ].map((category) => (
             <option key={category}>{category}</option>
           ))}
-        </select>
-        <select
+        </Choice>
+        <Choice
           aria-label="关联资产账户"
           value={filter.accountId ?? ""}
-          onChange={(event) => {
-            onFilter({ ...filter, accountId: event.target.value });
+          onChange={(value) => {
+            onFilter({ ...filter, accountId: value });
             setPageIndex(0);
           }}
         >
@@ -143,12 +147,12 @@ export function Transactions({
               {account.isArchived ? "（已归档）" : ""}
             </option>
           ))}
-        </select>
-        <select
+        </Choice>
+        <Choice
           aria-label="处理状态"
           value={status}
-          onChange={(event) => {
-            setStatus(event.target.value);
+          onChange={(value) => {
+            setStatus(value);
             setPageIndex(0);
           }}
         >
@@ -156,7 +160,7 @@ export function Transactions({
           <option value="confirmed">已入账</option>
           <option value="pending">待确认</option>
           <option value="duplicate">重复记录</option>
-        </select>
+        </Choice>
       </div>
       <p className="list-caption">
         共 {filtered.length} 条记录{" "}
@@ -175,20 +179,24 @@ export function Transactions({
         <span>
           第 {safePage + 1} / {totalPages} 页
         </span>
-        <button
+        <Button
+          variant="outline"
+          type="submit"
           className="secondary-button"
           disabled={safePage === 0}
           onClick={() => setPageIndex(safePage - 1)}
         >
           上一页
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
+          type="submit"
           className="secondary-button"
           disabled={safePage === totalPages - 1}
           onClick={() => setPageIndex(safePage + 1)}
         >
           下一页
-        </button>
+        </Button>
       </div>
     </section>
   );

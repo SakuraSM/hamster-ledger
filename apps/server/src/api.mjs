@@ -24,8 +24,27 @@ export function createApi({
     request.authCookieName = isSecure
       ? "__Host-hamster_session"
       : "hamster_session";
-    verifyWriteOrigin(request, origin);
-    const path = new URL(request.url, origin).pathname;
+    const requestedPath = new URL(request.url, origin).pathname;
+    request.authTransport = requestedPath.startsWith("/api/native/")
+      ? "native"
+      : "cookie";
+    if (request.authTransport === "native") {
+      // Native endpoints never accept ambient browser credentials or browser origins.
+      if (
+        request.headers.origin !== undefined ||
+        request.headers.cookie !== undefined
+      )
+        throw new HttpError(403, "此接口仅接受原生客户端的独立凭据。");
+      if (
+        !["GET", "HEAD"].includes(request.method) &&
+        !request.headers["content-type"]?.startsWith("application/json")
+      )
+        throw new HttpError(415, "请求必须使用 JSON。");
+    } else verifyWriteOrigin(request, origin);
+    const path =
+      request.authTransport === "native"
+        ? requestedPath.replace("/api/native/", "/api/")
+        : requestedPath;
     const method = request.method;
     if (path === "/api/health" && method === "GET") {
       json(response, 200, { ok: true, storage: "sqlite" });

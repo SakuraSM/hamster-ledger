@@ -1,3 +1,4 @@
+import { UnstyledButton, Button } from "@mantine/core";
 const MONTH_START = 5;
 const DAY_END = 10;
 import { CategoryIcon, Icons } from "./Icons";
@@ -56,7 +57,8 @@ export function TransactionTable({
                   {record.date.slice(MONTH_START, DAY_END).replace("-", ".")}
                 </td>
                 <td>
-                  <button
+                  <UnstyledButton
+                    type="submit"
                     className="merchant-button"
                     aria-label={`打开${record.merchant}账单`}
                     onClick={() => onSelect(record)}
@@ -74,7 +76,7 @@ export function TransactionTable({
                         {record.linkedSources.length ? " · 已关联" : ""}
                       </small>
                     </span>
-                  </button>
+                  </UnstyledButton>
                 </td>
                 <td>
                   <span className={`category-tag category-${record.category}`}>
@@ -109,14 +111,16 @@ export function TransactionTable({
                   {signedMoney(record)}
                 </td>
                 <td className="detail-cell">
-                  <button
+                  <Button
+                    variant="subtle"
+                    type="submit"
                     className="text-button record-detail-button"
                     onClick={() => onSelect(record)}
                     aria-label={`查看${record.merchant}账单详情`}
                   >
                     详情
                     <Icons.Caret size={16} />
-                  </button>
+                  </Button>
                 </td>
               </tr>
             );

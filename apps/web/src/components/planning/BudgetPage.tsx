@@ -1,3 +1,6 @@
+import { TextInput, Button } from "@mantine/core";
+import { Choice } from "../../ui/Choice";
+import { DateField } from "../../ui/DateField";
 const CENTS_PER_YUAN = 100;
 import { useState } from "react";
 import {
@@ -68,45 +71,43 @@ export function BudgetPage({
         <h1>给生活留一点余量</h1>
         <p>按账期规划支出，退款会抵扣已用预算。</p>
       </div>
-      <label className="inline-field">
-        预算月份
-        <input
-          type="month"
-          value={month}
-          onChange={(event) =>
-            event.target.value && onMonth(event.target.value)
-          }
-        />
-      </label>
+      <DateField
+        label={<>预算月份</>}
+        className="inline-field"
+        type="month"
+        value={month}
+        onChange={(value) => value && onMonth(value)}
+      />
       <p className="muted">
         账期 {range.start} 至 {range.end}（不含结束日）
       </p>
       <form className="panel inline-form" onSubmit={save}>
-        <label>
-          预算范围
-          <select
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-          >
-            <option value="">整月总预算</option>
-            {categoryNames(ledger, "支出").map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          预算金额（元）
-          <input
-            required
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            placeholder="如：3000"
-          />
-        </label>
-        <button className="primary-button" disabled={isSaving}>
+        <Choice
+          label={<>预算范围</>}
+          value={category}
+          onChange={(value) => setCategory(value)}
+        >
+          <option value="">整月总预算</option>
+          {categoryNames(ledger, "支出").map((name) => (
+            <option key={name}>{name}</option>
+          ))}
+        </Choice>
+        <TextInput
+          label={<>预算金额（元）</>}
+          required
+          inputMode="decimal"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder="如：3000"
+        />
+        <Button
+          variant="filled"
+          type="submit"
+          className="primary-button"
+          disabled={isSaving}
+        >
           保存预算
-        </button>
+        </Button>
       </form>
       {error ? (
         <p className="error-message" role="alert">
@@ -118,12 +119,14 @@ export function BudgetPage({
           <article className="panel budget-card" key={budget.id}>
             <div className="section-heading">
               <h2>{budget.category ?? "整月总预算"}</h2>
-              <button
+              <Button
+                variant="subtle"
+                type="submit"
                 className="text-button"
                 onClick={() => void remove(budget.id)}
               >
                 删除
-              </button>
+              </Button>
             </div>
             <strong>
               ¥ {money(budget.remaining)}
@@ -137,7 +140,9 @@ export function BudgetPage({
             <p>
               已用 ¥{money(budget.spent)} / ¥{money(budget.amount)}
             </p>
-            <button
+            <Button
+              variant="outline"
+              type="submit"
               className="secondary-button"
               onClick={() => {
                 setCategory(budget.category ?? "");
@@ -145,7 +150,7 @@ export function BudgetPage({
               }}
             >
               调整预算
-            </button>
+            </Button>
           </article>
         ))}
       </div>

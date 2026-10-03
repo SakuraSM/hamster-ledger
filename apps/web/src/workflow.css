@@ -282,9 +282,9 @@
   white-space: nowrap;
 }
 .mapping-panel {
-  background: #f8f0e5;
+  background: var(--sidebar);
   padding: 20px;
-  border-bottom: 1px solid #e3d1bd;
+  border-bottom: 1px solid var(--line);
 }
 .field-map-grid {
   display: grid;
@@ -502,4 +502,45 @@
 }
 .review-queue > button.selected small {
   color: #654b36;
+}
+
+.header-row-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.header-row-control > .mantine-NumberInput-root {
+  flex: 1;
+  min-width: 140px;
+}
+.mapping-preview {
+  margin-block: 18px;
+  overflow-x: auto;
+  max-width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.mapping-preview table {
+  min-width: 760px;
+}
+.mapping-preview th,
+.mapping-preview td {
+  min-width: 120px;
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
+.mapping-preview:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.mapping-panel .mantine-Button-root[data-variant="outline"] {
+  color: var(--ink);
+  border-color: var(--primary);
+}
+.mapping-review-alert .mantine-Alert-title,
+.mapping-review-alert .mantine-Alert-message {
+  color: var(--ink);
 }

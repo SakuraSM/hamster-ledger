@@ -1,0 +1,224 @@
+/* Mantine owns control internals. Page CSS continues to own the layout. */
+:root:root {
+  --mantine-color-body: var(--bg);
+  --mantine-color-text: var(--ink);
+  --mantine-color-dimmed: var(--muted);
+  --mantine-primary-color-filled: var(--primary);
+  --mantine-primary-color-filled-hover: var(--primary-hover);
+}
+.mantine-Input-wrapper .mantine-Input-input,
+.mantine-PasswordInput-innerInput {
+  color: var(--ink);
+  background: var(--bg);
+  border-color: var(--line);
+  font-size: 14px;
+}
+.mantine-Input-wrapper .mantine-Input-input {
+  padding-inline-start: var(--input-padding-inline-start);
+  padding-inline-end: var(--input-padding-inline-end);
+  min-height: var(--input-height);
+  height: var(--input-height);
+}
+.mantine-Input-wrapper .mantine-Input-input:focus {
+  border-color: var(--primary);
+}
+.mantine-InputWrapper-label.mantine-InputWrapper-label,
+.mantine-Checkbox-label.mantine-Checkbox-label {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.mantine-Checkbox-label.mantine-Checkbox-label {
+  margin: 0;
+  padding-inline-start: 10px;
+}
+.mantine-Checkbox-input.mantine-Checkbox-input {
+  padding: 0;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  min-height: 0;
+}
+.mantine-Button-inner {
+  gap: 8px;
+}
+.mantine-Button-label {
+  overflow: visible;
+}
+.mantine-Button-root {
+  transition:
+    background-color 140ms,
+    border-color 140ms,
+    transform 140ms;
+}
+.mantine-Button-root:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.mantine-Combobox-dropdown {
+  background: var(--bg);
+  color: var(--ink);
+  border-color: var(--line);
+}
+.mantine-Combobox-option {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+.mantine-Combobox-option[data-combobox-selected],
+.mantine-Combobox-option[data-combobox-active] {
+  background: var(--apricot);
+  color: var(--ink);
+}
+.mantine-Combobox-option:hover {
+  background: var(--sidebar);
+}
+.ledger-modal {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.ledger-modal-header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.ledger-modal-title {
+  font-size: 21px;
+  font-weight: 650;
+}
+.mantine-Modal-close {
+  color: var(--muted);
+}
+.mantine-InputWrapper-root {
+  min-width: 0;
+}
+.form-grid > .mantine-InputWrapper-root,
+.field-map-grid > .mantine-InputWrapper-root {
+  width: 100%;
+}
+.filter-bar > .mantine-InputWrapper-root {
+  flex: 1;
+  min-width: 130px;
+}
+.search-field {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.search-field > .mantine-InputWrapper-root {
+  flex: 1;
+}
+.search-field:focus-within {
+  outline: none;
+}
+.month-picker {
+  padding: 0;
+  border: 0;
+}
+.month-picker > .mantine-InputWrapper-root {
+  width: 160px;
+}
+.entry-amount {
+  margin-block: 18px;
+}
+.entry-amount .mantine-Input-input {
+  font-size: 32px;
+  height: 60px;
+  font-variant-numeric: tabular-nums;
+}
+.auth-field .mantine-PasswordInput-innerInput {
+  padding-block: 0;
+  padding-inline-start: var(--input-padding-inline-start);
+  padding-inline-end: var(--input-padding-inline-end);
+  border: 0;
+  background: transparent;
+  min-height: 0;
+  height: 100%;
+}
+.auth-field .mantine-Input-description {
+  line-height: 1.6;
+  color: var(--muted);
+}
+.inline-form > .mantine-InputWrapper-root {
+  flex: 1;
+}
+.mantine-SegmentedControl-root {
+  background: var(--sidebar);
+}
+.mantine-SegmentedControl-indicator {
+  background: var(--apricot);
+}
+.mantine-SegmentedControl-label {
+  color: var(--ink);
+}
+.mantine-Notification-root {
+  background: var(--bg);
+  border-color: var(--line);
+}
+.mantine-Notification-description {
+  color: var(--ink);
+}
+@media (max-width: 700px) {
+  .filter-bar > .mantine-InputWrapper-root {
+    flex-basis: 42%;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .dialog-actions .mantine-Button-root {
+    flex: 1;
+    padding-inline: 12px;
+  }
+  .mantine-Input-input,
+  .mantine-PasswordInput-innerInput {
+    font-size: 16px !important;
+  }
+  .entry-amount .mantine-Input-input {
+    font-size: 32px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mantine-Button-root {
+    transition: none;
+  }
+  .mantine-Button-root:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Calendar dates remain readable in both light and night themes. */
+:is(.mantine-DateTimePicker-day, .mantine-DateInput-day)[data-weekend]:not(
+    [data-selected]
+  ) {
+  color: #a6372f;
+}
+:is(.mantine-DateTimePicker-day, .mantine-DateInput-day)[data-outside]:not(
+    [data-selected]
+  ) {
+  color: var(--muted);
+  opacity: 1;
+}
+:root[data-theme="night"]
+  :is(.mantine-DateTimePicker-day, .mantine-DateInput-day)[data-weekend]:not(
+    [data-selected]
+  ) {
+  color: #ffafa2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mantine-Modal-content,
+  .mantine-Overlay-root,
+  .mantine-Combobox-dropdown,
+  .mantine-Notification-root,
+  .mantine-SegmentedControl-indicator {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+.mantine-InputPlaceholder-placeholder,
+.mantine-Input-input::placeholder,
+.mantine-PasswordInput-innerInput::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}

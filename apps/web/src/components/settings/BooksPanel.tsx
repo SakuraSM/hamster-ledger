@@ -1,3 +1,4 @@
+import { UnstyledButton, Button, TextInput } from "@mantine/core";
 import { useState } from "react";
 import type { LedgerController } from "../../hooks/useLedger";
 export function BooksPanel({
@@ -46,7 +47,8 @@ export function BooksPanel({
       <div className="book-list">
         {controller.books.map((book) => (
           <div className="book-row" key={book.id}>
-            <button
+            <UnstyledButton
+              type="submit"
               className={
                 book.id === controller.mode
                   ? "selected book-select"
@@ -60,9 +62,11 @@ export function BooksPanel({
               {book.name}
               {book.id === controller.mode ? " · 当前" : ""}
               {book.isArchived ? " · 已归档" : ""}
-            </button>
+            </UnstyledButton>
             {book.id.startsWith("book:") ? (
-              <button
+              <Button
+                variant="subtle"
+                type="submit"
                 className="text-button"
                 disabled={book.id === controller.mode}
                 onClick={() =>
@@ -70,25 +74,28 @@ export function BooksPanel({
                 }
               >
                 {book.isArchived ? "恢复" : "归档"}
-              </button>
+              </Button>
             ) : null}
           </div>
         ))}
       </div>
       <form className="inline-form" onSubmit={create}>
-        <label>
-          新账本名称
-          <input
-            required
-            maxLength={40}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="家庭、旅行、个人…"
-          />
-        </label>
-        <button className="secondary-button" disabled={isSaving}>
+        <TextInput
+          label={<>新账本名称</>}
+          required
+          maxLength={40}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="家庭、旅行、个人…"
+        />
+        <Button
+          variant="outline"
+          type="submit"
+          className="secondary-button"
+          disabled={isSaving}
+        >
           创建账本
-        </button>
+        </Button>
       </form>
       <form
         className="inline-form"
@@ -97,16 +104,16 @@ export function BooksPanel({
           void change({ id: controller.mode, name: rename });
         }}
       >
-        <label>
-          重命名当前账本
-          <input
-            required
-            maxLength={40}
-            value={rename}
-            onChange={(event) => setRename(event.target.value)}
-          />
-        </label>
-        <button className="secondary-button">重命名</button>
+        <TextInput
+          label={<>重命名当前账本</>}
+          required
+          maxLength={40}
+          value={rename}
+          onChange={(event) => setRename(event.target.value)}
+        />
+        <Button variant="outline" type="submit" className="secondary-button">
+          重命名
+        </Button>
       </form>
       {error ? (
         <p role="alert" className="error-message">

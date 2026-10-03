@@ -1,3 +1,4 @@
+import { Choice } from "../ui/Choice";
 import {
   accountMovement,
   resolveAssetAccount,
@@ -53,48 +54,45 @@ export function RecordAccountFields({
     <fieldset className="record-account-fields">
       <legend>账户关联</legend>
       <div className="form-grid">
-        <label className={kind === "转账" ? "" : "full-width"}>
-          {label}
-          <select
-            value={accountId}
-            onChange={(event) => onAccount(event.target.value)}
-          >
-            <option value="">不关联资产账户</option>
-            {options.map((account) => (
-              <option
-                key={account.id}
-                value={account.id}
-                disabled={account.isArchived && account.id !== accountId}
-              >
-                {account.name} · {account.kind === "asset" ? "资产" : "负债"}
-                {account.isArchived ? "（已归档）" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        {kind === "转账" ? (
-          <label>
-            转入 / 还款账户
-            <select
-              value={transferToAccountId}
-              onChange={(event) => onDestination(event.target.value)}
+        <Choice
+          label={<>{label}</>}
+          className={kind === "转账" ? "" : "full-width"}
+          value={accountId}
+          onChange={(value) => onAccount(value)}
+        >
+          <option value="">不关联资产账户</option>
+          {options.map((account) => (
+            <option
+              key={account.id}
+              value={account.id}
+              disabled={account.isArchived && account.id !== accountId}
             >
-              <option value="">请选择转入账户</option>
-              {options
-                .filter((account) => account.id !== accountId)
-                .map((account) => (
-                  <option
-                    key={account.id}
-                    value={account.id}
-                    disabled={
-                      account.isArchived && account.id !== transferToAccountId
-                    }
-                  >
-                    {account.name}
-                  </option>
-                ))}
-            </select>
-          </label>
+              {account.name} · {account.kind === "asset" ? "资产" : "负债"}
+              {account.isArchived ? "（已归档）" : ""}
+            </option>
+          ))}
+        </Choice>
+        {kind === "转账" ? (
+          <Choice
+            label={<>转入 / 还款账户</>}
+            value={transferToAccountId}
+            onChange={(value) => onDestination(value)}
+          >
+            <option value="">请选择转入账户</option>
+            {options
+              .filter((account) => account.id !== accountId)
+              .map((account) => (
+                <option
+                  key={account.id}
+                  value={account.id}
+                  disabled={
+                    account.isArchived && account.id !== transferToAccountId
+                  }
+                >
+                  {account.name}
+                </option>
+              ))}
+          </Choice>
         ) : null}
       </div>
       {!accounts.length ? (

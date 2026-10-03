@@ -1,3 +1,4 @@
+import { UnstyledButton, Button, Checkbox } from "@mantine/core";
 import { useMemo, useState } from "react";
 import {
   projectAccountBalance,
@@ -7,10 +8,10 @@ import {
   type AssetAccount,
   type Ledger,
   type BillRecord,
-  type AccountBalance,
 } from "@hamster-ledger/core";
 import { localNow } from "../../platform/browser/runtime";
 import { AccountEditor, type AccountSave } from "./AccountEditor";
+import { AccountGroup } from "./AccountGroup";
 import { AccountDetail } from "./AccountDetail";
 import { Icons } from "../Icons";
 interface AssetsPageProps {
@@ -24,75 +25,6 @@ interface AssetsPageProps {
   onRecord: (record: BillRecord) => void;
   onUnassigned: () => void;
   onLoadExamples: () => Promise<void>;
-}
-interface AccountGroupProps {
-  title: string;
-  accounts: AccountBalance[];
-  onSelect: (id: string) => void;
-}
-function AccountGroup({
-  title,
-  accounts,
-  onSelect,
-}: AccountGroupProps): React.JSX.Element {
-  if (!accounts.length)
-    return (
-      <section className="asset-account-group">
-        <h2>{title}</h2>
-        <p className="muted">还没有{title}，可添加银行卡、现金或贷款等账户。</p>
-      </section>
-    );
-  return (
-    <section className="asset-account-group">
-      <div className="section-heading">
-        <h2>
-          {title}
-          <small> {accounts.length} 个</small>
-        </h2>
-        <span>当前余额</span>
-      </div>
-      <div className="asset-account-list">
-        {accounts.map(({ account, balance, movementCount }) => {
-          const Icon =
-            account.kind === "liability"
-              ? Icons.Credit
-              : account.type === "银行卡"
-                ? Icons.Bank
-                : Icons.Wallet;
-          return (
-            <button
-              className="asset-account-row"
-              key={account.id}
-              onClick={() => onSelect(account.id)}
-            >
-              <span className="account-symbol">
-                <Icon size={24} weight="duotone" />
-              </span>
-              <span className="account-name">
-                <strong>{account.name}</strong>
-                <small>
-                  {account.type} ·{" "}
-                  {account.isArchived
-                    ? "已归档"
-                    : `${movementCount} 笔基准后变动`}
-                </small>
-              </span>
-              <span className="account-row-balance">
-                {account.kind === "liability" && balance < 0 ? (
-                  <small>预存</small>
-                ) : null}
-                ¥{" "}
-                {money(
-                  account.kind === "liability" ? Math.abs(balance) : balance,
-                )}
-              </span>
-              <Icons.Caret size={18} />
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
 }
 export function AssetsPage({
   ledger,
@@ -173,10 +105,15 @@ export function AssetsPage({
                 <h1>资产，也有一本清楚的账</h1>
                 <p>维护账户余额，掌握资产、负债与净资产</p>
               </div>
-              <button className="primary-button" onClick={() => setEditor({})}>
+              <Button
+                variant="filled"
+                type="submit"
+                className="primary-button"
+                onClick={() => setEditor({})}
+              >
                 <Icons.Plus size={19} />
                 添加账户
-              </button>
+              </Button>
             </div>
             <section
               className="summary asset-summary"
@@ -216,25 +153,36 @@ export function AssetsPage({
                 <p>
                   填写某时点的余额，并设置导入账单的账户别名。之后的已确认流水会更新账户余额。
                 </p>
-                <button
+                <Button
+                  variant="filled"
+                  type="submit"
                   className="primary-button"
                   onClick={() => setEditor({})}
                 >
                   添加第一个账户
-                </button>
+                </Button>
                 {isDemo ? (
-                  <button className="text-button" onClick={loadExamples}>
+                  <Button
+                    variant="subtle"
+                    type="submit"
+                    className="text-button"
+                    onClick={loadExamples}
+                  >
                     载入虚拟资产示例
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             ) : null}
             {unassigned > 0 ? (
-              <button className="account-link-reminder" onClick={onUnassigned}>
+              <UnstyledButton
+                type="submit"
+                className="account-link-reminder"
+                onClick={onUnassigned}
+              >
                 <Icons.Link size={20} />
                 {unassigned} 条账单尚未关联资产账户
                 <Icons.Arrow size={18} />
-              </button>
+              </UnstyledButton>
             ) : null}
             <div className="asset-groups">
               <AccountGroup
@@ -252,14 +200,13 @@ export function AssetsPage({
                 onSelect={setSelectedId}
               />
             </div>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={showArchived}
-                onChange={(event) => setShowArchived(event.target.checked)}
-              />
-              显示已归档账户
-            </label>
+            <Checkbox
+              label={<>显示已归档账户</>}
+              className="checkbox-label"
+
+              checked={showArchived}
+              onChange={(event) => setShowArchived(event.target.checked)}
+            />
             <p className="muted small asset-explanation">
               账户余额需要你维护基准。收入/退款增加资产余额，支出减少资产余额；信用卡支出增加负债，退款与还款减少负债。余额未接入银行实时查询。
             </p>

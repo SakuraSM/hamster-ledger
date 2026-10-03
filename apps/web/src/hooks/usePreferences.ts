@@ -1,6 +1,7 @@
 const DATE_KEY_LENGTH = 10;
 const TIME_START_INDEX = 11;
 const TIME_END_INDEX = 16;
+import { useMantineColorScheme } from "@mantine/core";
 import { useEffect } from "react";
 import { DEFAULT_PREFERENCES, type Ledger } from "@hamster-ledger/core";
 import { localNow } from "../platform/browser/runtime";
@@ -10,10 +11,12 @@ export function usePreferences(input: {
   mode: string;
   notify: (message: string) => void;
 }): void {
+  const { setColorScheme } = useMantineColorScheme();
   const preferences = input.ledger.preferences ?? DEFAULT_PREFERENCES;
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme;
-  }, [preferences.theme]);
+    setColorScheme(preferences.theme === "night" ? "dark" : "light");
+  }, [preferences.theme, setColorScheme]);
   useEffect(() => {
     if (!preferences.reminderEnabled) return;
     let reminded = "";

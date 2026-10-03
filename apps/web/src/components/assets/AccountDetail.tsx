@@ -1,3 +1,5 @@
+import { Button } from "@mantine/core";
+import { Choice } from "../../ui/Choice";
 const MONTH_KEY_LENGTH = 7;
 import { useState } from "react";
 import {
@@ -68,10 +70,15 @@ export function AccountDetail({
   }
   return (
     <section className="account-detail-page">
-      <button className="text-button account-back" onClick={onBack}>
+      <Button
+        variant="subtle"
+        type="submit"
+        className="text-button account-back"
+        onClick={onBack}
+      >
         <Icons.Arrow size={18} mirrored />
         返回资产管理
-      </button>
+      </Button>
       <div className="page-heading heading-with-action">
         <div>
           <h1>{account.name}</h1>
@@ -81,13 +88,23 @@ export function AccountDetail({
           </p>
         </div>
         <div className="account-actions">
-          <button className="secondary-button" onClick={onEdit}>
+          <Button
+            variant="outline"
+            type="submit"
+            className="secondary-button"
+            onClick={onEdit}
+          >
             <Icons.Edit size={18} />
             编辑账户
-          </button>
-          <button className="primary-button" onClick={onCalibrate}>
+          </Button>
+          <Button
+            variant="filled"
+            type="submit"
+            className="primary-button"
+            onClick={onCalibrate}
+          >
             校准余额
-          </button>
+          </Button>
         </div>
       </div>
       <div className="account-balance-hero">
@@ -116,10 +133,10 @@ export function AccountDetail({
       <section className="account-transactions">
         <div className="section-heading">
           <h2>关联收入与支出</h2>
-          <select
+          <Choice
             aria-label="账户账期"
             value={month}
-            onChange={(event) => setMonth(event.target.value)}
+            onChange={(value) => setMonth(value)}
           >
             <option value="">全部账期</option>
             {months.map((item) => (
@@ -127,7 +144,7 @@ export function AccountDetail({
                 {item}
               </option>
             ))}
-          </select>
+          </Choice>
         </div>
         <div className="account-flow-summary">
           <span>
@@ -170,9 +187,14 @@ export function AccountDetail({
           {error}
         </p>
       ) : null}
-      <button className="text-button archive-account" onClick={handleArchive}>
+      <Button
+        variant="subtle"
+        type="submit"
+        className="text-button archive-account"
+        onClick={handleArchive}
+      >
         {account.isArchived ? "恢复账户" : "归档账户"}
-      </button>
+      </Button>
       <p className="muted small">
         归档保留历史账单和账户关联，可恢复；操作后可撤销。
       </p>

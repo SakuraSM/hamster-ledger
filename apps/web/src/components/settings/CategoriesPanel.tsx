@@ -1,3 +1,5 @@
+import { TextInput, Button } from "@mantine/core";
+import { Choice } from "../../ui/Choice";
 import { useState } from "react";
 import {
   categoryDefinitions,
@@ -53,32 +55,27 @@ export function CategoriesPanel({
     <section className="panel">
       <h2>分类管理</h2>
       <form className="inline-form" onSubmit={submit}>
-        <label>
-          分类名称
-          <input
-            required
-            maxLength={30}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </label>
-        <label>
-          类型
-          <select
-            value={kind}
-            onChange={(event) =>
-              setKind(event.target.value === "收入" ? "收入" : "支出")
-            }
-          >
-            <option>支出</option>
-            <option>收入</option>
-          </select>
-        </label>
-        <button className="secondary-button">
+        <TextInput
+          label={<>分类名称</>}
+          required
+          maxLength={30}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <Choice
+          label={<>类型</>}
+          value={kind}
+          onChange={(value) => setKind(value === "收入" ? "收入" : "支出")}
+        >
+          <option>支出</option>
+          <option>收入</option>
+        </Choice>
+        <Button variant="outline" type="submit" className="secondary-button">
           {editing ? "保存分类" : "添加分类"}
-        </button>
+        </Button>
         {editing ? (
-          <button
+          <Button
+            variant="subtle"
             type="button"
             className="text-button"
             onClick={() => {
@@ -87,7 +84,7 @@ export function CategoriesPanel({
             }}
           >
             取消
-          </button>
+          </Button>
         ) : null}
       </form>
       <details>
@@ -100,7 +97,9 @@ export function CategoriesPanel({
                 {category.isArchived ? " · 已归档" : ""}
               </span>
               <div className="button-row">
-                <button
+                <Button
+                  variant="subtle"
+                  type="submit"
                   className="text-button"
                   aria-label={`上移${category.name}`}
                   disabled={index === 0}
@@ -111,8 +110,10 @@ export function CategoriesPanel({
                   }
                 >
                   ↑
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="subtle"
+                  type="submit"
                   className="text-button"
                   aria-label={`下移${category.name}`}
                   disabled={index === categories.length - 1}
@@ -123,8 +124,10 @@ export function CategoriesPanel({
                   }
                 >
                   ↓
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="subtle"
+                  type="submit"
                   className="text-button"
                   onClick={() => {
                     setEditing(category.id);
@@ -133,8 +136,10 @@ export function CategoriesPanel({
                   }}
                 >
                   改名
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="subtle"
+                  type="submit"
                   className="text-button"
                   onClick={() =>
                     void commit(
@@ -146,7 +151,7 @@ export function CategoriesPanel({
                   }
                 >
                   {category.isArchived ? "恢复" : "归档"}
-                </button>
+                </Button>
               </div>
             </div>
           ))}

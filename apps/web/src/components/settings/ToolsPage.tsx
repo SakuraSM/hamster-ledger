@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { AccountSecurityPanel } from "../auth/AccountSecurityPanel";
 const DATE_KEY_LENGTH = 10;
 import type { CloudController } from "../../hooks/useCloudSync";
@@ -47,13 +48,15 @@ export function ToolsPage({
             ["review", "重复核对"],
           ] as const
         ).map(([id, label]) => (
-          <button
+          <Button
+            variant="outline"
+            type="submit"
             className="secondary-button"
             key={id}
             onClick={() => onNavigate(id)}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="settings-grid">
@@ -89,12 +92,14 @@ export function ToolsPage({
                 <span>
                   {record.date.slice(0, DATE_KEY_LENGTH)} · {record.merchant}
                 </span>
-                <button
+                <Button
+                  variant="subtle"
+                  type="submit"
                   className="text-button"
                   onClick={() => void restore(restoreEntry(ledger, record.id))}
                 >
                   恢复
-                </button>
+                </Button>
               </div>
             ))}
           {error ? (

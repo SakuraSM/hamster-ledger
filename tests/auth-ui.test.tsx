@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { it, expect, vi, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  act,
-  cleanup,
-} from "@testing-library/react";
+import { render, screen, fireEvent, act, cleanup } from "./helpers/render";
 import {
   AuthContext,
   type AuthController,
@@ -52,14 +46,18 @@ it("provides a full login form, password visibility, and an explicit local-only 
   fireEvent.change(screen.getByLabelText("账号"), {
     target: { value: "test.user" },
   });
-  fireEvent.change(screen.getByLabelText("密码"), {
+  fireEvent.change(screen.getByLabelText(/^密码/, { selector: "input" }), {
     target: { value: "test-password-value" },
   });
-  expect((screen.getByLabelText("密码") as HTMLInputElement).type).toBe(
-    "password",
-  );
-  fireEvent.click(screen.getByRole("button", { name: "显示密码" }));
-  expect((screen.getByLabelText("密码") as HTMLInputElement).type).toBe("text");
+  expect(
+    (screen.getByLabelText(/^密码/, { selector: "input" }) as HTMLInputElement)
+      .type,
+  ).toBe("password");
+  fireEvent.mouseDown(screen.getByRole("button", { name: "显示密码" }));
+  expect(
+    (screen.getByLabelText(/^密码/, { selector: "input" }) as HTMLInputElement)
+      .type,
+  ).toBe("text");
   fireEvent.click(screen.getByLabelText("记住登录 30 天"));
   await act(async () =>
     fireEvent.click(screen.getByRole("button", { name: "登录" })),
@@ -78,10 +76,10 @@ it("rejects mismatched registration passwords before making a request", async ()
   fireEvent.change(screen.getByLabelText("账号"), {
     target: { value: "new.user" },
   });
-  fireEvent.change(screen.getByLabelText("密码"), {
+  fireEvent.change(screen.getByLabelText(/^密码/, { selector: "input" }), {
     target: { value: "new-password-value" },
   });
-  fireEvent.change(screen.getByLabelText("确认密码"), {
+  fireEvent.change(screen.getByLabelText(/^确认密码/, { selector: "input" }), {
     target: { value: "different-password" },
   });
   await act(async () =>

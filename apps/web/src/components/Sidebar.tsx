@@ -1,3 +1,4 @@
+import { UnstyledButton } from "@mantine/core";
 import { type PageId } from "../app-config";
 const PRIMARY_SOURCE_COUNT = 3;
 import { Icons, SourceIcon } from "./Icons";
@@ -42,7 +43,8 @@ export function Sidebar({
       </div>
       <nav className="main-nav" aria-label="主导航">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-          <button
+          <UnstyledButton
+            type="submit"
             key={id}
             aria-label={label}
             onClick={() => onNavigate(id)}
@@ -54,24 +56,28 @@ export function Sidebar({
             {id === "review" && pending > 0 ? (
               <span className="count-badge">{pending}</span>
             ) : null}
-          </button>
+          </UnstyledButton>
         ))}
       </nav>
       <div className="source-nav">
         <p>账单来源</p>
         {SOURCES.slice(0, PRIMARY_SOURCE_COUNT).map((source) => (
-          <button key={source} onClick={() => onSource(source)}>
+          <UnstyledButton
+            type="submit"
+            key={source}
+            onClick={() => onSource(source)}
+          >
             <SourceIcon source={source} />
             <span>{source}</span>
-          </button>
+          </UnstyledButton>
         ))}
       </div>
       <div className="sidebar-footer">
-        <button onClick={onSettings}>
+        <UnstyledButton type="submit" onClick={onSettings}>
           <Icons.Book size={25} />
           <span>{bookName}</span>
           <Icons.Caret size={18} />
-        </button>
+        </UnstyledButton>
         <p>账单保存在此浏览器</p>
       </div>
     </aside>
