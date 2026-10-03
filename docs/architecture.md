@@ -1,10 +1,12 @@
 # 项目结构与平台边界
 
-仓鼠记账使用 npm workspaces 管理 Web 应用和共享 TypeScript 包。账务规则不依赖 Web 界面，未来 App 通过平台适配器复用这些规则。
+仓鼠记账使用 npm workspaces 管理 Web、Android、服务端和共享 TypeScript 包。账务规则不依赖平台界面，两端通过适配器复用规则与账本控制器。
 
 ```text
 apps/
-  web/                       React 与 Vite 应用
+  server/                    Node.js、SQLite、账号与版本化同步 API
+  mobile/                    Expo、React Native Paper 与 Android 适配器
+  web/                       React、Mantine 与 Vite 应用
     src/components/          界面组件
     src/hooks/               页面状态与异步操作
     src/platform/browser/    文件读取、存储、下载
@@ -15,6 +17,8 @@ packages/
   ledger-core/               账本模型、分类、去重、异步存储协议
   statement-importers/       表头映射、日期金额解析、记录归一化
   design-tokens/             JSON 设计变量与生成的 Web CSS
+  fixtures/                  两端共用的虚拟数据
+  ledger-react/              注入平台依赖的 React 账本控制器
 scripts/                     包边界检查、设计变量生成
 tests/                      跨包行为与平台协议测试
 docs/                       架构、设计、能力边界和 App 准备说明
@@ -25,9 +29,9 @@ docs/                       架构、设计、能力边界和 App 准备说明
 
 ## 依赖方向
 
-`apps/web` 消费 `ledger-core`、`statement-importers` 和 `design-tokens`。`statement-importers` 只依赖 `ledger-core`，`ledger-core` 只使用 Zod 校验数据。平台层依赖共享协议，共享包不反向导入平台代码。
+`apps/web` 和 `apps/mobile` 消费 `ledger-core`、`statement-importers`、`fixtures`、`ledger-react` 和 `design-tokens`。`statement-importers` 只依赖 `ledger-core`，`ledger-core` 只使用 Zod 校验数据。平台层依赖共享协议，共享包不反向导入平台代码。
 
-`check:boundaries` 检查共享包的 import 和 export。共享包使用不含 DOM 和 Node 全局类型的 TypeScript 配置，构建产物同时提供 ESM JavaScript 与声明文件。无需 React 或浏览器即可执行账务测试。
+`check:boundaries` 检查共享包的 import 和 export。纯业务包使用不含 DOM 和 Node 全局类型的 TypeScript 配置；`ledger-react` 可依赖 React，但不得导入 Web、原生或 Node 文件 API。共享构建产物提供 ESM JavaScript 与声明文件。账务规则测试不需要 React 或浏览器。
 
 ## 导入链路
 
@@ -37,19 +41,23 @@ docs/                       架构、设计、能力边界和 App 准备说明
 4. `planImport` 对账本与新记录去重，生成待确认项。
 5. 用户确认后，经异步 `LedgerRepository` 写入平台存储。
 
-App 可用原生文件选择器和解码库替换第一步，其余业务链路无需复制。二进制文件适配尚未提供原生实现。
+Android 的第一步由 Expo DocumentPicker、FileSystem 和 Crypto 完成，系统选择器只授权用户选中的文件；CSV 支持 UTF-8 / GB18030，Excel 保留日期单元格语义。解析后的缓存副本会清理，导出文件留存最多至后续导出时清理过期缓存，以便分享接收方继续读取。其余业务链路复用共享包。
 
 ## 持久化
 
-`KeyValueStore` 提供异步 `getItem` 和 `setItem`。`createLedgerRepository` 负责模型校验、序列化和示例/个人账本隔离。Web 使用 localStorage 适配器，接口保留异步形式，便于后续接入原生存储。
+`KeyValueStore` 提供异步 `getItem` 和 `setItem`。`createLedgerRepository` 负责模型校验、序列化和示例/个人账本隔离。Web 使用 localStorage 适配器。Android 使用 SQLCipher 加密的 SQLite，密钥放入 SecureStore / Keystore；读写队列始终使用同一条已设置密钥的连接，避免新连接未设置密钥及事务交错。数据库 `user_version=1`，更高版本只报告升级提示，不覆盖数据库。
 
 原型的 `hamster-ledger.v1.*` 键名和账本 `version: 1` 保持兼容。读取损坏或未知版本数据会报错并停止初始化，不把空账本当作读取成功。保存失败不会更新已展示的账本，当前账本选择的保存失败与账单保存失败分别报告。
 
-跨设备同步、多进程冲突控制、增量迁移和完整操作日志尚未实现。不要把这个 KeyValueStore 协议直接当作已经完成的同步数据库。
+Web 通过 `protectedStore` 保存数据。启用密码后，将所有账本键加密为一个 AES-GCM 信封，密码经 PBKDF2 派生密钥。成功写入密文后才移除旧明文键。写入与迁移共用同源 Web Locks；迁移发现明文变化时中止并保留原数据。旧标签页在迁移后需要重新解锁，多标签页的过期写入会被拒绝。
+
+服务端通过 `apps/server` 实现，与 `KeyValueStore` 分离。SQLite 按用户隔离账本，写入携带已知 revision，条件更新失败返回 409。Web 保存连接对应的 revision 和内容摘要，在本机与远端同时修改时停止自动同步，允许恢复云端版本到新账本。同步单位为完整账本，不提供记录级自动合并。
+
+Web 自动同步在页面打开时运行。Android 由用户主动上传和同步；远端更新先预览，再恢复为新账本，原本机账本保留。Android 的 `/api/native/` 使用独立 Bearer 会话，拒绝 Cookie 和 Origin，并保留 CSRF 与预期用户校验；浏览器 Cookie 会话不能用于此通道。本机密码保护不等于端到端加密，服务端数据库仍包含明文账务数据。增量迁移、持久化操作历史和跨多服务实例的协同尚未实现。
 
 ## 设计变量
 
-JSON 是共享设计变量来源，Web 的基础主题从生成的 CSS 读取。未来原生客户端可把 JSON 转换为其主题对象。DOM 组件、CSS 布局和 Recharts 图表属于 Web 应用，不作为原生 UI 的共享接口。
+JSON 是共享设计变量来源，Web 的基础主题从生成的 CSS 读取。Android 已把 JSON 转换为 React Native Paper 主题对象。Web 的基本输入、选择、日期、弹窗与反馈使用 Mantine；嵌套日期弹窗由 Modal.Stack 管理 Escape 和焦点。DOM 组件、CSS 布局和 Recharts 图表属于 Web 应用，不作为原生 UI 的共享接口。
 
 ## 工程选择
 

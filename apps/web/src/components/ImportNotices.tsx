@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 export interface ImportSuccess {
   added: number;
   duplicate: number;
@@ -31,16 +32,23 @@ export function ImportComplete({
         </p>
         <p className="muted">原始字段已保留，可在账单详情查看。</p>
         <div className="button-row">
-          <button className="secondary-button" onClick={onContinue}>
+          <Button
+            variant="outline"
+            type="submit"
+            className="secondary-button"
+            onClick={onContinue}
+          >
             继续导入
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="filled"
+            type="submit"
             className="primary-button"
             onClick={success.pending ? onReview : onAll}
           >
             {success.pending ? "前往核对" : "查看我的账单"}
             <Icons.Arrow size={19} />
-          </button>
+          </Button>
         </div>
       </div>
     </section>
@@ -51,7 +59,7 @@ export function ImportHelp(): React.JSX.Element {
     <div className="import-help">
       <h2>第一次导入？</h2>
       <p>
-        从支付软件导出交易明细。银行账单没有账户列时，可在字段调整中填写卡尾号，辅助跨平台核对。
+        从支付软件导出交易明细。系统会寻找表头并建议字段，识别结果可在「调整字段」中按样例核对。银行账单没有账户列时，可填写卡尾号辅助核对。
       </p>
       <div className="sample-links">
         <a href="/samples/alipay-demo.csv" download>

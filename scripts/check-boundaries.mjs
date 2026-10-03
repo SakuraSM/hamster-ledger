@@ -5,6 +5,8 @@ const root = path.resolve(import.meta.dirname, "..");
 const rules = new Map([
   ["packages/ledger-core", new Set(["zod"])],
   ["packages/statement-importers", new Set(["@hamster-ledger/core"])],
+  ["packages/fixtures", new Set(["@hamster-ledger/core"])],
+  ["packages/ledger-react", new Set(["react", "@hamster-ledger/core"])],
 ]);
 const files = (directory) =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) =>
@@ -15,7 +17,7 @@ const files = (directory) =>
 const errors = [];
 for (const [workspace, allowed] of rules) {
   const sourceRoot = path.join(root, workspace, "src");
-  for (const file of files(sourceRoot).filter((file) => file.endsWith(".ts"))) {
+  for (const file of files(sourceRoot).filter((file) => /\.tsx?$/.test(file))) {
     const source = ts.createSourceFile(
       file,
       readFileSync(file, "utf8"),
@@ -55,5 +57,5 @@ for (const [workspace, allowed] of rules) {
 }
 if (errors.length) throw new Error(errors.join("\n"));
 console.log(
-  "Shared package boundaries verified: no Web, React, Node or native runtime imports.",
+  "Shared package boundaries verified: pure business packages and injected React controllers have no platform imports.",
 );
