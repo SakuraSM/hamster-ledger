@@ -7,6 +7,14 @@ import {
 } from "./planning-model.js";
 import { assetAccountSchema } from "./account-model.js";
 import { z } from "zod";
+import {
+  transactionDetailSchema,
+  subscriptionSchema,
+  debtSchema,
+  goalSchema,
+  notificationSchema,
+  auditEventSchema,
+} from "./finance-model.js";
 
 export const SOURCES = [
   "支付宝",
@@ -48,7 +56,7 @@ export const recordSchema = z.object({
   date: dateTimeSchema,
   merchant: z.string(),
   description: z.string(),
-  amount: z.number().int().nonnegative(),
+  amount: z.number().int().safe().nonnegative(),
   currency: z.literal("CNY"),
   kind: z.enum(KINDS),
   category: z.string().min(1),
@@ -67,6 +75,7 @@ export const recordSchema = z.object({
   tags: z.array(z.string()).optional(),
   isDeleted: z.boolean().optional(),
   recurringRuleId: z.string().optional(),
+  detail: transactionDetailSchema.optional(),
 });
 export type BillRecord = z.infer<typeof recordSchema>;
 export const reviewSchema = z.object({
@@ -79,7 +88,8 @@ export const reviewSchema = z.object({
 export type Review = z.infer<typeof reviewSchema>;
 export const ledgerSchema = z
   .object({
-    version: z.literal(1),
+    version: z.union([z.literal(1), z.literal(2)]),
+    baseCurrency: z.literal("CNY").optional(),
     records: z.array(recordSchema),
     reviews: z.array(reviewSchema),
     rules: z.record(z.string(), z.string()),
@@ -91,6 +101,11 @@ export const ledgerSchema = z
     budgets: z.array(budgetSchema).optional(),
     recurringRules: z.array(recurringRuleSchema).optional(),
     preferences: preferencesSchema.optional(),
+    subscriptions: z.array(subscriptionSchema).optional(),
+    debts: z.array(debtSchema).optional(),
+    goals: z.array(goalSchema).optional(),
+    notifications: z.array(notificationSchema).optional(),
+    history: z.array(auditEventSchema).optional(),
   })
   .superRefine((ledger, context) => {
     for (const field of [
@@ -100,6 +115,10 @@ export const ledgerSchema = z
       "categories",
       "budgets",
       "recurringRules",
+      "subscriptions",
+      "debts",
+      "goals",
+      "notifications",
     ] as const) {
       const values = ledger[field] ?? [];
       if (new Set(values.map((item) => item.id)).size !== values.length)

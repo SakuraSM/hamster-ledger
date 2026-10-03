@@ -37,6 +37,8 @@ export function saveEntry(ledger: Ledger, input: EntryInput): Ledger {
   )
     throw new Error("转账需要两个不同的账户。");
   const previous = ledger.records.find((record) => record.id === input.id);
+  if (previous?.detail && previous.detail.origin !== "legacy")
+    throw new Error("请使用完整交易编辑，保留币种及关联信息。");
   assertRecordUnchanged({ current: previous, expected: input.expectedRecord });
   if (
     previous &&
@@ -49,6 +51,7 @@ export function saveEntry(ledger: Ledger, input: EntryInput): Ledger {
     );
   const record: BillRecord = recordSchema.parse({
     ...previous,
+    detail: undefined,
     id: input.id,
     date: input.date,
     merchant: input.merchant.trim(),

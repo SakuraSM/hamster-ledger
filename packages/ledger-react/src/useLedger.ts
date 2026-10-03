@@ -4,6 +4,7 @@ const RECURRING_INTERVAL_MS = 60000;
 import { useEffect, useRef, useState } from "react";
 import {
   EMPTY_LEDGER,
+  migrateLedger,
   DEFAULT_BOOKS,
   applyRecurring,
   type Book,
@@ -126,12 +127,13 @@ export function useLedger({
     setIsSaving(true);
     const previous = workspace.ledgers[mode];
     try {
-      await repository.save(mode, next);
+      const saved = migrateLedger(next);
+      await repository.save(mode, saved);
       setUndoEntry({ ledger: previous, mode });
       setNotice("");
       setWorkspace((current) => ({
         ...current,
-        ledgers: { ...current.ledgers, [mode]: next },
+        ledgers: { ...current.ledgers, [mode]: saved },
         mode,
       }));
       setError("");
