@@ -268,7 +268,7 @@ export function NetworkScreen({
               {manager.history.map((item) => (
                 <Text key={item.id}>
                   {new Date(item.createdAt).toLocaleString()} · {item.username}{" "}
-                  · {item.summary}
+                  · {item.source} · {item.summary}
                 </Text>
               ))}
             </Section>

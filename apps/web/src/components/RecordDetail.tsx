@@ -1,3 +1,4 @@
+import { TransactionFacts } from "./finance/TransactionFacts";
 import { TextInput, Checkbox, UnstyledButton, Button } from "@mantine/core";
 import { Choice } from "../ui/Choice";
 import { RecordAccountFields } from "./RecordAccountFields";
@@ -16,6 +17,7 @@ import { Dialog } from "./Dialog";
 import { CategoryIcon, Icons } from "./Icons";
 import type { LedgerController } from "../hooks/useLedger";
 interface RecordDetailProps {
+  bookId?: string;
   onEdit?: () => void;
   onDelete?: () => Promise<void>;
   record: BillRecord;
@@ -25,6 +27,7 @@ interface RecordDetailProps {
   onRelated: (record: BillRecord) => void;
 }
 export function RecordDetail({
+  bookId,
   onEdit,
   onDelete,
   record,
@@ -97,6 +100,7 @@ export function RecordDetail({
           </div>
           <strong>{signedMoney(record)}</strong>
         </div>
+        <TransactionFacts record={record} ledger={ledger} bookId={bookId} />
         {record.status === "pending" ? (
           <p className="notice warning">
             <Icons.Warning size={19} />
@@ -115,6 +119,9 @@ export function RecordDetail({
           </Choice>
           <Choice
             label={<>交易类型</>}
+            disabled={Boolean(
+              record.detail && record.detail.origin !== "legacy",
+            )}
             value={kind}
             onChange={(value) => setKind(value as Kind)}
           >
@@ -130,15 +137,19 @@ export function RecordDetail({
             placeholder="如：招商银行 · 6628"
           />
         </div>
-        <RecordAccountFields
-          record={record}
-          accounts={ledger.accounts}
-          kind={kind}
-          accountId={accountId}
-          transferToAccountId={transferToAccountId}
-          onAccount={setAccountId}
-          onDestination={setTransferToAccountId}
-        />
+        {record.detail && record.detail.origin !== "legacy" ? (
+          <p className="muted">类型与账户请在完整交易编辑中修改。</p>
+        ) : (
+          <RecordAccountFields
+            record={record}
+            accounts={ledger.accounts}
+            kind={kind}
+            accountId={accountId}
+            transferToAccountId={transferToAccountId}
+            onAccount={setAccountId}
+            onDestination={setTransferToAccountId}
+          />
+        )}
         <Checkbox
           label={<>记住“{record.merchant}”的分类，用于下次导入</>}
           className="checkbox-label"

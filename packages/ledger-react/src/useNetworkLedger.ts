@@ -177,7 +177,11 @@ export function useNetworkLedger(input: {
           undoId: snapshot.operationId,
         },
       })
-      .then((saved) => accept(saved, contextKey))
+      .then(async (saved) => {
+        await accept(saved, contextKey);
+        if (currentKey.current === contextKey)
+          local.notify("已撤销，操作历史已保留。");
+      })
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : "撤销失败。"),
       )

@@ -1,3 +1,4 @@
+import { PlanningPanel } from "../finance/PlanningPanel";
 import { Button } from "@mantine/core";
 import { AccountSecurityPanel } from "../auth/AccountSecurityPanel";
 const DATE_KEY_LENGTH = 10;
@@ -61,6 +62,7 @@ export function ToolsPage({
         ))}
       </div>
       <div className="settings-grid">
+        <PlanningPanel key={controller.mode} controller={controller} />
         <NetworkPanel controller={controller} />
         <BooksPanel controller={controller} />
         <PreferencesPanel
@@ -68,7 +70,16 @@ export function ToolsPage({
           ledger={ledger}
           onCommit={controller.commit}
         />
-        <SyncPanel sync={sync} />
+        {controller.network?.isConnected ? (
+          <section className="panel">
+            <h2>联网账本保存</h2>
+            <p>
+              修改已通过联网操作接口保存到服务器。共享成员和连接状态见「家庭与联网账本」。
+            </p>
+          </section>
+        ) : (
+          <SyncPanel sync={sync} />
+        )}
         <AccountSecurityPanel />
         <BackupPanel
           ledger={ledger}

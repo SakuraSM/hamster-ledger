@@ -1,3 +1,4 @@
+import { addMinor } from "./currency.js";
 import { dateTimeSchema } from "./date-schemas.js";
 import {
   categoryDefinitionSchema,
@@ -167,11 +168,11 @@ export function summarize(records: BillRecord[]): {
   let income = 0;
   for (const record of records) {
     if (record.isDeleted || record.status !== RECORD_STATUS.CONFIRMED) continue;
-    if (record.kind === "支出") expense += record.amount;
-    if (record.kind === "退款") expense -= record.amount;
-    if (record.kind === "收入") income += record.amount;
+    if (record.kind === "支出") expense = addMinor(expense, record.amount);
+    if (record.kind === "退款") expense = addMinor(expense, -record.amount);
+    if (record.kind === "收入") income = addMinor(income, record.amount);
   }
-  return { expense, income, net: income - expense };
+  return { expense, income, net: addMinor(income, -expense) };
 }
 export function confirmedForMonth(ledger: Ledger, month: string): BillRecord[] {
   return ledger.records.filter(

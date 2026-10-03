@@ -1,3 +1,4 @@
+import { TransactionFacts } from "./TransactionFacts";
 import { useState } from "react";
 import { Button, Text, Divider, Chip } from "react-native-paper";
 import { Alert, View } from "react-native";
@@ -75,6 +76,14 @@ export function RecordDetail({
       ) : null}
       <Text>备注：{current.description || "无"}</Text>
       <Text>标签：{current.tags?.join("、") || "无"}</Text>
+      <TransactionFacts
+        record={current}
+        ledger={controller.ledger}
+        bookId={
+          controller.books.find((book) => book.id === controller.mode)?.cloud
+            ?.id
+        }
+      />
       <Divider />
       <Text variant="titleMedium">原始流水</Text>
       {Object.entries(current.raw).map(([name, value]) => (

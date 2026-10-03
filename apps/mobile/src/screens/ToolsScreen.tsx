@@ -2,6 +2,18 @@ import { List, Text } from "react-native-paper";
 import { Screen } from "../ui/Screen";
 export const TOOLS = [
   {
+    key: "planning",
+    title: "订阅、借贷与储蓄目标",
+    description: "固定开支、部分还款和目标进度",
+    icon: "target",
+  },
+  {
+    key: "notifications",
+    title: "通知中心",
+    description: "预算、订阅、借贷与还款提醒",
+    icon: "bell-outline",
+  },
+  {
     key: "network",
     title: "家庭与联网账本",
     description: "共享、邀请与操作历史",

@@ -128,7 +128,17 @@ export function applyOperation({
                 isDeleted: true,
               },
             }
-          : change,
+          : change.collection === "accounts" && change.value === null
+            ? {
+                ...change,
+                value: {
+                  ...before.accounts.find(
+                    (account) => account.id === change.id,
+                  ),
+                  isArchived: true,
+                },
+              }
+            : change,
       );
     }
     let next;
@@ -144,6 +154,23 @@ export function applyOperation({
         error instanceof Error ? error.message : "操作无效。",
       );
     }
+    for (const record of next.records) {
+      const previousRecord = before.records.find(
+        (item) => item.id === record.id,
+      );
+      if (
+        JSON.stringify(previousRecord?.detail?.splits) ===
+        JSON.stringify(record.detail?.splits)
+      )
+        continue;
+      for (const split of record.detail?.splits ?? [])
+        if (
+          !database
+            .prepare("SELECT 1 FROM book_members WHERE book_id=? AND user_id=?")
+            .get(bookId, split.memberId)
+        )
+          throw new HttpError(400, "AA 分摊须选择当前账本成员。");
+    }
     const revision = access.book.revision + 1;
     const at = new Date(now()).toISOString();
     const operationId = randomUUID();
@@ -157,11 +184,27 @@ export function applyOperation({
         bookId,
         userId,
         source,
-        body.undoId ? "撤销操作" : `修改 ${patch.changes.length} 项`,
+        body.undoId
+          ? "撤销操作"
+          : source === "scheduler"
+            ? "自动记账与提醒"
+            : `修改 ${patch.changes.length} 项`,
         revision,
         JSON.stringify(before),
         at,
       );
+    if (source === "scheduler")
+      for (const record of next.records) {
+        if (
+          (record.detail?.subscriptionId || record.recurringRuleId) &&
+          !before.records.some((item) => item.id === record.id)
+        )
+          database
+            .prepare(
+              "INSERT OR IGNORE INTO scheduler_runs(book_id,occurrence) VALUES(?,?)",
+            )
+            .run(bookId, record.id);
+      }
     const result = {
       ...snapshot(access),
       revision,

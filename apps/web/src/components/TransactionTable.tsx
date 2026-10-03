@@ -1,4 +1,4 @@
-import { UnstyledButton, Button } from "@mantine/core";
+import { UnstyledButton, Button, Checkbox } from "@mantine/core";
 const MONTH_START = 5;
 const DAY_END = 10;
 import { CategoryIcon, Icons } from "./Icons";
@@ -14,6 +14,8 @@ interface TransactionTableProps {
   onSelect: (record: BillRecord) => void;
   showStatus?: boolean;
   accounts?: AssetAccount[];
+  selected?: string[];
+  onToggle?: (record: BillRecord) => void;
 }
 const STATUS_LABELS = {
   confirmed: "已入账",
@@ -25,6 +27,8 @@ export function TransactionTable({
   onSelect,
   showStatus = false,
   accounts = [],
+  selected = [],
+  onToggle,
 }: TransactionTableProps): React.JSX.Element {
   if (!records.length)
     return (
@@ -39,6 +43,7 @@ export function TransactionTable({
       <table className="transaction-table">
         <thead>
           <tr>
+            {onToggle ? <th>选择</th> : null}
             <th>日期</th>
             <th>商户与说明</th>
             <th>分类</th>
@@ -53,6 +58,15 @@ export function TransactionTable({
             const managed = resolveAssetAccount(record, accounts);
             return (
               <tr key={record.id}>
+                {onToggle ? (
+                  <td>
+                    <Checkbox
+                      aria-label={`选择${record.merchant} ${record.date}账单`}
+                      checked={selected.includes(record.id)}
+                      onChange={() => onToggle(record)}
+                    />
+                  </td>
+                ) : null}
                 <td className="date-cell">
                   {record.date.slice(MONTH_START, DAY_END).replace("-", ".")}
                 </td>

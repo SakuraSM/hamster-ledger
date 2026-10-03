@@ -8,6 +8,7 @@ const server = createLedgerServer({
     process.env.DATABASE_PATH ?? resolve(root, "data/ledger.sqlite"),
   webRoot: process.env.WEB_ROOT ?? resolve(root, "apps/web/dist/client"),
   publicOrigin: process.env.PUBLIC_ORIGIN,
+  timeZone: process.env.LEDGER_TIMEZONE ?? "Asia/Shanghai",
   allowRegistration: process.env.ALLOW_REGISTRATION !== "false",
 });
 server.listen(port, host, () =>

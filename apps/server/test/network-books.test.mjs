@@ -358,3 +358,44 @@ test("client supplied legacy movements are discarded and expired invitations can
     400,
   );
 });
+test("undoing account creation preserves its identity as an archived account", async (context) => {
+  const client = await setup(context),
+    cookie = await register(client),
+    book = await create(client, cookie);
+  const account = {
+    id: "virtual-bank",
+    name: "虚拟银行",
+    kind: "asset",
+    type: "银行卡",
+    openingBalance: 100,
+    balanceAt: "2026-01-01 00:00:00",
+    aliases: [],
+    checkpoints: [],
+    isArchived: false,
+    currency: "CNY",
+  };
+  const response = await client.request(path(book.id, "/operations"), {
+    method: "POST",
+    cookie,
+    body: {
+      key: "create-account",
+      revision: book.revision,
+      patch: {
+        changes: [{ collection: "accounts", id: account.id, value: account }],
+      },
+    },
+  });
+  assert.equal(response.status, 200);
+  const changed = await response.json();
+  const undo = await client.request(path(book.id, "/operations"), {
+    method: "POST",
+    cookie,
+    body: {
+      key: "undo-account",
+      revision: changed.revision,
+      undoId: changed.operationId,
+    },
+  });
+  assert.equal(undo.status, 200);
+  assert.equal((await undo.json()).ledger.accounts[0].isArchived, true);
+});

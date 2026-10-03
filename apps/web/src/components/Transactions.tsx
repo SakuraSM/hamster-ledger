@@ -1,3 +1,15 @@
+import {
+  useBatchRecords,
+  useBookMembers,
+  type LedgerController,
+} from "@hamster-ledger/ledger-react";
+import {
+  matchesFinanceFilters,
+  type ReimbursementState,
+} from "@hamster-ledger/core";
+import { useNetworkClient } from "../hooks/useNetworkController";
+import { BatchActions } from "./finance/BatchActions";
+import { RecordFilters } from "./finance/RecordFilters";
 import { Button, TextInput } from "@mantine/core";
 import { Choice } from "../ui/Choice";
 import { useState } from "react";
@@ -22,6 +34,7 @@ export interface BillFilter {
 }
 interface TransactionsProps {
   records: BillRecord[];
+  controller: LedgerController;
   accounts: AssetAccount[];
   filter: BillFilter;
   onFilter: (filter: BillFilter) => void;
@@ -29,11 +42,33 @@ interface TransactionsProps {
 }
 export function Transactions({
   records,
+  controller,
   accounts,
   filter,
   onFilter,
   onSelect,
 }: TransactionsProps): React.JSX.Element {
+  const batch = useBatchRecords(controller);
+  const remoteMembers = useBookMembers(
+    useNetworkClient(),
+    controller.books.find((book) => book.id === controller.mode)?.cloud?.id,
+  );
+  const memberIds = [
+    ...new Set(
+      records
+        .flatMap((record) => [
+          record.detail?.memberId,
+          ...(record.detail?.splits.map((item) => item.memberId) ?? []),
+        ])
+        .filter((id): id is string => !!id),
+    ),
+  ];
+  const members = memberIds.map((id) => ({
+    id,
+    username: remoteMembers.find((item) => item.id === id)?.username ?? id,
+  }));
+  const [memberId, setMember] = useState("");
+  const [reimbursement, setReimbursement] = useState<ReimbursementState>("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
@@ -41,6 +76,10 @@ export function Transactions({
     .filter(
       (record) =>
         !record.isDeleted &&
+        matchesFinanceFilters(controller.ledger, record, {
+          memberId,
+          reimbursement,
+        }) &&
         (!filter.source ||
           record.source === filter.source ||
           record.linkedSources.includes(filter.source)) &&
@@ -161,7 +200,25 @@ export function Transactions({
           <option value="pending">待确认</option>
           <option value="duplicate">重复记录</option>
         </Choice>
+        <RecordFilters
+          memberId={memberId}
+          reimbursement={reimbursement}
+          members={members}
+          onMember={(value) => {
+            setMember(value);
+            setPageIndex(0);
+          }}
+          onReimbursement={(value) => {
+            setReimbursement(value);
+            setPageIndex(0);
+          }}
+        />
       </div>
+      <BatchActions
+        ledger={controller.ledger}
+        batch={batch}
+        onSelectAll={() => batch.select(filtered)}
+      />
       <p className="list-caption">
         共 {filtered.length} 条记录{" "}
         <span>点击“详情”查看原始流水与账户关联</span>
@@ -173,6 +230,8 @@ export function Transactions({
           (safePage + 1) * PAGE_SIZE,
         )}
         onSelect={onSelect}
+        selected={batch.selected}
+        onToggle={batch.toggle}
         showStatus
       />
       <div className="pagination">

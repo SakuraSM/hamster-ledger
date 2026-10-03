@@ -1,3 +1,4 @@
+import { startScheduler } from "./scheduler.mjs";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
@@ -20,6 +21,8 @@ export function createLedgerServer({
   publicOrigin,
   allowRegistration = true,
   now = Date.now,
+  enableScheduler = true,
+  timeZone = "Asia/Shanghai",
 } = {}) {
   validateOrigin(publicOrigin);
   const database = openDatabase(databasePath);
@@ -96,7 +99,13 @@ export function createLedgerServer({
   server.headersTimeout = 15000;
   server.keepAliveTimeout = 5000;
   server.maxHeadersCount = 100;
-  server.on("close", () => database.close());
+  const stopScheduler = enableScheduler
+    ? startScheduler({ database, now, timeZone })
+    : () => {};
+  server.on("close", () => {
+    stopScheduler();
+    database.close();
+  });
   return server;
 }
 

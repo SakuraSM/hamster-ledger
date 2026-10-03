@@ -1,3 +1,4 @@
+import { assertRecordUnchanged } from "./record-conflicts.js";
 import { z } from "zod";
 import { type Ledger, type Kind, recordSchema } from "./model.js";
 import { type AssetAccount } from "./account-model.js";
@@ -5,12 +6,13 @@ import {
   transactionDetailSchema,
   type TransactionDetail,
 } from "./finance-model.js";
-import { originalMoneySchema, convertToCny } from "./currency.js";
+import { originalMoneySchema, convertToCny, addMinor } from "./currency.js";
 import { dateTimeSchema } from "./date-schemas.js";
 import { migrateLedger } from "./migration.js";
 
 export const advancedEntrySchema = z.object({
   id: z.string().min(1),
+  expectedRecord: recordSchema.optional(),
   date: dateTimeSchema,
   merchant: z.string().trim().min(1).max(200),
   description: z.string().max(4000).default(""),
@@ -24,6 +26,7 @@ export const advancedEntrySchema = z.object({
 export type AdvancedEntryInput = z.input<typeof advancedEntrySchema>;
 const TRANSFER_TYPES = new Set<TransactionDetail["type"]>([
   "transfer",
+  "aa_settlement",
   "lend",
   "borrow",
   "repay_receive",
@@ -39,6 +42,7 @@ const KIND_BY_TYPE: Record<TransactionDetail["type"], Kind> = {
   refund: "退款",
   reimburse: "退款",
   transfer: "转账",
+  aa_settlement: "转账",
   lend: "转账",
   borrow: "转账",
   repay_receive: "转账",
@@ -96,8 +100,8 @@ function validateRefund(input: {
         record.kind === "退款" &&
         record.detail?.relatedId === original.id,
     )
-    .reduce((sum, record) => sum + record.amount, 0);
-  if (returned + baseAmount > original.amount)
+    .reduce((sum, record) => addMinor(sum, record.amount), 0);
+  if (BigInt(returned) + BigInt(baseAmount) > BigInt(original.amount))
     throw new Error("退款和报销累计金额不能超过原支出。");
 }
 export function saveAdvancedEntry(
@@ -118,6 +122,7 @@ export function saveAdvancedEntry(
   const baseAmount = convertToCny(original);
   if (baseAmount <= 0) throw new Error("折算金额不足一分，请核对金额与汇率。");
   const previous = ledger.records.find((record) => record.id === entry.id);
+  assertRecordUnchanged({ current: previous, expected: entry.expectedRecord });
   if (
     previous &&
     (previous.isDeleted ||
@@ -144,6 +149,11 @@ export function saveAdvancedEntry(
     const targetMoney = detail.destination ?? original;
     if ((destination.currency ?? "CNY") !== targetMoney.currency)
       throw new Error("请填写转入账户的实际币种和金额。");
+    if (
+      (targetMoney.currency === "CNY" && targetMoney.rate !== "1") ||
+      targetMoney.date > entry.date.slice(0, 10)
+    )
+      throw new Error("转入金额的汇率或日期无效。");
     if (targetMoney.minor <= 0) throw new Error("转入金额必须大于零。");
     movements = [
       signedMovement({ account, minor: original.minor, direction: -1 }),

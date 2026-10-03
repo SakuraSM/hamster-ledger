@@ -113,6 +113,7 @@ export function App(): React.JSX.Element {
         跳到主要内容
       </a>
       <Sidebar
+        isNetwork={controller.network?.isConnected}
         bookName={
           controller.books.find((book) => book.id === mode)?.name ?? "我的账本"
         }
@@ -183,6 +184,10 @@ export function App(): React.JSX.Element {
       </main>
       {selected ? (
         <RecordDetail
+          bookId={
+            controller.books.find((book) => book.id === controller.mode)?.cloud
+              ?.id
+          }
           key={selected.id}
           ledger={ledger}
           onRelated={setSelected}
@@ -202,6 +207,17 @@ export function App(): React.JSX.Element {
       ) : null}
       {editor ? (
         <EntryEditor
+          bookId={
+            controller.books.find((book) => book.id === controller.mode)?.cloud
+              ?.id
+          }
+          onCommit={async (next, date) => {
+            await controller.commit(next);
+            setMonth(
+              cycleMonthForDate(date, ledger.preferences?.cycleStartDay ?? 1),
+            );
+            controller.notify("账单已保存。");
+          }}
           key={editor.revision ?? 0}
           onReload={() => {
             const latest = ledger.records.find(

@@ -31,6 +31,7 @@ export const exchangeRateSchema = z.object({
   rate: rateSchema,
   date: dateSchema,
   source: z.enum(["manual", "frankfurter", "legacy"]),
+  requestedDate: dateSchema.optional(),
 });
 export const originalMoneySchema = exchangeRateSchema.extend({
   minor: z.number().int().safe().nonnegative(),
@@ -83,4 +84,10 @@ export function formatCurrency(input: {
     minimumFractionDigits: CURRENCY_DIGITS[input.currency],
     maximumFractionDigits: CURRENCY_DIGITS[input.currency],
   }).format(input.minor / 10 ** CURRENCY_DIGITS[input.currency]);
+}
+
+export function addMinor(...values: number[]): number {
+  if (!values.every(Number.isSafeInteger))
+    throw new Error("金额必须为安全整数。");
+  return safeNumber(values.reduce((sum, value) => sum + BigInt(value), 0n));
 }

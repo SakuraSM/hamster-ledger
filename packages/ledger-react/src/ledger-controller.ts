@@ -1,5 +1,7 @@
 import type {
   Book,
+  Currency,
+  ExchangeRate,
   Ledger,
   LedgerMode,
   LedgerRepository,
@@ -33,6 +35,9 @@ export interface LedgerController {
   notify: (message: string) => void;
 }
 export interface LedgerEnvironment {
+  loadRates?: (
+    requests: Array<{ currency: Currency; date: string }>,
+  ) => Promise<ExchangeRate[]>;
   repository: LedgerRepository;
   createDemoLedger: () => Ledger;
   localNow: () => string;

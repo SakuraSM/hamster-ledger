@@ -1,5 +1,5 @@
 import { UnstyledButton } from "@mantine/core";
-import { money, type AccountBalance } from "@hamster-ledger/core";
+import { formatCurrency, type AccountBalance } from "@hamster-ledger/core";
 import { Icons } from "../Icons";
 interface AccountGroupProps {
   title: string;
@@ -58,10 +58,11 @@ export function AccountGroup({
                 {account.kind === "liability" && balance < 0 ? (
                   <small>预存</small>
                 ) : null}
-                ¥{" "}
-                {money(
-                  account.kind === "liability" ? Math.abs(balance) : balance,
-                )}
+                {formatCurrency({
+                  minor:
+                    account.kind === "liability" ? Math.abs(balance) : balance,
+                  currency: account.currency ?? "CNY",
+                })}
               </span>
               <Icons.Caret size={18} />
             </UnstyledButton>

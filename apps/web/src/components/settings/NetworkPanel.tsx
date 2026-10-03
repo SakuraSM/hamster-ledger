@@ -260,7 +260,7 @@ export function NetworkPanel({
                 {manager.history.map((item) => (
                   <p key={item.id}>
                     {new Date(item.createdAt).toLocaleString()} ·{" "}
-                    {item.username} · {item.summary}
+                    {item.username} · {item.source} · {item.summary}
                   </p>
                 ))}
               </details>

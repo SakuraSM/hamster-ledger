@@ -10,7 +10,6 @@ const LEGACY_TYPES: Record<Kind, TransactionDetail["type"]> = {
 };
 export function migrateLedger(value: unknown): Ledger {
   const previous = ledgerSchema.parse(value);
-  if (previous.version === 2) return previous;
   return ledgerSchema.parse({
     ...previous,
     version: 2,

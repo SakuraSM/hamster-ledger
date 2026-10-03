@@ -1,3 +1,7 @@
+import { useExchangeRates } from "@hamster-ledger/ledger-react";
+import { useNativeAccount } from "../auth/NativeAccount";
+import { DateField } from "../ui/DateField";
+import { ValuationRates } from "./ValuationRates";
 import { useState } from "react";
 import { Alert } from "react-native";
 import { Button, Card, Text, List } from "react-native-paper";
@@ -5,6 +9,7 @@ import {
   archiveAssetAccount,
   summarizeAssets,
   money,
+  formatCurrency,
   type AssetAccount,
   type BillRecord,
 } from "@hamster-ledger/core";
@@ -25,9 +30,19 @@ export function AssetsScreen({
   const [editor, setEditor] = useState<AssetAccount | "new" | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [valuationDate, setValuationDate] = useState(localNow().slice(0, 10));
+  const currencies = controller.ledger.accounts
+    .filter((account) => !account.isArchived)
+    .map((account) => account.currency ?? "CNY");
+  const rates = useExchangeRates({
+    client: useNativeAccount().client,
+    currencies,
+    date: valuationDate,
+  });
   const totals = summarizeAssets({
     ledger: controller.ledger,
-    through: localNow(),
+    through: valuationDate + " 23:59:59",
+    rates: rates.rates,
   });
   const account = controller.ledger.accounts.find(
     (item) => item.id === selected,
@@ -55,6 +70,17 @@ export function AssetsScreen({
         <Text variant="headlineSmall" accessibilityRole="header">
           资产管理
         </Text>
+        <DateField
+          label="资产估值日"
+          value={valuationDate}
+          onChange={setValuationDate}
+        />
+        <ValuationRates controller={rates} currencies={currencies} />
+        {totals.missingCurrencies.length ? (
+          <Text>
+            {totals.missingCurrencies.join("、")} 缺少汇率；合计仅含已估值账户。
+          </Text>
+        ) : null}
         <Card mode="contained">
           <Card.Content>
             <Text>净资产</Text>
@@ -89,12 +115,13 @@ export function AssetsScreen({
                 )}
                 right={() => (
                   <Text style={{ alignSelf: "center" }}>
-                    ¥
-                    {money(
-                      totals.balances.find(
-                        (value) => value.account.id === item.id,
-                      )?.balance ?? item.openingBalance,
-                    )}
+                    {formatCurrency({
+                      minor:
+                        totals.balances.find(
+                          (value) => value.account.id === item.id,
+                        )?.balance ?? item.openingBalance,
+                      currency: item.currency ?? "CNY",
+                    })}
                   </Text>
                 )}
               />
@@ -107,10 +134,18 @@ export function AssetsScreen({
       {account ? (
         <FormSheet title={account.name} onClose={() => setSelected(null)}>
           <Text variant="headlineMedium">
-            ¥{money(projection?.balance ?? account.openingBalance)}
+            {formatCurrency({
+              minor: projection?.balance ?? account.openingBalance,
+              currency: account.currency ?? "CNY",
+            })}
           </Text>
           <Text>
-            基准余额 ¥{money(account.openingBalance)} · {account.balanceAt}
+            基准余额{" "}
+            {formatCurrency({
+              minor: account.openingBalance,
+              currency: account.currency ?? "CNY",
+            })}{" "}
+            · {account.balanceAt}
           </Text>
           <Text>别名：{account.aliases.join("、") || "无"}</Text>
           <Button
@@ -161,8 +196,12 @@ export function AssetsScreen({
           <Section title="余额校准记录">
             {account.checkpoints.map((checkpoint) => (
               <Text key={checkpoint.id}>
-                {checkpoint.at} · ¥{money(checkpoint.balance)} ·{" "}
-                {checkpoint.note}
+                {checkpoint.at} ·{" "}
+                {formatCurrency({
+                  minor: checkpoint.balance,
+                  currency: account.currency ?? "CNY",
+                })}{" "}
+                · {checkpoint.note}
               </Text>
             ))}
           </Section>

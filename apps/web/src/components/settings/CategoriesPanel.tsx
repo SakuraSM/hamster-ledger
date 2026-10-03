@@ -2,6 +2,8 @@ import { TextInput, Button } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
 import { useState } from "react";
 import {
+  CATEGORY_TEMPLATES,
+  applyCategoryTemplate,
   categoryDefinitions,
   saveCategory,
   moveCategory,
@@ -20,6 +22,9 @@ export function CategoriesPanel({
   const [name, setName] = useState("");
   const [kind, setKind] = useState<CategoryDefinition["kind"]>("支出");
   const [editing, setEditing] = useState<string | null>(null);
+  const [parentId, setParentId] = useState("");
+  const [template, setTemplate] =
+    useState<keyof typeof CATEGORY_TEMPLATES>("daily");
   const [error, setError] = useState("");
   const categories = categoryDefinitions(ledger);
   async function commit(next: Ledger): Promise<void> {
@@ -40,11 +45,13 @@ export function CategoriesPanel({
         id: editing ?? newEntityId(),
         name,
         kind,
+        parentId: parentId || null,
         order: current?.order ?? categories.length,
         isArchived: current?.isArchived,
       });
       await onCommit(next);
       setName("");
+      setParentId("");
       setEditing(null);
       setError("");
     } catch (cause) {
@@ -54,6 +61,26 @@ export function CategoriesPanel({
   return (
     <section className="panel">
       <h2>分类管理</h2>
+      <div className="inline-form">
+        <Choice
+          label="分类模板"
+          value={template}
+          onChange={(value) => setTemplate(value as typeof template)}
+        >
+          {Object.entries(CATEGORY_TEMPLATES).map(([value, label]) => (
+            <option value={value} key={value}>
+              {label}
+            </option>
+          ))}
+        </Choice>
+        <Button
+          variant="outline"
+          onClick={() => void commit(applyCategoryTemplate(ledger, template))}
+        >
+          应用所选模板
+        </Button>
+      </div>
+      <p className="muted">模板仅补充缺少的分类，不覆盖现有名称和层级。</p>
       <form className="inline-form" onSubmit={submit}>
         <TextInput
           label={<>分类名称</>}
@@ -69,6 +96,22 @@ export function CategoriesPanel({
         >
           <option>支出</option>
           <option>收入</option>
+        </Choice>
+        <Choice label="父分类" value={parentId} onChange={setParentId}>
+          <option value="">一级分类</option>
+          {categories
+            .filter(
+              (item) =>
+                !item.parentId &&
+                !item.isArchived &&
+                item.kind === kind &&
+                item.id !== editing,
+            )
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
         </Choice>
         <Button variant="outline" type="submit" className="secondary-button">
           {editing ? "保存分类" : "添加分类"}
@@ -93,6 +136,9 @@ export function CategoriesPanel({
           {categories.map((category, index) => (
             <div key={category.id}>
               <span>
+                {category.parentId
+                  ? `${categories.find((item) => item.id === category.parentId)?.name} / `
+                  : ""}
                 {category.name} · {category.kind}
                 {category.isArchived ? " · 已归档" : ""}
               </span>
@@ -133,6 +179,7 @@ export function CategoriesPanel({
                     setEditing(category.id);
                     setName(category.name);
                     setKind(category.kind);
+                    setParentId(category.parentId ?? "");
                   }}
                 >
                   改名

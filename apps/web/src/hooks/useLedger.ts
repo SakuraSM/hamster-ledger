@@ -1,5 +1,7 @@
+import { cloudRequest } from "../platform/browser/cloud-request";
 import {
   useLedger as useSharedLedger,
+  loadDueRates,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import type { LedgerRepository } from "@hamster-ledger/core";
@@ -15,5 +17,10 @@ export function useLedger(
     createDemoLedger,
     localNow,
     newEntityId,
+    loadRates: (requests) =>
+      loadDueRates(
+        { request: <T>(path: string) => cloudRequest<T>(path) },
+        requests,
+      ),
   });
 }

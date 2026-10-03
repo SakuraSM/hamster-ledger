@@ -1,7 +1,16 @@
 import { MONTH_KEY_LENGTH, CENTS_PER_YUAN } from "../constants";
 import { useState } from "react";
-import { Button, Card, ProgressBar, Text, TextInput } from "react-native-paper";
 import {
+  Button,
+  Card,
+  ProgressBar,
+  Text,
+  TextInput,
+  Checkbox,
+} from "react-native-paper";
+import {
+  BUDGET_PERIODS,
+  type Budget,
   budgetProgress,
   categoryNames,
   money,
@@ -22,6 +31,10 @@ export function BudgetScreen({
   const [month, setMonth] = useState(localNow().slice(0, MONTH_KEY_LENGTH));
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
+  const [period, setPeriod] =
+    useState<NonNullable<Budget["period"]>>("monthly");
+  const [rollover, setRollover] = useState(false);
+  const [threshold, setThreshold] = useState("80");
   const [error, setError] = useState("");
   const budgets = budgetProgress(controller.ledger, month);
   async function save(): Promise<void> {
@@ -37,6 +50,9 @@ export function BudgetScreen({
           month,
           category: category || null,
           amount: cents,
+          period,
+          rollover,
+          alertPercent: Number(threshold),
         }),
       );
       setAmount("");
@@ -71,7 +87,12 @@ export function BudgetScreen({
         <Card key={budget.id} mode="outlined">
           <Card.Content style={{ gap: 10 }}>
             <Text variant="titleMedium">
-              {budget.category ?? "总预算"} · ¥{money(budget.amount)}
+              {BUDGET_PERIODS[budget.period ?? "monthly"]} ·{" "}
+              {budget.category ?? "总预算"} · ¥{money(budget.available)}
+            </Text>
+            <Text>
+              {budget.start} 至 {budget.end}（不含结束日） · 结转 ¥
+              {money(budget.carried)}
             </Text>
             <ProgressBar
               progress={Math.min(1, budget.ratio)}
@@ -86,6 +107,9 @@ export function BudgetScreen({
               onPress={() => {
                 setCategory(budget.category ?? "");
                 setAmount(String(budget.amount / CENTS_PER_YUAN));
+                setPeriod(budget.period ?? "monthly");
+                setRollover(budget.rollover ?? false);
+                setThreshold(String(budget.alertPercent ?? 80));
               }}
             >
               调整金额
@@ -100,6 +124,26 @@ export function BudgetScreen({
         </Card>
       ))}
       <Section title="设置预算">
+        <ChoiceField
+          label="预算周期"
+          value={period}
+          options={Object.entries(BUDGET_PERIODS).map(([value, label]) => ({
+            value,
+            label,
+          }))}
+          onChange={(value) => setPeriod(value as typeof period)}
+        />
+        <Checkbox.Item
+          label="结转上期未使用预算"
+          status={rollover ? "checked" : "unchecked"}
+          onPress={() => setRollover(!rollover)}
+        />
+        <TextInput
+          label="提醒阈值（1–100%）"
+          value={threshold}
+          onChangeText={setThreshold}
+          keyboardType="number-pad"
+        />
         <ChoiceField
           label="预算范围"
           value={category}

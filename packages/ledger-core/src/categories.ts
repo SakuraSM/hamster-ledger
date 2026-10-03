@@ -21,6 +21,9 @@ export function categoryNames(ledger: Ledger, kind?: Kind): string[] {
     .filter(
       (category) =>
         !category.isArchived &&
+        !categoryDefinitions(ledger).some(
+          (parent) => parent.id === category.parentId && parent.isArchived,
+        ) &&
         (!kind ||
           kind === "转账" ||
           kind === "不计收支" ||
@@ -133,4 +136,68 @@ export function defaultCategory(
       category.id === preferredId && available.includes(category.name),
   );
   return preferred?.name ?? available[0] ?? "";
+}
+export const CATEGORY_TEMPLATES = {
+  daily: "日常生活",
+  family: "家庭开支",
+  investment: "投资收支",
+} as const;
+const TEMPLATE_GROUPS: Record<
+  keyof typeof CATEGORY_TEMPLATES,
+  Array<{ name: string; kind: "收入" | "支出"; children: string[] }>
+> = {
+  daily: [
+    { name: "餐饮", kind: "支出", children: ["早餐", "午晚餐", "咖啡茶饮"] },
+    { name: "交通", kind: "支出", children: ["公交地铁", "打车", "养车"] },
+    { name: "居住", kind: "支出", children: ["水电网费", "物业费用"] },
+  ],
+  family: [
+    {
+      name: "家庭",
+      kind: "支出",
+      children: ["育儿", "教育", "宠物", "家庭用品"],
+    },
+    { name: "家庭收入", kind: "收入", children: ["奖金", "补贴"] },
+  ],
+  investment: [
+    { name: "投资费用", kind: "支出", children: ["交易手续费", "借款利息"] },
+    { name: "投资收入", kind: "收入", children: ["存款利息", "分红"] },
+  ],
+};
+export function applyCategoryTemplate(
+  ledger: Ledger,
+  template: keyof typeof CATEGORY_TEMPLATES,
+): Ledger {
+  let next = ledger;
+  for (const group of TEMPLATE_GROUPS[template]) {
+    let parent = categoryDefinitions(next).find(
+      (item) => item.name === group.name,
+    );
+    if (
+      parent &&
+      (parent.kind !== group.kind || parent.parentId || parent.isArchived)
+    )
+      continue;
+    if (!parent) {
+      parent = {
+        id: `template:${template}:${group.name}`,
+        name: group.name,
+        kind: group.kind,
+        order: categoryDefinitions(next).length,
+      };
+      next = saveCategory(next, parent);
+    }
+    for (const name of group.children) {
+      if (categoryDefinitions(next).some((item) => item.name === name))
+        continue;
+      next = saveCategory(next, {
+        id: `template:${template}:${group.name}:${name}`,
+        name,
+        kind: group.kind,
+        parentId: parent.id,
+        order: categoryDefinitions(next).length,
+      });
+    }
+  }
+  return next;
 }
