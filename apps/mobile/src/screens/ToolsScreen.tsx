@@ -2,6 +2,12 @@ import { List, Text } from "react-native-paper";
 import { Screen } from "../ui/Screen";
 export const TOOLS = [
   {
+    key: "network",
+    title: "家庭与联网账本",
+    description: "共享、邀请与操作历史",
+    icon: "account-group",
+  },
+  {
     key: "account",
     title: "账号与登录",
     description: "登录、密码与设备管理",

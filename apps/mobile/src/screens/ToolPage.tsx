@@ -12,6 +12,7 @@ import { BackupScreen } from "./BackupScreen";
 import { PreferencesScreen } from "./PreferencesScreen";
 import { AccountScreen } from "./AccountScreen";
 import { SyncScreen } from "./SyncScreen";
+import { NetworkScreen } from "./NetworkScreen";
 interface ToolPageProps {
   page: ToolPageName;
   controller: LedgerController;
@@ -27,6 +28,7 @@ export function ToolPage({
   onReview,
 }: ToolPageProps): React.JSX.Element {
   const pages: Record<ToolPageName, React.JSX.Element> = {
+    network: <NetworkScreen controller={controller} />,
     account: <AccountScreen />,
     sync: <SyncScreen controller={controller} />,
     books: <BooksScreen controller={controller} />,

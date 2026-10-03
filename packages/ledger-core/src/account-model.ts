@@ -25,7 +25,7 @@ export const LIABILITY_TYPES = [
 export type AccountKind = (typeof ACCOUNT_KINDS)[keyof typeof ACCOUNT_KINDS];
 export const balanceCheckpointSchema = z.object({
   id: z.string(),
-  balance: z.number().int(),
+  balance: z.number().int().safe(),
   at: dateTimeSchema,
   note: z.string(),
   recordedAt: dateTimeSchema,
@@ -35,7 +35,7 @@ export const assetAccountSchema = z.object({
   name: z.string().trim().min(1).max(MAX_ACCOUNT_NAME_LENGTH),
   kind: z.enum(["asset", "liability"]),
   type: z.enum([...ASSET_TYPES, ...LIABILITY_TYPES]),
-  openingBalance: z.number().int(),
+  openingBalance: z.number().int().safe(),
   balanceAt: dateTimeSchema,
   aliases: z.array(z.string()).default([]),
   isArchived: z.boolean().default(false),

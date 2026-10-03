@@ -88,6 +88,10 @@ export function useNativeSync(
       throw new Error("当前账本或登录状态已变化，请重新打开同步页面。");
   }
   async function run(action: () => Promise<void>): Promise<void> {
+    if (controller.network?.isConnected) {
+      setError("联网账本使用在线编辑，无需整本同步。");
+      return;
+    }
     if (lock.current || controller.isLoading || controller.isSaving) return;
     lock.current = true;
     setBusy(true);

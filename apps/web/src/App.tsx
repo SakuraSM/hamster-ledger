@@ -15,6 +15,7 @@ import { type BillFilter } from "./components/Transactions";
 import { RecordDetail } from "./components/RecordDetail";
 import { Dialog } from "./components/Dialog";
 import { useLedger } from "./hooks/useLedger";
+import { useNetworkController } from "./hooks/useNetworkController";
 import {
   type Source,
   type Category,
@@ -28,7 +29,8 @@ import {
 
 export function App(): React.JSX.Element {
   const auth = useAuth();
-  const controller = useLedger();
+  const local = useLedger();
+  const controller = useNetworkController(local);
   const { ledger, mode } = controller;
   const sync = useCloudSync(controller);
   const [page, setPage] = useState<PageId>(() =>

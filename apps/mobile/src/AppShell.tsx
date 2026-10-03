@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { saveEntry, type BillRecord } from "@hamster-ledger/core";
 import { useLedger } from "./hooks/useLedger";
+import { useNetworkController } from "./hooks/useNetworkController";
 import { ledgerTheme } from "./ui/theme";
 import { iconSettings } from "./ui/Icons";
 import { OverviewScreen } from "./screens/OverviewScreen";
@@ -46,7 +47,8 @@ const ROUTES = [
   { key: "tools", title: "更多", focusedIcon: "dots-horizontal" },
 ];
 export function AppShell(): React.JSX.Element {
-  const controller = useLedger();
+  const local = useLedger();
+  const controller = useNetworkController(local);
   const account = useNativeAccount();
   const [index, setIndex] = useState(0);
   const [tool, setTool] = useState<ToolPageName | null>(null);

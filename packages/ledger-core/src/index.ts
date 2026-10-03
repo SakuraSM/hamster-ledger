@@ -20,3 +20,4 @@ export * from "./currency.js";
 export * from "./finance-model.js";
 export * from "./migration.js";
 export * from "./advanced-entries.js";
+export * from "./commands.js";

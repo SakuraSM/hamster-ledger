@@ -12,9 +12,16 @@ import {
   type Ledger,
   type LedgerMode,
   type Review,
-  type LedgerRepository,
 } from "@hamster-ledger/core";
 import { editLedgerRecord, type RecordEdit } from "./ledger-actions.js";
+import type {
+  LedgerController,
+  LedgerEnvironment,
+} from "./ledger-controller.js";
+export type {
+  LedgerController,
+  LedgerEnvironment,
+} from "./ledger-controller.js";
 
 interface UndoEntry {
   ledger: Ledger;
@@ -24,32 +31,6 @@ interface WorkspaceState {
   books: Book[];
   ledgers: Record<LedgerMode, Ledger>;
   mode: LedgerMode;
-}
-export interface LedgerController {
-  books: Book[];
-  createBook: (name: string, initial?: Ledger) => Promise<LedgerMode>;
-  updateBooks: (books: Book[]) => Promise<void>;
-  ledger: Ledger;
-  personalLedger: Ledger;
-  mode: LedgerMode;
-  notice: string;
-  error: string;
-  isLoading: boolean;
-  isSaving: boolean;
-  canUndo: boolean;
-  switchMode: (mode: LedgerMode) => void;
-  commit: (ledger: Ledger, mode?: LedgerMode) => Promise<void>;
-  decide: (review: Review, decision: "linked" | "separate") => void;
-  undo: () => void;
-  editRecord: (input: RecordEdit) => Promise<void>;
-  dismissNotice: () => void;
-  notify: (message: string) => void;
-}
-export interface LedgerEnvironment {
-  repository: LedgerRepository;
-  createDemoLedger: () => Ledger;
-  localNow: () => string;
-  newEntityId: () => string;
 }
 export function useLedger({
   repository,
@@ -214,6 +195,7 @@ export function useLedger({
   async function createBook(
     name: string,
     initial: Ledger = EMPTY_LEDGER,
+    cloud?: Book["cloud"],
   ): Promise<LedgerMode> {
     if (isLoading || isWriteInProgress.current)
       throw new Error("账本正在读写，请稍后。");
@@ -223,7 +205,10 @@ export function useLedger({
     setIsSaving(true);
     try {
       const id: LedgerMode = `book:${newEntityId()}`;
-      const books = [...workspace.books, { id, name: name.trim() }];
+      const books = [
+        ...workspace.books,
+        { id, name: name.trim(), ...(cloud ? { cloud } : {}) },
+      ];
       await repository.save(id, initial);
       await repository.saveBooks(books);
       setWorkspace((current) => ({
@@ -241,7 +226,11 @@ export function useLedger({
     }
   }
   useEffect(() => {
-    if (isLoading) return;
+    if (
+      isLoading ||
+      workspace.books.find((book) => book.id === workspace.mode)?.cloud
+    )
+      return;
     let stopped = false;
     const run = async (): Promise<void> => {
       if (isWriteInProgress.current) return;
