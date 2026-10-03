@@ -27,7 +27,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run build:packages && vitest run",
-    "check": "npm run format:check && npm run tokens:check && npm run typecheck && npm run lint && npm run check:boundaries && npm test && npm run build && npm run test:sites && npm run test:server",
+    "check": "npm run check:dependencies && npm run format:check && npm run tokens:check && npm run typecheck && npm run lint && npm run check:boundaries && npm test && npm run build && npm run test:sites && npm run test:server",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "test:sites": "npm run test:sites --workspace @hamster-ledger/web",
     "tokens:generate": "node scripts/generate-tokens.mjs",
@@ -38,7 +38,8 @@
     "android:dev": "npm run build:packages && npm run start --workspace @hamster-ledger/mobile",
     "android:run": "npm run build:packages && npm run android --workspace @hamster-ledger/mobile",
     "android:export": "npm run build:packages && npm run export --workspace @hamster-ledger/mobile",
-    "android:apk": "npm run build:packages && node scripts/build-android.mjs"
+    "android:apk": "npm run build:packages && node scripts/build-android.mjs",
+    "check:dependencies": "node scripts/check-dependencies.mjs && node --test scripts/check-dependencies.test.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
@@ -50,6 +51,7 @@
     "eslint": "^10.12.0",
     "jsdom": "^30.1.1",
     "prettier": "^3.9.9",
+    "semver": "^7.8.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.0",
     "vitest": "^4.1.11"
