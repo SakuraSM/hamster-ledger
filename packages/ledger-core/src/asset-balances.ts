@@ -14,6 +14,10 @@ export function accountMovement(input: {
 }): number {
   const { record, account, accounts } = input;
   if (record.isDeleted || record.status !== RECORD_STATUS.CONFIRMED) return 0;
+  if (record.detail?.movements.length)
+    return record.detail.movements
+      .filter((movement) => movement.accountId === account.id)
+      .reduce((sum, movement) => sum + movement.amount, 0);
   const source = resolveAssetAccount(record, accounts);
   const isSource = source?.id === account.id;
   const isLiability = account.kind === ACCOUNT_KINDS.LIABILITY;

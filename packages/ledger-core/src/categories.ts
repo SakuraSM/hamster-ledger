@@ -34,6 +34,18 @@ export function saveCategory(
 ): Ledger {
   const category = categoryDefinitionSchema.parse(input);
   const existing = categoryDefinitions(ledger);
+  if (category.parentId) {
+    const parent = existing.find((item) => item.id === category.parentId);
+    if (
+      !parent ||
+      parent.id === category.id ||
+      parent.parentId ||
+      parent.kind !== category.kind ||
+      parent.isArchived ||
+      existing.some((item) => item.parentId === category.id)
+    )
+      throw new Error("父分类必须是同收支类型的有效一级分类，最多两级。");
+  }
   if (
     existing.some(
       (item) => item.id !== category.id && item.name === category.name,
@@ -77,6 +89,13 @@ export function saveCategory(
             : rule,
         )
       : ledger.recurringRules,
+    subscriptions: shouldRename
+      ? ledger.subscriptions?.map((subscription) =>
+          subscription.category === old.name
+            ? { ...subscription, category: category.name }
+            : subscription,
+        )
+      : ledger.subscriptions,
   };
 }
 export function moveCategory(
