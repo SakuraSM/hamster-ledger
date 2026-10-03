@@ -1,3 +1,5 @@
+import { browserAttachments } from "../../platform/browser/attachments";
+import { newEntityId } from "../../platform/browser/runtime";
 import { NetworkOwnership } from "./NetworkOwnership";
 import { useState } from "react";
 import {
@@ -12,6 +14,7 @@ import {
 } from "@mantine/core";
 import {
   useNetworkManagement,
+  prepareAttachmentConversion,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import type { BookRole } from "@hamster-ledger/core";
@@ -50,7 +53,17 @@ export function NetworkPanel({
         linkKey(auth.user?.id ?? "", mode),
       );
       const link: Link | null = raw ? JSON.parse(raw) : null;
-      return link ? { sourceBookId: link.id, revision: link.revision } : {};
+      const attachmentMap = await prepareAttachmentConversion({
+        store: browserAttachments,
+        mode,
+        ledger: controller.ledger,
+        client,
+        newId: newEntityId,
+      });
+      return {
+        ...(link ? { sourceBookId: link.id, revision: link.revision } : {}),
+        attachmentMap,
+      };
     },
   });
   const currentRole = controller.network?.role;

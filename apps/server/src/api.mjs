@@ -1,3 +1,6 @@
+import { modelsApi } from "./models.mjs";
+import { attachmentsApi } from "./attachments.mjs";
+import { aiApi } from "./ai-api.mjs";
 import { randomUUID } from "node:crypto";
 import { ledgerSchema } from "@hamster-ledger/core";
 import { createAuthApi } from "./auth.mjs";
@@ -18,6 +21,8 @@ export function createApi({
   publicOrigin,
   allowRegistration = true,
   now = Date.now,
+  modelTransport,
+  secrets,
 }) {
   const auth = createAuthApi({ database, allowRegistration, now });
   return async (request, response) => {
@@ -63,6 +68,29 @@ export function createApi({
       json(response, 200, { ledgerVersions: [1, 2], networkBooks: true });
       return;
     }
+    const context = {
+      database,
+      request,
+      response,
+      path,
+      userId: user.id,
+      now,
+      modelTransport,
+      secrets,
+      revalidate: () =>
+        requireSession(request, database, { write: true, now: now() }),
+      readBody: async () => {
+        const body = await readJson(request);
+        requireSession(request, database, { write: true, now: now() });
+        return body;
+      },
+    };
+    if (
+      (await modelsApi(context)) ||
+      (await attachmentsApi(context)) ||
+      (await aiApi(context))
+    )
+      return;
     if (
       await networkApi({
         database,

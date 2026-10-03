@@ -35,6 +35,16 @@ function FactsContent({
     members.find((item) => item.id === id)?.username ?? id;
   return (
     <dl className="detail-meta">
+      {detail.origin === "ai" ? (
+        <div>
+          <dt>记账来源</dt>
+          <dd>
+            AI 草稿 ·{" "}
+            {ledger.aiDrafts?.find((draft) => draft.recordId === record.id)
+              ?.sourceLabel ?? "历史识别记录"}
+          </dd>
+        </div>
+      ) : null}
       <div>
         <dt>完整交易类型</dt>
         <dd>{TRANSACTION_LABELS[detail.type]}</dd>

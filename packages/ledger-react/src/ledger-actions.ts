@@ -1,5 +1,6 @@
 import {
   RECORD_STATUS,
+  normalizeLegacyRecord,
   assertRecordUnchanged,
   type BillRecord,
   type Category,
@@ -67,7 +68,7 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
       ? {
           ...item,
           category: input.category,
-          detail: isAdvanced ? item.detail : undefined,
+          detail: item.detail,
           kind: input.kind,
           account: input.account,
           ...(input.accountId !== undefined
@@ -85,7 +86,9 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
   );
   return {
     ...ledger,
-    records,
+    records: records.map((item) =>
+      item.id === input.id ? normalizeLegacyRecord(item) : item,
+    ),
     rules: input.remember
       ? { ...ledger.rules, [record.merchant]: input.category }
       : ledger.rules,

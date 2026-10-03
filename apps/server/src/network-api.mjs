@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   migrateLedger,
+  attachmentReferences,
   validateFinancialIntegrity,
 } from "@hamster-ledger/core";
 import { json, HttpError } from "./http.mjs";
@@ -63,10 +64,33 @@ function convertBook({ database, userId, body, now }) {
         .prepare("INSERT INTO book_backups VALUES(?,?,?,?,?)")
         .run(randomUUID(), id, previous.ledger, previous.revision, at);
     }
+    const attachmentMap = body.attachmentMap ?? {};
+    const refs = attachmentReferences(ledger);
+    for (const ref of refs) {
+      const uploaded = database
+        .prepare(
+          "SELECT id FROM attachments WHERE id=? AND user_id=? AND book_id IS NULL",
+        )
+        .get(attachmentMap[ref] ?? "", userId);
+      if (!uploaded) throw new HttpError(400, "转换前须上传全部附件凭证。");
+    }
+    ledger.aiDrafts = ledger.aiDrafts?.map((draft) => ({
+      ...draft,
+      memberId: userId,
+      attachmentIds: draft.attachmentIds.map(
+        (ref) => attachmentMap[ref] ?? ref,
+      ),
+    }));
     ledger.records = ledger.records.map((record) => ({
       ...record,
       detail: record.detail
-        ? { ...record.detail, memberId: userId }
+        ? {
+            ...record.detail,
+            memberId: userId,
+            attachmentIds: record.detail.attachmentIds.map(
+              (ref) => attachmentMap[ref],
+            ),
+          }
         : record.detail,
     }));
     if (body.sourceBookId)
@@ -88,6 +112,10 @@ function convertBook({ database, userId, body, now }) {
     database
       .prepare("INSERT INTO book_members VALUES(?,?,'owner')")
       .run(id, userId);
+    for (const ref of refs)
+      database
+        .prepare("UPDATE attachments SET book_id=? WHERE id=?")
+        .run(id, attachmentMap[ref]);
     return snapshot(membership(database, id, userId));
   });
 }

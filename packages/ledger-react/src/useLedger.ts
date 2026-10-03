@@ -200,6 +200,7 @@ export function useLedger({
     name: string,
     initial: Ledger = EMPTY_LEDGER,
     cloud?: Book["cloud"],
+    prepare?: (mode: LedgerMode) => Promise<void>,
   ): Promise<LedgerMode> {
     if (isLoading || isWriteInProgress.current)
       throw new Error("账本正在读写，请稍后。");
@@ -213,6 +214,7 @@ export function useLedger({
         ...workspace.books,
         { id, name: name.trim(), ...(cloud ? { cloud } : {}) },
       ];
+      await prepare?.(id);
       await repository.save(id, initial);
       await repository.saveBooks(books);
       setWorkspace((current) => ({

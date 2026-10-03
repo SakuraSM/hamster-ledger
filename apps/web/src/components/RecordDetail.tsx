@@ -17,6 +17,7 @@ import { Dialog } from "./Dialog";
 import { CategoryIcon, Icons } from "./Icons";
 import type { LedgerController } from "../hooks/useLedger";
 interface RecordDetailProps {
+  attachmentPanel?: React.ReactNode;
   bookId?: string;
   onEdit?: () => void;
   onDelete?: () => Promise<void>;
@@ -27,6 +28,7 @@ interface RecordDetailProps {
   onRelated: (record: BillRecord) => void;
 }
 export function RecordDetail({
+  attachmentPanel,
   bookId,
   onEdit,
   onDelete,
@@ -100,6 +102,7 @@ export function RecordDetail({
           </div>
           <strong>{signedMoney(record)}</strong>
         </div>
+        {attachmentPanel}
         <TransactionFacts record={record} ledger={ledger} bookId={bookId} />
         {record.status === "pending" ? (
           <p className="notice warning">

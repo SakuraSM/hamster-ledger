@@ -54,7 +54,7 @@ export const transactionDetailSchema = z.object({
   debtId: z.string().optional(),
   subscriptionId: z.string().optional(),
   isReimbursable: z.boolean().optional(),
-  attachmentIds: z.array(z.string()).default([]),
+  attachmentIds: z.array(z.string()).max(10).default([]),
   splits: z.array(splitSchema).default([]),
   movements: z
     .array(z.object({ accountId: z.string(), amount: z.number().int().safe() }))

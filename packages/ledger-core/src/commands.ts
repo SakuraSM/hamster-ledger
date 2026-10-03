@@ -17,6 +17,7 @@ export const COLLECTIONS = [
   "debts",
   "goals",
   "notifications",
+  "aiDrafts",
 ] as const;
 const changeSchema = z.object({
   collection: z.enum(COLLECTIONS),
@@ -82,7 +83,10 @@ export function applyLedgerPatch(input: {
     const key = change.collection + ":" + change.id;
     if (keys.has(key)) throw new Error("同一批操作不能重复修改同一对象。");
     keys.add(key);
-    if (!canManage && !["records", "notifications"].includes(change.collection))
+    if (
+      !canManage &&
+      !["records", "notifications", "aiDrafts"].includes(change.collection)
+    )
       throw new Error("修改共享配置需要管理员权限。");
     if (change.collection === "accounts") {
       const account = next.accounts.find((item) => item.id === change.id);
@@ -98,6 +102,14 @@ export function applyLedgerPatch(input: {
     const collection = next[change.collection] ?? [];
     const previous = collection.find((item) => item.id === change.id);
     let value = change.value;
+    if (change.collection === "aiDrafts") {
+      if (value === null) throw new Error("草稿须标记丢弃以保留识别去重信息。");
+      const oldDraft = next.aiDrafts?.find((item) => item.id === change.id);
+      if (!canManage && oldDraft && oldDraft.memberId !== actor.userId)
+        throw new Error("只能修改自己的草稿。");
+      if (value && typeof value === "object")
+        value = { ...value, memberId: oldDraft?.memberId ?? actor.userId };
+    }
     if (change.collection === "notifications" && !canManage) {
       if (
         !previous ||
@@ -141,6 +153,7 @@ export function applyLedgerPatch(input: {
         ...normalized,
         detail: {
           ...normalized.detail,
+          attachmentIds: record.detail?.attachmentIds ?? [],
           memberId: old?.detail?.memberId ?? actor.userId,
         },
       };

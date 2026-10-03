@@ -224,6 +224,11 @@ export function useNetworkLedger(input: {
       revision: remote?.revision,
       error,
       refresh,
+      receive: async (snapshot) => {
+        if (snapshot.id !== cloud.id || !isIdentityValid)
+          throw new Error("联网账本身份已变化。");
+        await accept(snapshot, contextKey);
+      },
     },
   };
 }

@@ -15,6 +15,7 @@ export interface LedgerController {
     name: string,
     initial?: Ledger,
     cloud?: Book["cloud"],
+    prepare?: (mode: LedgerMode) => Promise<void>,
   ) => Promise<LedgerMode>;
   network?: NetworkState;
   updateBooks: (books: Book[]) => Promise<void>;
