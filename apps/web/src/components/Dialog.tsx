@@ -1,6 +1,7 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { Icons } from "./Icons";
-
+import { useState, useEffect, useId, type ReactNode } from "react";
+import { Modal } from "@mantine/core";
+const WIDE_DIALOG_WIDTH = 820;
+const DEFAULT_DIALOG_WIDTH = 600;
 interface DialogProps {
   title: string;
   children: ReactNode;
@@ -13,30 +14,39 @@ export function Dialog({
   onClose,
   wide = false,
 }: DialogProps): React.JSX.Element {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const stackId = useId();
+  const [isOpened, setIsOpened] = useState(false);
+  const [opener] = useState(() => document.activeElement);
   useEffect(() => {
-    const previous = document.activeElement;
-    const dialog = dialogRef.current;
-    dialog?.showModal();
-    return () => {
-      dialog?.close();
-      if (previous instanceof HTMLElement) previous.focus();
-    };
+    setIsOpened(true);
   }, []);
+  useEffect(
+    () => () => {
+      // Forms can also unmount their dialog directly after saving or cancelling.
+      if (opener instanceof HTMLElement && opener.isConnected)
+        opener.focus({ preventScroll: true });
+    },
+    [opener],
+  );
   return (
-    <dialog
-      ref={dialogRef}
-      className={`dialog ${wide ? "dialog-wide" : ""}`}
-      onCancel={onClose}
-      aria-labelledby="dialog-title"
-    >
-      <header className="dialog-header">
-        <h2 id="dialog-title">{title}</h2>
-        <button className="icon-button" onClick={onClose} aria-label="关闭弹窗">
-          <Icons.Close size={23} />
-        </button>
-      </header>
-      {children}
-    </dialog>
+    <Modal.Stack>
+      <Modal
+        stackId={stackId}
+        opened={isOpened}
+        onClose={() => setIsOpened(false)}
+        onExitTransitionEnd={onClose}
+        title={title}
+        size={wide ? WIDE_DIALOG_WIDTH : DEFAULT_DIALOG_WIDTH}
+        padding="lg"
+        closeButtonProps={{ "aria-label": "关闭弹窗" }}
+        classNames={{
+          content: "ledger-modal",
+          header: "ledger-modal-header",
+          title: "ledger-modal-title",
+        }}
+      >
+        {children}
+      </Modal>
+    </Modal.Stack>
   );
 }

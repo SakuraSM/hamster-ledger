@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "仓鼠记账",
+    "slug": "hamster-ledger",
+    "version": "0.1.0",
+    "scheme": "hamster-ledger",
+    "orientation": "default",
+    "icon": "./assets/hamster-logo.png",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "top.nings.hamsterledger",
+      "versionCode": 1,
+      "allowBackup": false,
+      "predictiveBackGestureEnabled": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#fffcf7",
+        "foregroundImage": "./assets/hamster-logo.png"
+      },
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
+      ],
+      "expo-document-picker",
+      "expo-sharing",
+      "expo-notifications",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

@@ -26,3 +26,6 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run check
+      - name: Export Android JavaScript bundle
+        if: matrix.node == 22
+        run: npm run android:export

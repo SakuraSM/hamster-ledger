@@ -10,10 +10,14 @@
 ## Architecture
 
 - Web UI and browser adapters live in `apps/web`.
-- Shared business logic lives in `packages/ledger-core`.
+- Shared business logic lives in `packages/ledger-core`, including asset accounts, balance baselines and record linkage.
+- Asset balances must only apply confirmed, nonduplicate movements after an explicit baseline. Transfers require both accounts and never count as income or expenses.
+- Preserve historical account IDs when account names or aliases change; never infer a funding account from the payment platform alone.
 - Statement normalization lives in `packages/statement-importers`.
 - Shared design values live in `packages/design-tokens`.
-- Shared packages must not import browser, React, Node filesystem or native platform APIs.
+- Pure shared packages (`ledger-core`, `statement-importers`, `fixtures`, `design-tokens`) must not import browser, React, Node filesystem or native platform APIs.
+- `ledger-react` contains shared React controllers only; inject storage, clock and ID adapters. It must not import Web or native implementations.
+- Android UI and native adapters live in `apps/mobile`. Build native modules from the Expo configuration; generated Android files are not the source of truth.
 - Side effects belong in platform adapters. Keep ledger schemas and storage keys backward compatible, or document and test an explicit migration.
 - Do not create a placeholder native app. Follow `docs/mobile-readiness.md` when a target platform is chosen.
 
