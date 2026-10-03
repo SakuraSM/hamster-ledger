@@ -1,3 +1,4 @@
+import { aiDraftSchema } from "./ai-model.js";
 import { addMinor } from "./currency.js";
 import { dateTimeSchema } from "./date-schemas.js";
 import {
@@ -107,6 +108,7 @@ export const ledgerSchema = z
     goals: z.array(goalSchema).optional(),
     notifications: z.array(notificationSchema).optional(),
     history: z.array(auditEventSchema).optional(),
+    aiDrafts: z.array(aiDraftSchema).optional(),
   })
   .superRefine((ledger, context) => {
     for (const field of [
@@ -120,6 +122,7 @@ export const ledgerSchema = z
       "debts",
       "goals",
       "notifications",
+      "aiDrafts",
     ] as const) {
       const values = ledger[field] ?? [];
       if (new Set(values.map((item) => item.id)).size !== values.length)

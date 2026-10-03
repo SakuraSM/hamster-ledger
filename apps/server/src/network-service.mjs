@@ -51,7 +51,14 @@ export function requireManager(access, ownerOnly = false) {
     throw new HttpError(403, "需要账本管理权限。");
 }
 // Membership changes have their own audit entries and cannot be undone as ledger patches.
-export function auditMembership(database, bookId, userId, summary, now) {
+export function auditMembership(
+  database,
+  bookId,
+  userId,
+  summary,
+  now,
+  source = "membership",
+) {
   const book = database
     .prepare("SELECT revision FROM books WHERE id=?")
     .get(bookId);
@@ -61,7 +68,7 @@ export function auditMembership(database, bookId, userId, summary, now) {
       randomUUID(),
       bookId,
       userId,
-      "membership",
+      source,
       summary,
       book.revision,
       "null",
@@ -75,12 +82,15 @@ export function applyOperation({
   body,
   now,
   source = "app",
+  command,
 }) {
   if (typeof body.key !== "string" || !/^[A-Za-z0-9:_-]{8,160}$/.test(body.key))
     throw new HttpError(400, "缺少有效的幂等键。");
   if (!Number.isSafeInteger(body.revision))
     throw new HttpError(400, "缺少账本版本。");
-  const payload = digest({ patch: body.patch, undoId: body.undoId });
+  const payload = digest(
+    command ? { command } : { patch: body.patch, undoId: body.undoId },
+  );
   return transaction(database, () => {
     const access = membership(database, bookId, userId);
     if (access.role === "viewer")
@@ -109,7 +119,7 @@ export function applyOperation({
         .get(body.undoId, bookId);
       if (
         !operation ||
-        operation.source === "membership" ||
+        operation.before_json === "null" ||
         operation.revision !== access.book.revision
       )
         throw new HttpError(409, "只能撤销当前最新操作，请先查看历史。");
@@ -128,17 +138,25 @@ export function applyOperation({
                 isDeleted: true,
               },
             }
-          : change.collection === "accounts" && change.value === null
+          : change.collection === "aiDrafts" && change.value === null
             ? {
                 ...change,
                 value: {
-                  ...before.accounts.find(
-                    (account) => account.id === change.id,
-                  ),
-                  isArchived: true,
+                  ...before.aiDrafts.find((draft) => draft.id === change.id),
+                  state: "discarded",
                 },
               }
-            : change,
+            : change.collection === "accounts" && change.value === null
+              ? {
+                  ...change,
+                  value: {
+                    ...before.accounts.find(
+                      (account) => account.id === change.id,
+                    ),
+                    isArchived: true,
+                  },
+                }
+              : change,
       );
     }
     let next;
@@ -171,6 +189,19 @@ export function applyOperation({
         )
           throw new HttpError(400, "AA 分摊须选择当前账本成员。");
     }
+    const attachmentIds = new Set([
+      ...next.records.flatMap((record) => record.detail?.attachmentIds ?? []),
+      ...(next.aiDrafts ?? [])
+        .filter((draft) => draft.state === "pending")
+        .flatMap((draft) => draft.attachmentIds),
+    ]);
+    for (const id of attachmentIds)
+      if (
+        !database
+          .prepare("SELECT 1 FROM attachments WHERE id=? AND book_id=?")
+          .get(id, bookId)
+      )
+        throw new HttpError(400, "附件不存在或不属于当前账本。");
     const revision = access.book.revision + 1;
     const at = new Date(now()).toISOString();
     const operationId = randomUUID();

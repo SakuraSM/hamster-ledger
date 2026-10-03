@@ -94,6 +94,11 @@ export function startScheduler({
     if (stopped || running) return;
     running = true;
     try {
+      database
+        .prepare(
+          "DELETE FROM attachments WHERE book_id IS NULL AND created_at < ?",
+        )
+        .run(now() - 24 * 60 * 60 * 1000);
       const books = database
         .prepare("SELECT id FROM books WHERE authority='server'")
         .all();

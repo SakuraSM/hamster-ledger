@@ -1,3 +1,4 @@
+import { RecordAttachments } from "./RecordAttachments";
 import { TransactionFacts } from "./TransactionFacts";
 import { useState } from "react";
 import { Button, Text, Divider, Chip } from "react-native-paper";
@@ -76,6 +77,7 @@ export function RecordDetail({
       ) : null}
       <Text>备注：{current.description || "无"}</Text>
       <Text>标签：{current.tags?.join("、") || "无"}</Text>
+      <RecordAttachments controller={controller} recordId={current.id} />
       <TransactionFacts
         record={current}
         ledger={controller.ledger}

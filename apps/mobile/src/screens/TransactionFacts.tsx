@@ -25,6 +25,13 @@ export function TransactionFacts({
     members.find((item) => item.id === id)?.username ?? id;
   return (
     <Section title={TRANSACTION_LABELS[detail.type]}>
+      {detail.origin === "ai" ? (
+        <Text>
+          记账来源：AI 草稿 ·{" "}
+          {ledger.aiDrafts?.find((draft) => draft.recordId === record.id)
+            ?.sourceLabel ?? "历史识别记录"}
+        </Text>
+      ) : null}
       <Text>原币金额：{formatCurrency(detail.original)}</Text>
       {detail.original.currency !== "CNY" ? (
         <Text>

@@ -28,6 +28,7 @@ export interface Invitation {
   revokedAt: number | null;
 }
 export interface ConversionSource {
+  attachmentMap?: Record<string, string>;
   sourceBookId?: string;
   revision?: number;
 }
@@ -141,7 +142,15 @@ export function useNetworkManagement(input: {
   async function convert(): Promise<void> {
     if (!userId || !book || cloud)
       throw new Error("请先登录并选择个人本地账本。");
+    const initialLedger = controller.ledger;
+    const initialContext = contextKey;
     const source = await prepareConversion(controller.mode);
+    if (
+      currentKey.current !== initialContext ||
+      active.current.controller.mode !== book.id ||
+      active.current.controller.ledger !== initialLedger
+    )
+      throw new Error("转换期间账本或账号已变化，请重新检查后转换。");
     const saved = await client.request<NetworkSnapshot>("/network/books", {
       method: "POST",
       body: {
@@ -152,6 +161,14 @@ export function useNetworkManagement(input: {
       },
     });
     const current = active.current.controller;
+    if (
+      currentKey.current !== initialContext ||
+      current.mode !== book.id ||
+      current.ledger !== initialLedger
+    )
+      throw new Error(
+        "服务端已完成转换，本地又发生变化。请保留本地账本，从联网账本列表打开服务端版本后核对。",
+      );
     await current.updateBooks(
       current.books.map((item) =>
         item.id === book.id

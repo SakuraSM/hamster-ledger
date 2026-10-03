@@ -1,7 +1,10 @@
+import { nativeAttachments } from "../platform/attachments";
+import { newEntityId } from "../platform/runtime";
 import { useState } from "react";
 import { Button, Checkbox, Text, TextInput } from "react-native-paper";
 import {
   useNetworkManagement,
+  prepareAttachmentConversion,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import type { BookRole } from "@hamster-ledger/core";
@@ -45,7 +48,17 @@ export function NetworkScreen({
       const link: { id: string; revision: number } | null = raw
         ? JSON.parse(raw)
         : null;
-      return link ? { sourceBookId: link.id, revision: link.revision } : {};
+      const attachmentMap = await prepareAttachmentConversion({
+        store: nativeAttachments,
+        mode,
+        ledger: controller.ledger,
+        client: account.client,
+        newId: newEntityId,
+      });
+      return {
+        ...(link ? { sourceBookId: link.id, revision: link.revision } : {}),
+        attachmentMap,
+      };
     },
   });
   const currentRole = controller.network?.role,

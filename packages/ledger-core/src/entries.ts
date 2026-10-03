@@ -1,3 +1,4 @@
+import { normalizeLegacyRecord } from "./migration.js";
 import { assertRecordUnchanged } from "./record-conflicts.js";
 import { recordGroupIds } from "./record-groups.js";
 import {
@@ -58,33 +59,36 @@ export function saveEntry(ledger: Ledger, input: EntryInput): Ledger {
     throw new Error(
       "有关联流水或待核对的账单，请先使用详情中的分类与账户编辑。",
     );
-  const record: BillRecord = recordSchema.parse({
-    ...previous,
-    detail: undefined,
-    id: input.id,
-    date: input.date,
-    merchant: input.merchant.trim(),
-    amount: input.amount,
-    kind: input.kind,
-    category: input.category,
-    description: input.description,
-    tags: [...new Set(input.tags.map((tag) => tag.trim()).filter(Boolean))],
-    accountId: input.accountId,
-    transferToAccountId:
-      input.kind === "转账" ? input.transferToAccountId : null,
-    currency: "CNY",
-    account:
-      previous?.account ??
-      ledger.accounts.find((account) => account.id === input.accountId)?.name ??
-      "",
-    source: previous?.source ?? "手动记账",
-    sourceStatus: previous?.sourceStatus ?? "手动确认",
-    orderId: previous?.orderId ?? "",
-    fileName: previous?.fileName ?? "手动记账",
-    raw: previous?.raw ?? {},
-    linkedSources: previous?.linkedSources ?? [],
-    status: previous?.status ?? RECORD_STATUS.CONFIRMED,
-  });
+  const record: BillRecord = normalizeLegacyRecord(
+    recordSchema.parse({
+      ...previous,
+      detail: previous?.detail,
+      id: input.id,
+      date: input.date,
+      merchant: input.merchant.trim(),
+      amount: input.amount,
+      kind: input.kind,
+      category: input.category,
+      description: input.description,
+      tags: [...new Set(input.tags.map((tag) => tag.trim()).filter(Boolean))],
+      accountId: input.accountId,
+      transferToAccountId:
+        input.kind === "转账" ? input.transferToAccountId : null,
+      currency: "CNY",
+      account:
+        previous?.account ??
+        ledger.accounts.find((account) => account.id === input.accountId)
+          ?.name ??
+        "",
+      source: previous?.source ?? "手动记账",
+      sourceStatus: previous?.sourceStatus ?? "手动确认",
+      orderId: previous?.orderId ?? "",
+      fileName: previous?.fileName ?? "手动记账",
+      raw: previous?.raw ?? {},
+      linkedSources: previous?.linkedSources ?? [],
+      status: previous?.status ?? RECORD_STATUS.CONFIRMED,
+    }),
+  );
   return {
     ...ledger,
     records: previous

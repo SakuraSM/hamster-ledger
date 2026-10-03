@@ -23,4 +23,5 @@ export interface NetworkState {
   revision?: number;
   error: string;
   refresh: () => Promise<void>;
+  receive?: (snapshot: NetworkSnapshot) => Promise<void>;
 }

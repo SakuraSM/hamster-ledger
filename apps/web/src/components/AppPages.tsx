@@ -170,7 +170,12 @@ export function AppPages(props: Props): React.JSX.Element {
       <RecurringPage ledger={ledger} onCommit={controller.commit} />
     ),
     tools: () => (
-      <ToolsPage sync={sync} controller={controller} onNavigate={onNavigate} />
+      <ToolsPage
+        sync={sync}
+        controller={controller}
+        onNavigate={onNavigate}
+        onMonth={onMonth}
+      />
     ),
   };
   return pages[page]();

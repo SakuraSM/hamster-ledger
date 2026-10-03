@@ -1,3 +1,4 @@
+import { AiPanel } from "../ai/AiPanel";
 import { PlanningPanel } from "../finance/PlanningPanel";
 import { Button } from "@mantine/core";
 import { AccountSecurityPanel } from "../auth/AccountSecurityPanel";
@@ -18,11 +19,13 @@ interface Props {
   sync: CloudController;
   controller: LedgerController;
   onNavigate: (page: PageId) => void;
+  onMonth: (month: string) => void;
 }
 export function ToolsPage({
   sync,
   controller,
   onNavigate,
+  onMonth,
 }: Props): React.JSX.Element {
   const [error, setError] = useState("");
   const { ledger } = controller;
@@ -62,6 +65,11 @@ export function ToolsPage({
         ))}
       </div>
       <div className="settings-grid">
+        <AiPanel
+          key={`ai:${controller.mode}`}
+          controller={controller}
+          onMonth={onMonth}
+        />
         <PlanningPanel key={controller.mode} controller={controller} />
         <NetworkPanel controller={controller} />
         <BooksPanel controller={controller} />
@@ -81,14 +89,7 @@ export function ToolsPage({
           <SyncPanel sync={sync} />
         )}
         <AccountSecurityPanel />
-        <BackupPanel
-          ledger={ledger}
-          name={
-            controller.books.find((book) => book.id === controller.mode)
-              ?.name ?? "账本"
-          }
-          onRestore={controller.createBook}
-        />
+        <BackupPanel controller={controller} />
         <CategoriesPanel ledger={ledger} onCommit={controller.commit} />
         <PrivacyPanel />
         <section className="panel">
