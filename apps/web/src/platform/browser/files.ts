@@ -4,9 +4,21 @@ import {
   MAX_FILE_ROWS,
   type StatementFile,
 } from "@hamster-ledger/importers";
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_FILE_MEGABYTES = 10;
+const BYTES_PER_KIB = 1024;
+const MAX_FILE_BYTES = MAX_FILE_MEGABYTES * BYTES_PER_KIB * BYTES_PER_KIB;
 const HEX_RADIX = 16;
 const TWO_DIGITS = 2;
+function normalizeExcelCell(value: unknown): string {
+  if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime()))
+      throw new Error("Excel 日期单元格无效。");
+    const pad = (part: number): string =>
+      String(part).padStart(TWO_DIGITS, "0");
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())} ${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
+  }
+  return String(value ?? "");
+}
 export async function readStatement(file: File): Promise<StatementFile> {
   if (file.size > MAX_FILE_BYTES)
     throw new Error("文件超过 10 MB，请按月拆分后导入。");
@@ -21,7 +33,7 @@ export async function readStatement(file: File): Promise<StatementFile> {
     const text = utf8.includes("\uFFFD")
       ? new TextDecoder("gb18030").decode(buffer)
       : utf8;
-    const result = Papa.parse<string[]>(text, { skipEmptyLines: "greedy" });
+    const result = Papa.parse<string[]>(text, { skipEmptyLines: false });
     if (result.errors.some((error) => error.type === "Quotes"))
       throw new Error("CSV 引号格式有误，请重新导出账单。");
     rows = result.data.map((row) => row.map((value) => value.trim()));
@@ -36,13 +48,12 @@ export async function readStatement(file: File): Promise<StatementFile> {
       throw new Error("此文件包含多个工作表，请每次导入一个账单工作表。");
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     rows = XLSX.utils
-      .sheet_to_json<string[]>(sheet, {
+      .sheet_to_json<unknown[]>(sheet, {
         header: 1,
-        raw: false,
+        raw: true,
         defval: "",
-        dateNF: "yyyy-mm-dd hh:mm:ss",
       })
-      .map((row) => row.map(String));
+      .map((row) => row.map(normalizeExcelCell));
   } else {
     throw new Error("当前支持 CSV、XLSX 和 XLS。PDF 账单请先转换为表格。");
   }

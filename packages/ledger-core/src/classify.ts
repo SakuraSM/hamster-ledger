@@ -14,13 +14,17 @@ export function classifyCategory(input: {
   text: string;
   hint: string;
   rules: Record<string, Category>;
+  preserveHint?: boolean;
 }): Category {
   const { text, hint, rules } = input;
   const customRule = Object.entries(rules).find(([merchant]) =>
     text.includes(merchant),
   );
   if (customRule) return customRule[1];
-  const known = CATEGORIES.find((category) => category === hint);
+  const known =
+    input.preserveHint && hint.trim()
+      ? hint.trim()
+      : CATEGORIES.find((category) => category === hint);
   return (
     known ??
     CATEGORY_RULES.find((rule) => rule.pattern.test(text))?.category ??
@@ -34,6 +38,7 @@ export function classifyKind(input: {
 }): Kind | null {
   const { direction, description, sourceStatus } = input;
   if (/关闭|失败|未支付|撤销/.test(sourceStatus)) return "不计收支";
+  if (direction === "转账" || direction === "退款") return direction;
   if (/退款/.test(description) && /收入|退/.test(direction + sourceStatus))
     return "退款";
   if (/还款|提现|充值|本人转账|账户互转/.test(description)) return "转账";

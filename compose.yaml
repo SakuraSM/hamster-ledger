@@ -1,0 +1,13 @@
+services:
+  ledger:
+    build: .
+    ports:
+      - "127.0.0.1:4190:4190"
+    environment:
+      PUBLIC_ORIGIN: "http://127.0.0.1:4190"
+      ALLOW_REGISTRATION: "true"
+    volumes:
+      - ledger-data:/data
+    restart: unless-stopped
+volumes:
+  ledger-data:

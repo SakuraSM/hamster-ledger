@@ -1,3 +1,5 @@
+import { primaryRecord } from "./record-groups.js";
+import { linkRecognizedAccounts } from "./account-links.js";
 const MATCH_WINDOW_DAYS = 2;
 const HOURS_PER_DAY = 24;
 const SECONDS_PER_MINUTE = 60;
@@ -92,7 +94,7 @@ export function planImport(
       records.push({
         ...record,
         status: RECORD_STATUS.DUPLICATE,
-        duplicateOf: prior.id,
+        duplicateOf: primaryRecord(records, prior.id).id,
         reason: "同来源、账户、流水号与金额一致",
       });
       duplicate++;
@@ -100,6 +102,7 @@ export function planImport(
     }
     const candidates = records.filter(
       (candidate) =>
+        !candidate.isDeleted &&
         candidate.status !== RECORD_STATUS.DUPLICATE &&
         !used.has(candidate.id) &&
         findMatchReasons(candidate, record).length > 0,
@@ -129,7 +132,11 @@ export function planImport(
   const incomingIds = new Set(incoming.map((record) => record.id));
   const addedRecords = records.filter((record) => incomingIds.has(record.id));
   return {
-    ledger: { ...existing, records, reviews },
+    ledger: {
+      ...existing,
+      records: linkRecognizedAccounts(records, existing.accounts),
+      reviews,
+    },
     duplicate,
     added: addedRecords.filter(
       (record) => record.status === RECORD_STATUS.CONFIRMED,
@@ -151,11 +158,24 @@ export function resolveReview(input: {
   const isBankLeft = left.source === "招商银行" || left.source === "其他银行";
   const kept = isBankLeft ? right : left;
   const linked = isBankLeft ? left : right;
+  if (
+    decision === REVIEW_STATUS.LINKED &&
+    left.accountId &&
+    right.accountId &&
+    left.accountId !== right.accountId
+  )
+    throw new Error("两条账单关联了不同资产账户，请先核对账户再合并。");
   const records = ledger.records.map((record) => {
     if (record.id === kept.id)
       return {
         ...record,
         status: RECORD_STATUS.CONFIRMED,
+        accountId:
+          decision === REVIEW_STATUS.LINKED
+            ? record.accountId !== undefined
+              ? record.accountId
+              : linked.accountId
+            : record.accountId,
         linkedSources:
           decision === REVIEW_STATUS.LINKED
             ? [...new Set([...record.linkedSources, linked.source])]

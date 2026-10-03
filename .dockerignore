@@ -1,0 +1,12 @@
+.git
+node_modules
+**/node_modules
+**/dist
+coverage
+data
+imports
+backups
+.env*
+*.log
+docs/images
+docs/design
