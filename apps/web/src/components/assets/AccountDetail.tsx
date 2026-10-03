@@ -7,6 +7,7 @@ import {
   projectAccountBalance,
   summarize,
   money,
+  formatCurrency,
   type AssetAccount,
   type Ledger,
   type BillRecord,
@@ -110,19 +111,29 @@ export function AccountDetail({
       <div className="account-balance-hero">
         <span>{balanceLabel}</span>
         <strong>
-          ¥{" "}
-          {money(
-            account.kind === "liability"
-              ? Math.abs(projection.balance)
-              : projection.balance,
-          )}
+          {formatCurrency({
+            minor:
+              account.kind === "liability"
+                ? Math.abs(projection.balance)
+                : projection.balance,
+            currency: account.currency ?? "CNY",
+          })}
         </strong>
         <p>
-          基准 {money(account.openingBalance)} 元 · {account.balanceAt} 确认
+          基准{" "}
+          {formatCurrency({
+            minor: account.openingBalance,
+            currency: account.currency ?? "CNY",
+          })}{" "}
+          · {account.balanceAt} 确认
         </p>
         <p>
           之后已确认账单变动 {projection.change >= 0 ? "+" : ""}
-          {money(projection.change)} 元 · {projection.movementCount} 笔
+          {formatCurrency({
+            minor: projection.change,
+            currency: account.currency ?? "CNY",
+          })}{" "}
+          · {projection.movementCount} 笔
         </p>
       </div>
       {account.aliases.length ? (
@@ -171,7 +182,12 @@ export function AccountDetail({
           <ol>
             {[...account.checkpoints].reverse().map((checkpoint) => (
               <li key={checkpoint.id}>
-                <strong>¥ {money(checkpoint.balance)}</strong>
+                <strong>
+                  {formatCurrency({
+                    minor: checkpoint.balance,
+                    currency: account.currency ?? "CNY",
+                  })}
+                </strong>
                 <span>
                   {checkpoint.note} · 基准时间 {checkpoint.at}
                 </span>

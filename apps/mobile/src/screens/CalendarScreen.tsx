@@ -10,6 +10,7 @@ import { View } from "react-native";
 import { Button, Text, IconButton, useTheme } from "react-native-paper";
 import {
   summarize,
+  calendarHeat,
   money,
   type Ledger,
   type BillRecord,
@@ -42,6 +43,14 @@ export function CalendarScreen({
   );
   const daily = records.filter((record) => record.date.startsWith(selected));
   const totals = summarize(daily);
+  const heat = calendarHeat(ledger, month);
+  const heatColors = [
+    theme.colors.surface,
+    "#faf0e5",
+    "#f4dfca",
+    "#edc5a6",
+    "#e0a780",
+  ];
   function move(delta: number): void {
     const date = new Date(year, monthNumber - 1 + delta, 1);
     setSelected(
@@ -79,6 +88,7 @@ export function CalendarScreen({
           </Text>
         ))}
       </View>
+      <Text>底色越深，当日净支出越多。</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {Array.from({ length: offset }, (_, index) => (
           <View key={`offset-${index}`} style={{ width: "14.285%" }} />
@@ -95,8 +105,14 @@ export function CalendarScreen({
                 compact
                 mode={date === selected ? "contained" : "text"}
                 onPress={() => setSelected(date)}
-                accessibilityLabel={`${date}${hasRecords ? "，有账单" : ""}`}
-                style={{ borderRadius: 12 }}
+                accessibilityLabel={`${date}，净支出 ${money(heat[index]?.expense ?? 0)} 元`}
+                style={{
+                  borderRadius: 12,
+                  backgroundColor:
+                    date === selected
+                      ? theme.colors.primary
+                      : heatColors[heat[index]?.level ?? 0],
+                }}
                 contentStyle={{ minHeight: 48 }}
               >
                 {day}

@@ -6,7 +6,9 @@ import {
   EMPTY_LEDGER,
   migrateLedger,
   DEFAULT_BOOKS,
-  applyRecurring,
+  applyPlanning,
+  dueExchangeRequests,
+  validateFinancialIntegrity,
   type Book,
   resolveReview,
   type Ledger,
@@ -37,6 +39,7 @@ export function useLedger({
   createDemoLedger,
   localNow,
   newEntityId,
+  loadRates,
 }: LedgerEnvironment): LedgerController {
   const [workspace, setWorkspace] = useState<WorkspaceState>(() => ({
     books: DEFAULT_BOOKS,
@@ -109,6 +112,7 @@ export function useLedger({
     const previous = workspace.ledgers[mode];
     try {
       const saved = migrateLedger(next);
+      validateFinancialIntegrity(saved);
       await repository.save(mode, saved);
       setUndoEntry({ ledger: previous, mode });
       setNotice("");
@@ -236,10 +240,12 @@ export function useLedger({
       if (isWriteInProgress.current) return;
       const previous = workspace.ledgers[workspace.mode];
       try {
-        const next = applyRecurring(
-          previous,
-          localNow().slice(0, DATE_KEY_LENGTH),
-        );
+        const today = localNow().slice(0, DATE_KEY_LENGTH);
+        const requests = dueExchangeRequests(previous, today);
+        const rates =
+          requests.length && loadRates ? await loadRates(requests) : [];
+        if (stopped) return;
+        const next = applyPlanning({ ledger: previous, today, rates });
         if (next !== previous && !stopped) await commit(next);
       } catch (cause) {
         if (!stopped)

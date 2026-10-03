@@ -36,6 +36,15 @@ export function saveEntry(ledger: Ledger, input: EntryInput): Ledger {
       input.accountId === input.transferToAccountId)
   )
     throw new Error("转账需要两个不同的账户。");
+  if (
+    [input.accountId, input.transferToAccountId].some(
+      (id) =>
+        id &&
+        (ledger.accounts.find((account) => account.id === id)?.currency ??
+          "CNY") !== "CNY",
+    )
+  )
+    throw new Error("外币账户请使用完整交易记账。");
   const previous = ledger.records.find((record) => record.id === input.id);
   if (previous?.detail && previous.detail.origin !== "legacy")
     throw new Error("请使用完整交易编辑，保留币种及关联信息。");

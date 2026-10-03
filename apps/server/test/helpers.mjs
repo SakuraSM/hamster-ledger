@@ -17,6 +17,7 @@ export async function setup(context, { initialize, ...options } = {}) {
   const databasePath = join(directory, "ledger.sqlite");
   if (initialize) await initialize(databasePath);
   const server = createLedgerServer({
+    enableScheduler: false,
     databasePath,
     webRoot: resolve(import.meta.dirname, "../../web/dist/client"),
     ...options,

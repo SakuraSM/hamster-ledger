@@ -1,3 +1,7 @@
+import { useExchangeRates } from "@hamster-ledger/ledger-react";
+import { useNetworkClient } from "../../hooks/useNetworkController";
+import { DateField } from "../../ui/DateField";
+import { ValuationRates } from "./ValuationRates";
 import { UnstyledButton, Button, Checkbox } from "@mantine/core";
 import { useMemo, useState } from "react";
 import {
@@ -52,10 +56,19 @@ export function AssetsPage({
       );
     }
   }
-  const through = localNow();
+  const [valuationDate, setValuationDate] = useState(localNow().slice(0, 10));
+  const through = valuationDate + " 23:59:59";
+  const currencies = ledger.accounts
+    .filter((account) => !account.isArchived)
+    .map((account) => account.currency ?? "CNY");
+  const rates = useExchangeRates({
+    client: useNetworkClient(),
+    currencies,
+    date: valuationDate,
+  });
   const totals = useMemo(
-    () => summarizeAssets({ ledger, through }),
-    [ledger, through],
+    () => summarizeAssets({ ledger, through, rates: rates.rates }),
+    [ledger, through, rates.rates],
   );
   const selected = ledger.accounts.find((account) => account.id === selectedId);
   const displayed = showArchived
@@ -115,6 +128,19 @@ export function AssetsPage({
                 添加账户
               </Button>
             </div>
+            <DateField
+              label="资产估值日"
+              type="date"
+              value={valuationDate}
+              onChange={setValuationDate}
+            />
+            <ValuationRates controller={rates} currencies={currencies} />
+            {totals.missingCurrencies.length ? (
+              <p role="alert">
+                {totals.missingCurrencies.join("、")}{" "}
+                缺少汇率；下方合计仅含已估值账户。
+              </p>
+            ) : null}
             <section
               className="summary asset-summary"
               aria-label="资产负债汇总"

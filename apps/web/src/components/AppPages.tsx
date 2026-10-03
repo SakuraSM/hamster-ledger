@@ -81,6 +81,8 @@ export function AppPages(props: Props): React.JSX.Element {
     ),
     transactions: () => (
       <Transactions
+        key={mode}
+        controller={controller}
         records={
           recordMonth ? periodRecords(ledger, recordMonth) : ledger.records
         }
@@ -156,7 +158,14 @@ export function AppPages(props: Props): React.JSX.Element {
         onCommit={controller.commit}
       />
     ),
-    reports: () => <ReportsPage key={mode} ledger={ledger} month={month} />,
+    reports: () => (
+      <ReportsPage
+        key={mode}
+        ledger={ledger}
+        month={month}
+        bookId={controller.books.find((book) => book.id === mode)?.cloud?.id}
+      />
+    ),
     recurring: () => (
       <RecurringPage ledger={ledger} onCommit={controller.commit} />
     ),

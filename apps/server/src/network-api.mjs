@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { migrateLedger } from "@hamster-ledger/core";
+import {
+  migrateLedger,
+  validateFinancialIntegrity,
+} from "@hamster-ledger/core";
 import { json, HttpError } from "./http.mjs";
 import {
   membership,
@@ -28,6 +31,7 @@ function convertBook({ database, userId, body, now }) {
     let ledger;
     try {
       ledger = migrateLedger(body.ledger);
+      validateFinancialIntegrity(ledger);
     } catch {
       throw new HttpError(400, "账本内容无效。");
     }

@@ -19,6 +19,8 @@ export function resolveAssetAccount(
   const matches = accounts.filter(
     (account) =>
       !account.isArchived &&
+      (account.currency ?? "CNY") ===
+        (record.detail?.original.currency ?? "CNY") &&
       [account.name, ...account.aliases].some(
         (alias) => normalizeAccountLabel(alias) === label,
       ),

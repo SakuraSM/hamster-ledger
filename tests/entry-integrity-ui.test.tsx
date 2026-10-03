@@ -10,7 +10,7 @@ import {
   type Ledger,
   type EntryInput,
 } from "@hamster-ledger/core";
-import { EntryEditor } from "../apps/web/src/components/EntryEditor";
+import { SimpleEntryEditor as EntryEditor } from "../apps/web/src/components/SimpleEntryEditor";
 beforeAll(() => {
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
     configurable: true,

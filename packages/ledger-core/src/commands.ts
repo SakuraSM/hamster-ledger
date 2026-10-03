@@ -1,3 +1,4 @@
+import { validateFinancialIntegrity } from "./financial-integrity.js";
 import { z } from "zod";
 import { ledgerSchema, recordSchema, type Ledger } from "./model.js";
 import { migrateLedger } from "./migration.js";
@@ -217,5 +218,6 @@ export function applyLedgerPatch(input: {
       ),
     };
   }
+  validateFinancialIntegrity(next);
   return next;
 }

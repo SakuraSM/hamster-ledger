@@ -1,3 +1,4 @@
+import { ChoiceField } from "../ui/ChoiceField";
 import { useState } from "react";
 import {
   Button,
@@ -7,6 +8,8 @@ import {
   Card,
 } from "react-native-paper";
 import {
+  CATEGORY_TEMPLATES,
+  applyCategoryTemplate,
   categoryDefinitions,
   saveCategory,
   moveCategory,
@@ -24,6 +27,9 @@ export function CategoriesScreen({
   const [kind, setKind] = useState<"支出" | "收入">("支出");
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<CategoryDefinition | null>(null);
+  const [parentId, setParentId] = useState("");
+  const [template, setTemplate] =
+    useState<keyof typeof CATEGORY_TEMPLATES>("daily");
   const [error, setError] = useState("");
   const categories = categoryDefinitions(controller.ledger);
   async function save(category?: CategoryDefinition): Promise<void> {
@@ -32,10 +38,12 @@ export function CategoriesScreen({
         id: editing?.id ?? newEntityId(),
         name,
         kind,
+        parentId: parentId || null,
         order: editing?.order ?? categories.length,
       };
       await controller.commit(saveCategory(controller.ledger, input));
       setName("");
+      setParentId("");
       setEditing(null);
       setError("");
     } catch (cause) {
@@ -53,6 +61,31 @@ export function CategoriesScreen({
   }
   return (
     <Screen>
+      <Section title="分类模板">
+        <ChoiceField
+          label="选择模板"
+          value={template}
+          options={Object.entries(CATEGORY_TEMPLATES).map(([value, label]) => ({
+            value,
+            label,
+          }))}
+          onChange={(value) => setTemplate(value as typeof template)}
+        />
+        <Text>仅补充缺少的分类，不覆盖现有名称和层级。</Text>
+        <Button
+          onPress={() => {
+            void controller
+              .commit(applyCategoryTemplate(controller.ledger, template))
+              .catch((cause: unknown) =>
+                setError(
+                  cause instanceof Error ? cause.message : "应用模板失败",
+                ),
+              );
+          }}
+        >
+          应用所选模板
+        </Button>
+      </Section>
       <Text variant="headlineSmall" accessibilityRole="header">
         分类管理
       </Text>
@@ -64,6 +97,7 @@ export function CategoriesScreen({
         onValueChange={(value) => {
           setKind(value as "支出" | "收入");
           setEditing(null);
+          setParentId("");
           setName("");
         }}
         buttons={[
@@ -79,6 +113,23 @@ export function CategoriesScreen({
           value={name}
           maxLength={30}
           onChangeText={setName}
+        />
+        <ChoiceField
+          label="父分类"
+          value={parentId}
+          options={[
+            { value: "", label: "一级分类" },
+            ...categories
+              .filter(
+                (item) =>
+                  !item.parentId &&
+                  !item.isArchived &&
+                  item.kind === kind &&
+                  item.id !== editing?.id,
+              )
+              .map((item) => ({ value: item.id, label: item.name })),
+          ]}
+          onChange={setParentId}
         />
         <Button
           mode="contained"
@@ -105,6 +156,9 @@ export function CategoriesScreen({
           <Card mode="outlined" key={category.id}>
             <Card.Content>
               <Text variant="titleMedium">
+                {category.parentId
+                  ? `${categories.find((item) => item.id === category.parentId)?.name} / `
+                  : ""}
                 {category.name}
                 {category.isArchived ? " · 已归档" : ""}
               </Text>
@@ -112,6 +166,7 @@ export function CategoriesScreen({
                 onPress={() => {
                   setEditing(category);
                   setName(category.name);
+                  setParentId(category.parentId ?? "");
                 }}
               >
                 重命名

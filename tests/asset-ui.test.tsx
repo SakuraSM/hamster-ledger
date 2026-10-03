@@ -11,6 +11,11 @@ import {
   type BillRecord,
 } from "@hamster-ledger/core";
 
+const { testClient } = vi.hoisted(() => ({ testClient: { request: vi.fn() } }));
+vi.mock("../apps/web/src/hooks/useNetworkController", () => ({
+  useNetworkClient: () => testClient,
+}));
+
 // JSDOM does not implement the native dialog APIs; focus behavior is checked in the browser.
 beforeAll(() => {
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
@@ -100,7 +105,7 @@ describe("single-record and asset account UI", () => {
     });
     fireEvent.click(screen.getByRole("combobox", { name: "账户性质" }));
     fireEvent.click(screen.getByRole("option", { name: "负债账户" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "基准负债（元）" }), {
+    fireEvent.change(screen.getByRole("textbox", { name: "基准负债（CNY）" }), {
       target: { value: "6500.80" },
     });
 

@@ -14,7 +14,7 @@ export function LedgerNotice({
 }: LedgerNoticeProps): React.JSX.Element {
   return (
     <Affix
-      position={{ bottom: 20, right: 20 }}
+      position={{ bottom: "var(--ledger-notice-bottom, 20px)", right: 20 }}
       zIndex={190}
       style={{ maxWidth: "calc(100vw - 40px)" }}
     >

@@ -3,12 +3,15 @@ import { Choice } from "../../ui/Choice";
 import { DateField } from "../../ui/DateField";
 import { useState } from "react";
 import {
+  CURRENCIES,
+  CURRENCY_DIGITS,
+  parseMinor,
+  type Currency,
   ASSET_TYPES,
   LIABILITY_TYPES,
   type AssetAccount,
   type AccountKind,
 } from "@hamster-ledger/core";
-import { parseAmount } from "@hamster-ledger/importers";
 import { localNow, newEntityId } from "../../platform/browser/runtime";
 import { Dialog } from "../Dialog";
 export interface AccountSave {
@@ -22,7 +25,6 @@ interface AccountEditorProps {
   onSave: (input: AccountSave) => Promise<void>;
   onClose: () => void;
 }
-const CENTS_PER_YUAN = 100;
 const MINUTE_PRECISION_LENGTH = 16;
 export function AccountEditor({
   account,
@@ -36,10 +38,24 @@ export function AccountEditor({
   const [type, setType] = useState<AssetAccount["type"]>(
     account?.type ?? "银行卡",
   );
+  const [currency, setCurrency] = useState<Currency>(
+    account?.currency ?? "CNY",
+  );
+  const [creditLimit, setCreditLimit] = useState(
+    account?.creditLimit === undefined
+      ? ""
+      : String(account.creditLimit / 10 ** CURRENCY_DIGITS[currency]),
+  );
+  const [statementDay, setStatementDay] = useState(
+    String(account?.statementDay ?? ""),
+  );
+  const [paymentDay, setPaymentDay] = useState(
+    String(account?.paymentDay ?? ""),
+  );
   const [balance, setBalance] = useState(
     String(
       (isCalibration ? (currentBalance ?? 0) : (account?.openingBalance ?? 0)) /
-        CENTS_PER_YUAN,
+        10 ** CURRENCY_DIGITS[currency],
     ),
   );
   const [balanceAt, setBalanceAt] = useState(
@@ -57,13 +73,9 @@ export function AccountEditor({
   ): Promise<void> {
     event.preventDefault();
     setError("");
-    const amount = parseAmount(balance);
-    if (amount === null) {
-      setError("请填写最多两位小数的余额。");
-      return;
-    }
     setIsSaving(true);
     try {
+      const amount = parseMinor({ value: balance, currency });
       const timestamp = balanceAt.replace("T", " ");
       const normalizedAt =
         timestamp.length === MINUTE_PRECISION_LENGTH
@@ -75,7 +87,18 @@ export function AccountEditor({
           name,
           kind,
           type,
-          openingBalance: /^[\s￥¥]*-/.test(balance) ? -amount : amount,
+          currency,
+          creditLimit:
+            type === "信用卡" && creditLimit
+              ? parseMinor({ value: creditLimit, currency })
+              : undefined,
+          statementDay:
+            type === "信用卡" && statementDay
+              ? Number(statementDay)
+              : undefined,
+          paymentDay:
+            type === "信用卡" && paymentDay ? Number(paymentDay) : undefined,
+          openingBalance: amount,
           balanceAt: normalizedAt,
           aliases: aliases
             .split(/[\n，,]/)
@@ -138,9 +161,45 @@ export function AccountEditor({
               <option key={item}>{item}</option>
             ))}
           </Choice>
+          <Choice
+            label="账户币种"
+            value={currency}
+            disabled={Boolean(account)}
+            onChange={(value) => setCurrency(value as Currency)}
+          >
+            {CURRENCIES.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </Choice>
+          {type === "信用卡" ? (
+            <>
+              <TextInput
+                label={`信用额度（${currency}）`}
+                value={creditLimit}
+                onChange={(event) => setCreditLimit(event.currentTarget.value)}
+                inputMode="decimal"
+              />
+              <TextInput
+                label="账单日（1–31）"
+                value={statementDay}
+                onChange={(event) => setStatementDay(event.currentTarget.value)}
+                inputMode="numeric"
+              />
+              <TextInput
+                label="还款日（1–31）"
+                value={paymentDay}
+                onChange={(event) => setPaymentDay(event.currentTarget.value)}
+                inputMode="numeric"
+              />
+            </>
+          ) : null}
           <TextInput
             label={
-              <>{kind === "asset" ? "基准余额（元）" : "基准负债（元）"}</>
+              <>
+                {kind === "asset"
+                  ? `基准余额（${currency}）`
+                  : `基准负债（${currency}）`}
+              </>
             }
             required
             inputMode="decimal"

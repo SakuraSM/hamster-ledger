@@ -6,6 +6,7 @@ const DATE_DIGITS = 2;
 import { useState } from "react";
 import {
   money,
+  calendarHeat,
   summarize,
   type BillRecord,
   type Ledger,
@@ -37,6 +38,7 @@ export function CalendarPage({
   );
   const dayRecords = records.filter((record) => record.date.startsWith(day));
   const totals = summarize(dayRecords);
+  const heat = calendarHeat(ledger, month);
   return (
     <section className="planning-page">
       <div className="page-heading heading-with-action">
@@ -51,6 +53,7 @@ export function CalendarPage({
           onChange={(value) => value && onMonth(value)}
         />
       </div>
+      <p className="muted">底色越深，当日净支出越多。</p>
       <div className="calendar-grid" role="group" aria-label="账单日历">
         {["一", "二", "三", "四", "五", "六", "日"].map((name) => (
           <div className="calendar-weekday" key={name}>
@@ -72,6 +75,8 @@ export function CalendarPage({
               className={
                 date === day ? "calendar-day selected" : "calendar-day"
               }
+              data-heat={heat[index]?.level ?? 0}
+              aria-label={`${date}，净支出 ${money(total.expense)} 元`}
               key={date}
               onClick={() => setSelected(date)}
               aria-pressed={date === day}

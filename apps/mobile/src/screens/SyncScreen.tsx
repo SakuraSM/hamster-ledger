@@ -11,6 +11,19 @@ export function SyncScreen({
   const account = useNativeAccount();
   const sync = useNativeSync(controller);
   const disabled = sync.isBusy || controller.isLoading || controller.isSaving;
+  if (controller.network?.isConnected)
+    return (
+      <Screen>
+        <Text variant="headlineSmall">联网账本保存</Text>
+        <Text>
+          修改通过联网操作接口保存到服务器；断网时可查看缓存。成员和邀请在「家庭账本」管理。
+        </Text>
+        <Button onPress={() => void controller.network?.refresh()}>
+          刷新账本
+        </Button>
+        <ErrorMessage message={controller.network.error} />
+      </Screen>
+    );
   return (
     <Screen>
       <Text variant="headlineSmall" accessibilityRole="header">
