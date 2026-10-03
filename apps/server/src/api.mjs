@@ -3,6 +3,8 @@ import { ledgerSchema } from "@hamster-ledger/core";
 import { createAuthApi } from "./auth.mjs";
 import { requireSession } from "./sessions.mjs";
 import { json, readJson, HttpError, verifyWriteOrigin } from "./http.mjs";
+import { networkApi } from "./network-api.mjs";
+import { exchangeApi } from "./exchange-api.mjs";
 function parseBook(body) {
   const parsed = ledgerSchema.safeParse(body.ledger);
   if (!parsed.success) throw new HttpError(400, "账本格式不正确。");
@@ -51,16 +53,37 @@ export function createApi({
       return;
     }
     if (await auth(request, response, { path, isSecure })) return;
+    if (await exchangeApi({ database, request, response, now })) return;
     const session = requireSession(request, database, {
       write: !["GET", "HEAD"].includes(method),
       now: now(),
     });
     const user = { id: session.user_id };
+    if (path === "/api/capabilities" && method === "GET") {
+      json(response, 200, { ledgerVersions: [1, 2], networkBooks: true });
+      return;
+    }
+    if (
+      await networkApi({
+        database,
+        request,
+        response,
+        path,
+        userId: user.id,
+        now,
+        readBody: async () => {
+          const body = await readJson(request);
+          requireSession(request, database, { write: true, now: now() });
+          return body;
+        },
+      })
+    )
+      return;
     if (path === "/api/books" && method === "GET") {
       json(response, 200, {
         books: database
           .prepare(
-            "SELECT id,name,revision,updated_at AS updatedAt FROM books WHERE user_id=? ORDER BY updated_at DESC",
+            "SELECT id,name,revision,updated_at AS updatedAt FROM books WHERE user_id=? AND authority='snapshot' ORDER BY updated_at DESC",
           )
           .all(user.id),
       });
@@ -72,7 +95,9 @@ export function createApi({
       const id = randomUUID();
       const updatedAt = new Date(now()).toISOString();
       database
-        .prepare("INSERT INTO books VALUES(?,?,?,?,?,?)")
+        .prepare(
+          "INSERT INTO books(id,user_id,name,revision,ledger,updated_at) VALUES(?,?,?,?,?,?)",
+        )
         .run(id, user.id, book.name, 1, book.serialized, updatedAt);
       json(response, 201, { id, name: book.name, revision: 1, updatedAt });
       return;
@@ -83,6 +108,12 @@ export function createApi({
         .prepare("SELECT * FROM books WHERE id=? AND user_id=?")
         .get(match[1], user.id);
       if (!row) throw new HttpError(404, "云端账本不存在。");
+      if (row.authority === "server")
+        throw new HttpError(
+          426,
+          "此账本已启用联网编辑，请升级客户端并从联网账本打开。",
+          "network_book_required",
+        );
       if (method === "GET") {
         json(response, 200, {
           id: row.id,
@@ -94,6 +125,12 @@ export function createApi({
         return;
       }
       const body = await readJson(request);
+      if (JSON.parse(row.ledger).version === 2 && body.ledger?.version !== 2)
+        throw new HttpError(
+          426,
+          "账本已升级，请更新客户端后再写入。",
+          "upgrade_required",
+        );
       const book = parseBook(body);
       requireSession(request, database, { write: true, now: now() });
       if (!Number.isSafeInteger(body.revision) || body.revision < 1)

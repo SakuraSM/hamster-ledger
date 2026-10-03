@@ -12,6 +12,7 @@ import { CategoriesPanel } from "./CategoriesPanel";
 import { PreferencesPanel } from "./PreferencesPanel";
 import { PrivacyPanel } from "./PrivacyPanel";
 import { SyncPanel } from "./SyncPanel";
+import { NetworkPanel } from "./NetworkPanel";
 interface Props {
   sync: CloudController;
   controller: LedgerController;
@@ -60,6 +61,7 @@ export function ToolsPage({
         ))}
       </div>
       <div className="settings-grid">
+        <NetworkPanel controller={controller} />
         <BooksPanel controller={controller} />
         <PreferencesPanel
           key={controller.mode}
