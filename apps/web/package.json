@@ -23,7 +23,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "dayjs": "^1.11.23",
     "papaparse": "^5.7.0",
-    "react": "19.2.3",
+    "react": "19.3.0",
     "react-dom": "19.2.3",
     "recharts": "^3.10.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
