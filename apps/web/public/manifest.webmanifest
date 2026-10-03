@@ -1,0 +1,26 @@
+{
+  "name": "仓鼠记账",
+  "short_name": "仓鼠记账",
+  "description": "记录收支，管理资产与预算",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffcf7",
+  "theme_color": "#a9552b",
+  "icons": [
+    {
+      "src": "/assets/hamster-logo.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "记一笔",
+      "url": "/?action=add",
+      "description": "快速记录一笔收支"
+    }
+  ]
+}
