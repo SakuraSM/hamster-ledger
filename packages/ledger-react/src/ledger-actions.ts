@@ -1,5 +1,6 @@
 import {
   RECORD_STATUS,
+  normalizeLegacyRecord,
   assertRecordUnchanged,
   type BillRecord,
   type Category,
@@ -36,6 +37,27 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
     input.accountId === input.transferToAccountId
   )
     throw new Error("转出与转入账户不能相同。");
+  const isAdvanced = record.detail && record.detail.origin !== "legacy";
+  if (
+    isAdvanced &&
+    (input.kind !== record.kind ||
+      (input.accountId !== undefined && input.accountId !== record.accountId) ||
+      (input.transferToAccountId !== undefined &&
+        input.transferToAccountId !== record.transferToAccountId))
+  )
+    throw new Error(
+      "这笔交易含币种或关联信息，请使用完整交易编辑修改类型和账户。",
+    );
+  if (
+    !isAdvanced &&
+    [input.accountId, input.transferToAccountId].some(
+      (id) =>
+        id &&
+        (ledger.accounts.find((account) => account.id === id)?.currency ??
+          "CNY") !== "CNY",
+    )
+  )
+    throw new Error("外币账户须使用完整交易编辑。");
   const hasPendingReview = ledger.reviews.some(
     (review) =>
       review.state === "pending" &&
@@ -46,6 +68,7 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
       ? {
           ...item,
           category: input.category,
+          detail: item.detail,
           kind: input.kind,
           account: input.account,
           ...(input.accountId !== undefined
@@ -63,7 +86,9 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
   );
   return {
     ...ledger,
-    records,
+    records: records.map((item) =>
+      item.id === input.id ? normalizeLegacyRecord(item) : item,
+    ),
     rules: input.remember
       ? { ...ledger.rules, [record.merchant]: input.category }
       : ledger.rules,

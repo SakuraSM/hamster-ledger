@@ -1,13 +1,8 @@
 const DATE_KEY_LENGTH = 10;
 const DAYS_PER_WEEK = 7;
 const MAX_OCCURRENCES = 10000;
-import { type Ledger, type BillRecord, summarize } from "./model.js";
-import {
-  budgetSchema,
-  recurringRuleSchema,
-  type Budget,
-  type RecurringRule,
-} from "./planning-model.js";
+import { type Ledger, type BillRecord } from "./model.js";
+import { recurringRuleSchema, type RecurringRule } from "./planning-model.js";
 import { addDays, calendarDate, cycleRange, isValidDate } from "./periods.js";
 export function periodRecords(ledger: Ledger, month: string): BillRecord[] {
   const range = cycleRange(month, ledger.preferences?.cycleStartDay ?? 1);
@@ -18,45 +13,7 @@ export function periodRecords(ledger: Ledger, month: string): BillRecord[] {
       record.date.slice(0, DATE_KEY_LENGTH) < range.end,
   );
 }
-export function budgetProgress(
-  ledger: Ledger,
-  month: string,
-): Array<Budget & { spent: number; remaining: number; ratio: number }> {
-  const records = periodRecords(ledger, month);
-  return (ledger.budgets ?? [])
-    .filter((budget) => budget.month === month)
-    .map((budget) => {
-      const spent = Math.max(
-        0,
-        summarize(
-          records.filter(
-            (record) =>
-              budget.category === null || record.category === budget.category,
-          ),
-        ).expense,
-      );
-      return {
-        ...budget,
-        spent,
-        remaining: budget.amount - spent,
-        ratio: spent / budget.amount,
-      };
-    });
-}
-export function saveBudget(ledger: Ledger, input: Budget): Ledger {
-  const budget = budgetSchema.parse(input);
-  return {
-    ...ledger,
-    budgets: [
-      ...(ledger.budgets ?? []).filter(
-        (item) =>
-          item.id !== budget.id &&
-          (item.month !== budget.month || item.category !== budget.category),
-      ),
-      budget,
-    ],
-  };
-}
+export { budgetProgress, saveBudget } from "./budgets.js";
 function occurrence(rule: RecurringRule, index: number): string {
   if (rule.frequency === "daily" || rule.frequency === "weekly")
     return addDays(
@@ -70,14 +27,19 @@ function occurrence(rule: RecurringRule, index: number): string {
     day,
   });
 }
-export function applyRecurring(ledger: Ledger, today: string): Ledger {
+export function applyRecurring(
+  ledger: Ledger,
+  today: string,
+  maxNewEntries = 10000,
+): Ledger {
   if (!isValidDate(today)) throw new Error("周期记账日期无效。");
   const ids = new Set(ledger.records.map((record) => record.id));
   const added: BillRecord[] = [];
   for (const rule of ledger.recurringRules ?? []) {
+    if (added.length >= maxNewEntries) break;
     if (rule.isPaused) continue;
     let index = 0;
-    while (index < MAX_OCCURRENCES) {
+    while (index < MAX_OCCURRENCES && added.length < maxNewEntries) {
       const date = occurrence(rule, index++);
       if (date > today || (rule.endDate && date > rule.endDate)) break;
       const id = `recurring:${rule.id}:${date}`;
@@ -87,7 +49,10 @@ export function applyRecurring(ledger: Ledger, today: string): Ledger {
           (id) =>
             id &&
             !ledger.accounts.some(
-              (account) => account.id === id && !account.isArchived,
+              (account) =>
+                account.id === id &&
+                !account.isArchived &&
+                (account.currency ?? "CNY") === "CNY",
             ),
         )
       )
@@ -145,7 +110,10 @@ export function saveRecurring(ledger: Ledger, input: RecurringRule): Ledger {
       (id) =>
         id &&
         !ledger.accounts.some(
-          (account) => account.id === id && !account.isArchived,
+          (account) =>
+            account.id === id &&
+            !account.isArchived &&
+            (account.currency ?? "CNY") === "CNY",
         ),
     )
   )

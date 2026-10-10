@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   createLedgerRepository,
   EMPTY_LEDGER,
+  migrateLedger,
   STORAGE_PREFIX,
   type KeyValueStore,
 } from "@hamster-ledger/core";
@@ -21,7 +22,9 @@ describe("portable asynchronous persistence contract", () => {
     const store = memoryStore();
     const repository = createLedgerRepository(store);
     await repository.save("personal", EMPTY_LEDGER);
-    expect(await repository.load("personal")).toEqual(EMPTY_LEDGER);
+    expect(await repository.load("personal")).toEqual(
+      migrateLedger(EMPTY_LEDGER),
+    );
     expect(await repository.load("demo")).toBeNull();
     expect(await store.getItem(STORAGE_PREFIX + "personal")).not.toBeNull();
   });
@@ -36,7 +39,7 @@ describe("portable asynchronous persistence contract", () => {
     const store = memoryStore({
       [STORAGE_PREFIX + "personal"]: JSON.stringify({
         ...EMPTY_LEDGER,
-        version: 2,
+        version: 3,
       }),
     });
     await expect(

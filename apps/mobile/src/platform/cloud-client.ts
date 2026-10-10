@@ -119,6 +119,10 @@ interface SaveBookInput {
   ledger: Ledger;
 }
 export interface CloudClient {
+  request<T>(
+    path: string,
+    options?: { method?: string; body?: unknown },
+  ): Promise<T>;
   me: () => Promise<AuthReceipt>;
   authenticate: (input: AuthInput) => Promise<AuthReceipt>;
   logout: () => Promise<{ ok: boolean }>;
@@ -193,6 +197,7 @@ export function createCloudClient({
     }
   }
   return {
+    request,
     me: () => request<AuthReceipt>("/auth/me"),
     authenticate: (input: AuthInput) =>
       request<AuthReceipt>(

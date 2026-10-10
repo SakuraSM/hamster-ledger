@@ -1,3 +1,4 @@
+import { ExtendedReports } from "./ExtendedReports";
 import { DATE_KEY_LENGTH, MONTH_KEY_LENGTH } from "../constants";
 import { useState } from "react";
 import { View } from "react-native";
@@ -14,9 +15,11 @@ import { DateField } from "../ui/DateField";
 import { localNow } from "../platform/runtime";
 interface ReportsScreenProps {
   ledger: Ledger;
+  bookId?: string;
 }
 export function ReportsScreen({
   ledger,
+  bookId,
 }: ReportsScreenProps): React.JSX.Element {
   const [start, setStart] = useState(
     localNow().slice(0, MONTH_KEY_LENGTH) + "-01",
@@ -84,6 +87,14 @@ export function ReportsScreen({
                 </Text>
               ))}
           </Section>
+          <ExtendedReports
+            ledger={ledger}
+            records={records}
+            start={start}
+            end={end}
+            kind={kind}
+            bookId={bookId}
+          />
         </>
       )}
     </Screen>

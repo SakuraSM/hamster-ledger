@@ -4,6 +4,7 @@ import { afterEach, describe, it, expect } from "vitest";
 import {
   createLedgerRepository,
   EMPTY_LEDGER,
+  migrateLedger,
   type KeyValueStore,
   STORAGE_PREFIX,
 } from "@hamster-ledger/core";
@@ -35,7 +36,9 @@ describe("Web adapter consumes asynchronous repository", () => {
     await waitFor(() =>
       expect(result.current.personalLedger.rules).toEqual({}),
     );
-    expect(await repository.load("personal")).toEqual(EMPTY_LEDGER);
+    expect(await repository.load("personal")).toEqual(
+      migrateLedger(EMPTY_LEDGER),
+    );
   });
   it("keeps initialization blocked and does not write over corrupt storage", async () => {
     let writes = 0;

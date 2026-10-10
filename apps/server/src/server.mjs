@@ -1,3 +1,6 @@
+import { modelSecrets } from "./model-secrets.mjs";
+import { requestModel } from "./model-transport.mjs";
+import { startScheduler } from "./scheduler.mjs";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
@@ -20,10 +23,20 @@ export function createLedgerServer({
   publicOrigin,
   allowRegistration = true,
   now = Date.now,
+  enableScheduler = true,
+  timeZone = "Asia/Shanghai",
+  modelTransport = requestModel,
 } = {}) {
   validateOrigin(publicOrigin);
   const database = openDatabase(databasePath);
-  const api = createApi({ database, publicOrigin, allowRegistration, now });
+  const api = createApi({
+    database,
+    publicOrigin,
+    allowRegistration,
+    now,
+    modelTransport,
+    secrets: modelSecrets(databasePath),
+  });
   const root = resolve(webRoot);
   const server = createServer(async (request, response) => {
     try {
@@ -96,7 +109,13 @@ export function createLedgerServer({
   server.headersTimeout = 15000;
   server.keepAliveTimeout = 5000;
   server.maxHeadersCount = 100;
-  server.on("close", () => database.close());
+  const stopScheduler = enableScheduler
+    ? startScheduler({ database, now, timeZone })
+    : () => {};
+  server.on("close", () => {
+    stopScheduler();
+    database.close();
+  });
   return server;
 }
 

@@ -9,18 +9,22 @@ export const categoryDefinitionSchema = z.object({
   kind: z.enum(["支出", "收入"]),
   order: z.number().int(),
   isArchived: z.boolean().optional(),
+  parentId: z.string().nullable().optional(),
 });
 export const budgetSchema = z.object({
   id: z.string(),
   month: monthSchema,
   category: z.string().nullable(),
-  amount: z.number().int().positive(),
+  amount: z.number().int().safe().positive(),
+  period: z.enum(["monthly", "quarterly", "yearly"]).optional(),
+  rollover: z.boolean().optional(),
+  alertPercent: z.number().int().min(1).max(100).optional(),
 });
 export const recurringRuleSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
   merchant: z.string().min(1),
-  amount: z.number().int().positive(),
+  amount: z.number().int().safe().positive(),
   kind: z.enum(["支出", "收入", "转账"]),
   category: z.string(),
   accountId: z.string().nullable(),
@@ -61,6 +65,14 @@ export const bookSchema = z.object({
   ]),
   name: z.string().trim().min(1).max(MAX_BOOK_NAME_LENGTH),
   isArchived: z.boolean().optional(),
+  cloud: z
+    .object({
+      id: z.string(),
+      server: z.string(),
+      userId: z.string(),
+      role: z.enum(["owner", "admin", "member", "viewer"]),
+    })
+    .optional(),
 });
 export type Book = z.infer<typeof bookSchema>;
 export const DEFAULT_BOOKS: Book[] = [

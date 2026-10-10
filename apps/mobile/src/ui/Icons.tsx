@@ -1,3 +1,11 @@
+import {
+  ImageIcon,
+  CameraIcon,
+  FileMagnifyingGlassIcon,
+  TargetIcon,
+  BellIcon,
+  UsersIcon,
+} from "phosphor-react-native";
 import { HouseIcon as House } from "phosphor-react-native";
 import { ListBulletsIcon as ListBullets } from "phosphor-react-native";
 import { WalletIcon as Wallet } from "phosphor-react-native";
@@ -83,6 +91,14 @@ const ICONS: Record<string, Icon> = {
   "radiobox-marked": RadioButton,
   delete: Trash,
   cog: Gear,
+  "cog-outline": Gear,
+  "image-outline": ImageIcon,
+  "camera-outline": CameraIcon,
+  "text-box-search-outline": FileMagnifyingGlassIcon,
+  target: TargetIcon,
+  "bell-outline": BellIcon,
+  "account-group": UsersIcon,
+  "account-outline": User,
   "account-circle-outline": User,
   "shield-check-outline": ShieldCheck,
 };

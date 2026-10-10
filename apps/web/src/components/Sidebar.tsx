@@ -17,6 +17,7 @@ const NAV_ITEMS = [
 ] as const;
 interface SidebarProps {
   bookName: string;
+  isNetwork?: boolean;
   page: PageId;
   pending: number;
   mode: LedgerMode;
@@ -26,6 +27,7 @@ interface SidebarProps {
 }
 export function Sidebar({
   bookName,
+  isNetwork,
   page,
   pending,
   onNavigate,
@@ -78,7 +80,9 @@ export function Sidebar({
           <span>{bookName}</span>
           <Icons.Caret size={18} />
         </UnstyledButton>
-        <p>账单保存在此浏览器</p>
+        <p>
+          {isNetwork ? "联网账本 · 本机保留只读缓存" : "账单保存在此浏览器"}
+        </p>
       </div>
     </aside>
   );

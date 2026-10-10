@@ -56,6 +56,8 @@ export function useCloudSync(controller: LedgerController): CloudController {
     };
   }, [user?.id]);
   async function guarded(action: () => Promise<void>): Promise<void> {
+    if (current.current.network?.isConnected)
+      throw new Error("联网账本使用在线编辑，无需整本同步。");
     if (auth.isOffline)
       throw new CloudError(0, "同步服务暂时不可用，请重新连接。 ");
     if (lock.current) return;
@@ -79,6 +81,7 @@ export function useCloudSync(controller: LedgerController): CloudController {
   }
   async function sync(): Promise<void> {
     if (
+      current.current.network?.isConnected ||
       !user ||
       auth.isOffline ||
       current.current.isLoading ||

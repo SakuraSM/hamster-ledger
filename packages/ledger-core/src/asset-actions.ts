@@ -32,6 +32,8 @@ export function saveAssetAccount(input: SaveAssetAccountInput): Ledger {
   const previous = input.ledger.accounts.find((item) => item.id === account.id);
   if (previous && previous.kind !== account.kind)
     throw new Error("已有账户的资产/负债类型不能更改，请新增账户。");
+  if (previous && (previous.currency ?? "CNY") !== (account.currency ?? "CNY"))
+    throw new Error("已有账户的币种不能更改，请新增账户。");
   const labels = new Set(
     [account.name, ...account.aliases]
       .map(normalizeAccountLabel)

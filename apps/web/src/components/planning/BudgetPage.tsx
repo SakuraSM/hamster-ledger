@@ -1,9 +1,11 @@
-import { TextInput, Button } from "@mantine/core";
+import { TextInput, Button, Checkbox } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
 import { DateField } from "../../ui/DateField";
 const CENTS_PER_YUAN = 100;
 import { useState } from "react";
 import {
+  BUDGET_PERIODS,
+  type Budget,
   budgetProgress,
   categoryNames,
   cycleRange,
@@ -27,6 +29,10 @@ export function BudgetPage({
 }: Props): React.JSX.Element {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
+  const [period, setPeriod] =
+    useState<NonNullable<Budget["period"]>>("monthly");
+  const [rollover, setRollover] = useState(false);
+  const [threshold, setThreshold] = useState("80");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const budgets = budgetProgress(ledger, month);
@@ -45,6 +51,9 @@ export function BudgetPage({
           month,
           category: category || null,
           amount: cents,
+          period,
+          rollover,
+          alertPercent: Number(threshold),
         }),
       );
       setAmount("");
@@ -83,11 +92,33 @@ export function BudgetPage({
       </p>
       <form className="panel inline-form" onSubmit={save}>
         <Choice
+          label="预算周期"
+          value={period}
+          onChange={(value) => setPeriod(value as typeof period)}
+        >
+          {Object.entries(BUDGET_PERIODS).map(([value, label]) => (
+            <option value={value} key={value}>
+              {label}
+            </option>
+          ))}
+        </Choice>
+        <Checkbox
+          label="结转上期未使用预算"
+          checked={rollover}
+          onChange={(event) => setRollover(event.currentTarget.checked)}
+        />
+        <TextInput
+          label="提醒阈值（1–100%）"
+          value={threshold}
+          onChange={(event) => setThreshold(event.currentTarget.value)}
+          inputMode="numeric"
+        />
+        <Choice
           label={<>预算范围</>}
           value={category}
           onChange={(value) => setCategory(value)}
         >
-          <option value="">整月总预算</option>
+          <option value="">总预算</option>
           {categoryNames(ledger, "支出").map((name) => (
             <option key={name}>{name}</option>
           ))}
@@ -118,7 +149,10 @@ export function BudgetPage({
         {budgets.map((budget) => (
           <article className="panel budget-card" key={budget.id}>
             <div className="section-heading">
-              <h2>{budget.category ?? "整月总预算"}</h2>
+              <h2>
+                {BUDGET_PERIODS[budget.period ?? "monthly"]} ·{" "}
+                {budget.category ?? "总预算"}
+              </h2>
               <Button
                 variant="subtle"
                 type="submit"
@@ -128,17 +162,21 @@ export function BudgetPage({
                 删除
               </Button>
             </div>
+            <p className="muted">
+              {budget.start} 至 {budget.end}（不含结束日）
+            </p>
             <strong>
               ¥ {money(budget.remaining)}
               <small>{budget.remaining < 0 ? " 超出预算" : " 剩余"}</small>
             </strong>
             <progress
-              max={budget.amount}
-              value={Math.min(budget.spent, budget.amount)}
+              max={budget.available}
+              value={Math.min(budget.spent, budget.available)}
               aria-label={`${budget.category ?? "整月"}预算已用`}
             />
             <p>
-              已用 ¥{money(budget.spent)} / ¥{money(budget.amount)}
+              已用 ¥{money(budget.spent)} / ¥{money(budget.available)} · 结转 ¥
+              {money(budget.carried)}
             </p>
             <Button
               variant="outline"
@@ -147,6 +185,9 @@ export function BudgetPage({
               onClick={() => {
                 setCategory(budget.category ?? "");
                 setAmount(String(budget.amount / CENTS_PER_YUAN));
+                setPeriod(budget.period ?? "monthly");
+                setRollover(budget.rollover ?? false);
+                setThreshold(String(budget.alertPercent ?? 80));
               }}
             >
               调整预算
@@ -156,7 +197,7 @@ export function BudgetPage({
       </div>
       {!budgets.length ? (
         <div className="empty-panel">
-          这个月还没有预算，先设一个合适的金额。
+          这个账期还没有预算，先设一个合适的金额。
         </div>
       ) : null}
     </section>

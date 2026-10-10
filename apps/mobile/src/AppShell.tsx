@@ -1,3 +1,4 @@
+import { deliverPlanningNotifications } from "./platform/planning-notifications";
 import { MONTH_KEY_LENGTH } from "./constants";
 const FAB_WITH_NOTICE_BOTTOM = 176;
 const FAB_BOTTOM = 106;
@@ -20,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { saveEntry, type BillRecord } from "@hamster-ledger/core";
 import { useLedger } from "./hooks/useLedger";
+import { useNetworkController } from "./hooks/useNetworkController";
 import { ledgerTheme } from "./ui/theme";
 import { iconSettings } from "./ui/Icons";
 import { OverviewScreen } from "./screens/OverviewScreen";
@@ -46,7 +48,8 @@ const ROUTES = [
   { key: "tools", title: "更多", focusedIcon: "dots-horizontal" },
 ];
 export function AppShell(): React.JSX.Element {
-  const controller = useLedger();
+  const local = useLedger();
+  const controller = useNetworkController(local);
   const account = useNativeAccount();
   const [index, setIndex] = useState(0);
   const [tool, setTool] = useState<ToolPageName | null>(null);
@@ -58,6 +61,19 @@ export function AppShell(): React.JSX.Element {
   const [detail, setDetail] = useState<BillRecord | null>(null);
   const [metadata, setMetadata] = useState<BillRecord | null>(null);
   const [hasReducedMotion, setHasReducedMotion] = useState(false);
+  useEffect(() => {
+    if (!controller.ledger.preferences?.reminderEnabled) return;
+    void deliverPlanningNotifications(
+      controller.mode,
+      controller.ledger.notifications ?? [],
+    ).catch(() => {
+      /* Notices remain available in the notification center when the OS delivery fails. */
+    });
+  }, [
+    controller.mode,
+    controller.ledger.notifications,
+    controller.ledger.preferences?.reminderEnabled,
+  ]);
   const isDark = controller.ledger.preferences?.theme === "night";
   const theme = ledgerTheme(isDark);
   if (controller.ledger.preferences?.theme === "sage")
@@ -124,10 +140,23 @@ export function AppShell(): React.JSX.Element {
         />
       ),
       records: (
-        <TransactionsScreen ledger={controller.ledger} onRecord={setDetail} />
+        <TransactionsScreen
+          key={controller.mode}
+          controller={controller}
+          onRecord={setDetail}
+        />
       ),
       assets: <AssetsScreen controller={controller} onRecord={setDetail} />,
-      reports: <ReportsScreen ledger={controller.ledger} />,
+      reports: (
+        <ReportsScreen
+          key={controller.mode}
+          ledger={controller.ledger}
+          bookId={
+            controller.books.find((book) => book.id === controller.mode)?.cloud
+              ?.id
+          }
+        />
+      ),
       tools: <ToolsScreen onSelect={setTool} />,
     };
     return pages[route.key];
@@ -263,6 +292,15 @@ export function AppShell(): React.JSX.Element {
         ) : null}
         {editor ? (
           <EntryEditor
+            bookId={
+              controller.books.find((book) => book.id === controller.mode)
+                ?.cloud?.id
+            }
+            onCommit={async (next, date) => {
+              await controller.commit(next);
+              setMonth(date.slice(0, MONTH_KEY_LENGTH));
+              controller.notify("账单已保存。");
+            }}
             ledger={controller.ledger}
             record={editor.record}
             date={editor.date}
