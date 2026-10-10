@@ -5,9 +5,29 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 5
+    ignore:
+      # Expo 57 / React Native 0.86 use React 19.2.3. Review SDK changes together.
+      - dependency-name: react
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-major"]
+      # Keep types aligned with the minimum supported Node.js major.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint 8.71 supports TypeScript >=4.8.4 <6.1.0.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
     groups:
+      react-runtime:
+        patterns: ["react", "react-dom"]
+      web-build:
+        patterns: ["vite", "@vitejs/plugin-react"]
       development:
         dependency-type: development
+        exclude-patterns: ["react", "react-dom", "vite", "@vitejs/plugin-react"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
