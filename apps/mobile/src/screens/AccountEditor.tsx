@@ -1,13 +1,15 @@
-import { CENTS_PER_YUAN } from "../constants";
 import { useState } from "react";
 import { Button, TextInput, Text } from "react-native-paper";
 import {
+  CURRENCIES,
+  CURRENCY_DIGITS,
+  parseMinor,
+  type Currency,
   ASSET_TYPES,
   LIABILITY_TYPES,
   saveAssetAccount,
   type AssetAccount,
 } from "@hamster-ledger/core";
-import { parseAmount } from "@hamster-ledger/importers";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { ChoiceField } from "../ui/ChoiceField";
 import { DateField } from "../ui/DateField";
@@ -29,20 +31,32 @@ export function AccountEditor({
     account?.kind ?? "asset",
   );
   const [type, setType] = useState(account?.type ?? "银行卡");
+  const [currency, setCurrency] = useState<Currency>(
+    account?.currency ?? "CNY",
+  );
+  const [creditLimit, setCreditLimit] = useState(
+    account?.creditLimit === undefined
+      ? ""
+      : String(account.creditLimit / 10 ** CURRENCY_DIGITS[currency]),
+  );
+  const [statementDay, setStatementDay] = useState(
+    String(account?.statementDay ?? ""),
+  );
+  const [paymentDay, setPaymentDay] = useState(
+    String(account?.paymentDay ?? ""),
+  );
   const [balance, setBalance] = useState(
-    account ? String(account.openingBalance / CENTS_PER_YUAN) : "0",
+    account
+      ? String(account.openingBalance / 10 ** CURRENCY_DIGITS[currency])
+      : "0",
   );
   const [balanceAt, setBalanceAt] = useState(account?.balanceAt ?? localNow());
   const [aliases, setAliases] = useState(account?.aliases.join("，") ?? "");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   async function save(): Promise<void> {
-    const amount = parseAmount(balance);
-    if (amount === null) {
-      setError("请填写有效的余额，最多两位小数。");
-      return;
-    }
     try {
+      const amount = parseMinor({ value: balance, currency });
       await controller.commit(
         saveAssetAccount({
           ledger: controller.ledger,
@@ -52,6 +66,17 @@ export function AccountEditor({
             name,
             kind,
             type,
+            currency,
+            creditLimit:
+              type === "信用卡" && creditLimit
+                ? parseMinor({ value: creditLimit, currency })
+                : undefined,
+            statementDay:
+              type === "信用卡" && statementDay
+                ? Number(statementDay)
+                : undefined,
+            paymentDay:
+              type === "信用卡" && paymentDay ? Number(paymentDay) : undefined,
             openingBalance: amount,
             balanceAt,
             aliases: aliases
@@ -106,12 +131,47 @@ export function AccountEditor({
         )}
         onChange={(value) => setType(value as AssetAccount["type"])}
       />
+      <ChoiceField
+        label="账户币种"
+        value={currency}
+        disabled={Boolean(account)}
+        options={CURRENCIES.map((value) => ({ value, label: value }))}
+        onChange={(value) => setCurrency(value as Currency)}
+      />
+      {type === "信用卡" ? (
+        <>
+          <TextInput
+            label={`信用额度（${currency}）`}
+            value={creditLimit}
+            onChangeText={setCreditLimit}
+            keyboardType="decimal-pad"
+          />
+          <TextInput
+            label="账单日（1–31）"
+            value={statementDay}
+            onChangeText={setStatementDay}
+            keyboardType="number-pad"
+          />
+          <TextInput
+            label="还款日（1–31）"
+            value={paymentDay}
+            onChangeText={setPaymentDay}
+            keyboardType="number-pad"
+          />
+        </>
+      ) : null}
       <TextInput
         accessibilityLabel={
-          kind === "asset" ? "基准余额（元）" : "基准负债（元）"
+          kind === "asset"
+            ? `基准余额（${currency}）`
+            : `基准负债（${currency}）`
         }
         mode="outlined"
-        label={kind === "asset" ? "基准余额（元）" : "基准负债（元）"}
+        label={
+          kind === "asset"
+            ? `基准余额（${currency}）`
+            : `基准负债（${currency}）`
+        }
         value={balance}
         keyboardType="decimal-pad"
         onChangeText={setBalance}

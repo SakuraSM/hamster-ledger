@@ -1,6 +1,5 @@
 import { DATE_PART_WIDTH, CENTS_PER_YUAN } from "../constants";
 const HEX_RADIX = 16;
-const JSON_INDENT_SPACES = 2;
 import * as DocumentPicker from "expo-document-picker";
 import { File, Directory, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -14,9 +13,13 @@ import {
   MAX_FILE_ROWS,
   type StatementFile,
 } from "@hamster-ledger/importers";
-import { ledgerSchema, type Ledger } from "@hamster-ledger/core";
+import {
+  parseArchive,
+  type Attachment,
+  type Ledger,
+} from "@hamster-ledger/core";
 const MAX_STATEMENT_BYTES = 10_485_760;
-const MAX_BACKUP_BYTES = 20_971_520;
+const MAX_BACKUP_BYTES = 167_772_160;
 XLSX.set_cptable(codepages);
 function excelCell(value: unknown): string {
   if (!(value instanceof Date)) return String(value ?? "");
@@ -79,7 +82,10 @@ export async function readStatement(
     removePickerCopy(file);
   }
 }
-export async function pickBackup(): Promise<Ledger | null> {
+export async function pickBackup(): Promise<{
+  ledger: Ledger;
+  attachments: Attachment[];
+} | null> {
   const result = await DocumentPicker.getDocumentAsync({
     type: ["application/json", "text/plain", "application/octet-stream"],
     copyToCacheDirectory: true,
@@ -87,20 +93,17 @@ export async function pickBackup(): Promise<Ledger | null> {
   if (result.canceled) return null;
   const file = new File(result.assets[0].uri);
   try {
-    if (file.size > MAX_BACKUP_BYTES)
-      throw new Error("备份超过 20 MB，请在 Web 端拆分账本后恢复。");
-    return ledgerSchema.parse(JSON.parse(await file.text()));
+    if (file.size > MAX_BACKUP_BYTES) throw new Error("备份不能超过 160 MiB。");
+    return parseArchive(await file.text());
   } finally {
     removePickerCopy(file);
   }
 }
-export async function shareBackup(ledger: Ledger): Promise<void> {
+export async function shareBackup(serialized: string): Promise<void> {
   if (!(await Sharing.isAvailableAsync()))
     throw new Error("此设备暂不支持系统分享。");
-  const file = createExportFile("完整备份.json");
-  file.write(
-    JSON.stringify(ledgerSchema.parse(ledger), null, JSON_INDENT_SPACES),
-  );
+  const file = createExportFile("完整备份.hamster");
+  file.write(serialized);
   await Sharing.shareAsync(file.uri, {
     mimeType: "application/json",
     dialogTitle: "保存或分享账本备份",

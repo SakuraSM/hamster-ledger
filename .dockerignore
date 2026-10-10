@@ -10,3 +10,9 @@ backups
 *.log
 docs/images
 docs/design
+
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/.expo
+docs/evidence
+*.apk

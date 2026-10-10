@@ -2,6 +2,30 @@ import { List, Text } from "react-native-paper";
 import { Screen } from "../ui/Screen";
 export const TOOLS = [
   {
+    key: "ai",
+    title: "AI 记账与凭证",
+    description: "文本、多图、拍照与待确认草稿",
+    icon: "text-box-search-outline",
+  },
+  {
+    key: "planning",
+    title: "订阅、借贷与储蓄目标",
+    description: "固定开支、部分还款和目标进度",
+    icon: "target",
+  },
+  {
+    key: "notifications",
+    title: "通知中心",
+    description: "预算、订阅、借贷与还款提醒",
+    icon: "bell-outline",
+  },
+  {
+    key: "network",
+    title: "家庭与联网账本",
+    description: "共享、邀请与操作历史",
+    icon: "account-group",
+  },
+  {
     key: "account",
     title: "账号与登录",
     description: "登录、密码与设备管理",

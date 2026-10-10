@@ -1,3 +1,5 @@
+import { AiPanel } from "../ai/AiPanel";
+import { PlanningPanel } from "../finance/PlanningPanel";
 import { Button } from "@mantine/core";
 import { AccountSecurityPanel } from "../auth/AccountSecurityPanel";
 const DATE_KEY_LENGTH = 10;
@@ -12,15 +14,18 @@ import { CategoriesPanel } from "./CategoriesPanel";
 import { PreferencesPanel } from "./PreferencesPanel";
 import { PrivacyPanel } from "./PrivacyPanel";
 import { SyncPanel } from "./SyncPanel";
+import { NetworkPanel } from "./NetworkPanel";
 interface Props {
   sync: CloudController;
   controller: LedgerController;
   onNavigate: (page: PageId) => void;
+  onMonth: (month: string) => void;
 }
 export function ToolsPage({
   sync,
   controller,
   onNavigate,
+  onMonth,
 }: Props): React.JSX.Element {
   const [error, setError] = useState("");
   const { ledger } = controller;
@@ -60,22 +65,31 @@ export function ToolsPage({
         ))}
       </div>
       <div className="settings-grid">
+        <AiPanel
+          key={`ai:${controller.mode}`}
+          controller={controller}
+          onMonth={onMonth}
+        />
+        <PlanningPanel key={controller.mode} controller={controller} />
+        <NetworkPanel controller={controller} />
         <BooksPanel controller={controller} />
         <PreferencesPanel
           key={controller.mode}
           ledger={ledger}
           onCommit={controller.commit}
         />
-        <SyncPanel sync={sync} />
+        {controller.network?.isConnected ? (
+          <section className="panel">
+            <h2>联网账本保存</h2>
+            <p>
+              修改已通过联网操作接口保存到服务器。共享成员和连接状态见「家庭与联网账本」。
+            </p>
+          </section>
+        ) : (
+          <SyncPanel sync={sync} />
+        )}
         <AccountSecurityPanel />
-        <BackupPanel
-          ledger={ledger}
-          name={
-            controller.books.find((book) => book.id === controller.mode)
-              ?.name ?? "账本"
-          }
-          onRestore={controller.createBook}
-        />
+        <BackupPanel controller={controller} />
         <CategoriesPanel ledger={ledger} onCommit={controller.commit} />
         <PrivacyPanel />
         <section className="panel">

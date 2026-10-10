@@ -1,3 +1,5 @@
+import { AiScreen } from "./AiScreen";
+import { PlanningScreen } from "./PlanningScreen";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import type { BillRecord } from "@hamster-ledger/core";
 import type { ToolPage as ToolPageName } from "./ToolsScreen";
@@ -12,6 +14,7 @@ import { BackupScreen } from "./BackupScreen";
 import { PreferencesScreen } from "./PreferencesScreen";
 import { AccountScreen } from "./AccountScreen";
 import { SyncScreen } from "./SyncScreen";
+import { NetworkScreen } from "./NetworkScreen";
 interface ToolPageProps {
   page: ToolPageName;
   controller: LedgerController;
@@ -27,6 +30,16 @@ export function ToolPage({
   onReview,
 }: ToolPageProps): React.JSX.Element {
   const pages: Record<ToolPageName, React.JSX.Element> = {
+    ai: <AiScreen key={controller.mode} controller={controller} />,
+    planning: <PlanningScreen key={controller.mode} controller={controller} />,
+    notifications: (
+      <PlanningScreen
+        key={controller.mode}
+        controller={controller}
+        initialTab="notifications"
+      />
+    ),
+    network: <NetworkScreen controller={controller} />,
     account: <AccountScreen />,
     sync: <SyncScreen controller={controller} />,
     books: <BooksScreen controller={controller} />,

@@ -1,5 +1,6 @@
 import { bookSchema, DEFAULT_BOOKS, type Book } from "./planning-model.js";
 import { ledgerSchema, type Ledger, type LedgerMode } from "./model.js";
+import { migrateLedger } from "./migration.js";
 
 /** Platform adapter: localStorage, SQLite or another local store. */
 export interface KeyValueStore {
@@ -29,6 +30,7 @@ function validateBooks(input: unknown): Book[] {
   return books;
 }
 export function createLedgerRepository(store: KeyValueStore): LedgerRepository {
+  const loadedRaw = new Map<LedgerMode, string>();
   return {
     async listBooks(): Promise<Book[]> {
       const raw = await store.getItem(STORAGE_PREFIX + "books");
@@ -41,11 +43,21 @@ export function createLedgerRepository(store: KeyValueStore): LedgerRepository {
     async load(mode): Promise<Ledger | null> {
       const serialized = await store.getItem(STORAGE_PREFIX + mode);
       if (serialized === null) return null;
-      return ledgerSchema.parse(JSON.parse(serialized));
+      const ledger = migrateLedger(JSON.parse(serialized));
+      loadedRaw.set(mode, serialized);
+      return ledger;
     },
     async save(mode, ledger): Promise<void> {
-      const validated = ledgerSchema.parse(ledger);
-      await store.setItem(STORAGE_PREFIX + mode, JSON.stringify(validated));
+      const validated = migrateLedger(ledger);
+      const previous = loadedRaw.get(mode);
+      if (previous && ledgerSchema.parse(JSON.parse(previous)).version === 1) {
+        const backupKey = STORAGE_PREFIX + "migration-v1." + mode;
+        if ((await store.getItem(backupKey)) === null)
+          await store.setItem(backupKey, previous);
+      }
+      const serialized = JSON.stringify(validated);
+      await store.setItem(STORAGE_PREFIX + mode, serialized);
+      loadedRaw.set(mode, serialized);
     },
     async loadActiveMode(): Promise<LedgerMode> {
       const mode = await store.getItem(STORAGE_PREFIX + "active");

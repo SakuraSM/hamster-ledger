@@ -1,27 +1,44 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Text, Card } from "react-native-paper";
-import type { Ledger } from "@hamster-ledger/core";
-import type { LedgerController } from "@hamster-ledger/ledger-react";
+import type { Ledger, Attachment } from "@hamster-ledger/core";
+import {
+  exportArchive,
+  restoreArchive,
+  cleanupAttachments,
+  remoteAttachments,
+  type LedgerController,
+} from "@hamster-ledger/ledger-react";
 import { Screen, ErrorMessage } from "../ui/Screen";
 import { pickBackup, shareBackup, shareExcel } from "../platform/files";
-interface BackupScreenProps {
-  controller: LedgerController;
-}
+import { nativeAttachments, verifyAttachment } from "../platform/attachments";
+import { useNativeAccount } from "../auth/NativeAccount";
 export function BackupScreen({
   controller,
-}: BackupScreenProps): React.JSX.Element {
-  const [preview, setPreview] = useState<Ledger | null>(null);
-  const [error, setError] = useState("");
-  const [isBusy, setIsBusy] = useState(false);
+}: {
+  controller: LedgerController;
+}): React.JSX.Element {
+  const [preview, setPreview] = useState<{
+      ledger: Ledger;
+      attachments: Attachment[];
+    } | null>(null),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState(""),
+    [isBusy, setBusy] = useState(false);
+  const client = useNativeAccount().client,
+    remote = useMemo(() => remoteAttachments(client), [client]),
+    book = controller.books.find((item) => item.id === controller.mode),
+    storageId = book?.cloud?.id ?? controller.mode,
+    store = book?.cloud ? remote : nativeAttachments;
   async function run(action: () => Promise<void>): Promise<void> {
-    setIsBusy(true);
+    setBusy(true);
     setError("");
+    setMessage("");
     try {
       await action();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "文件操作失败");
+      setError(cause instanceof Error ? cause.message : "文件操作失败。");
     } finally {
-      setIsBusy(false);
+      setBusy(false);
     }
   }
   return (
@@ -30,16 +47,22 @@ export function BackupScreen({
         备份与导出
       </Text>
       <Text>
-        完整备份包含分类、账户、周期规则和回收站。导出的文件为明文，请存放到你信任的位置。可在
-        Web 和安卓之间恢复。
+        完整归档包含账本、草稿和附件凭证，支持在 Web
+        与安卓之间恢复。导出文件为明文，请妥善保存。
       </Text>
       <Button
         mode="contained"
         icon="share-variant"
         disabled={isBusy}
-        onPress={() => void run(() => shareBackup(controller.ledger))}
+        onPress={() =>
+          void run(async () =>
+            shareBackup(
+              await exportArchive(store, storageId, controller.ledger),
+            ),
+          )
+        }
       >
-        导出完整备份
+        导出含附件完整备份
       </Button>
       <Button
         mode="outlined"
@@ -55,28 +78,41 @@ export function BackupScreen({
         disabled={isBusy}
         onPress={() =>
           void run(async () => {
-            setPreview(await pickBackup());
+            setPreview(null);
+            const archive = await pickBackup();
+            if (archive)
+              for (const image of archive.attachments)
+                await verifyAttachment(image);
+            setPreview(archive);
           })
         }
       >
-        选择 JSON 备份
+        选择归档或 JSON 备份
       </Button>
       {preview ? (
         <Card mode="outlined">
           <Card.Content style={{ gap: 12 }}>
             <Text variant="titleMedium">恢复预览</Text>
             <Text>
-              {preview.records.filter((record) => !record.isDeleted).length}{" "}
-              笔账单 · {preview.accounts.length} 个账户 ·{" "}
-              {preview.budgets?.length ?? 0} 项预算
+              {
+                preview.ledger.records.filter((record) => !record.isDeleted)
+                  .length
+              }{" "}
+              笔账单 · {preview.ledger.accounts.length} 个账户 ·{" "}
+              {preview.attachments.length} 张凭证
             </Text>
-            <Text>将创建一个新账本，当前账本保留。</Text>
+            <Text>将创建一个新的本地账本。</Text>
             <Button
               mode="contained"
               disabled={isBusy || controller.isSaving}
               onPress={() =>
                 void run(async () => {
-                  await controller.createBook("恢复的账本", preview);
+                  await restoreArchive({
+                    store: nativeAttachments,
+                    ...preview,
+                    verify: verifyAttachment,
+                    createBook: controller.createBook,
+                  });
                   setPreview(null);
                   controller.notify("已恢复为新账本");
                 })
@@ -88,7 +124,36 @@ export function BackupScreen({
           </Card.Content>
         </Card>
       ) : null}
+      <Text variant="titleMedium">附件清理</Text>
+      <Text>
+        清理超过 24 小时、未被流水或待确认草稿引用的附件。回收站凭证继续保留。
+      </Text>
+      <Button
+        mode="outlined"
+        disabled={isBusy}
+        onPress={() =>
+          void run(async () => {
+            const removed = book?.cloud
+              ? (
+                  await client.request<{ removed: number }>(
+                    `/network/books/${book.cloud.id}/attachments/cleanup`,
+                    { method: "POST", body: {} },
+                  )
+                ).removed
+              : await cleanupAttachments(
+                  store,
+                  storageId,
+                  controller.ledger,
+                  Date.now(),
+                );
+            setMessage(`已清理 ${removed} 张未使用附件。`);
+          })
+        }
+      >
+        清理未使用附件
+      </Button>
       <ErrorMessage message={error} />
+      {message ? <Text accessibilityLiveRegion="polite">{message}</Text> : null}
     </Screen>
   );
 }

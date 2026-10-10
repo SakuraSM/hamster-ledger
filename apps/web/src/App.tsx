@@ -1,3 +1,4 @@
+import { RecordAttachments } from "./components/ai/RecordAttachments";
 import { Button } from "@mantine/core";
 import { LedgerNotice } from "./ui/LedgerNotice";
 import { useAuth } from "./auth/auth-context";
@@ -9,12 +10,13 @@ import { usePreferences } from "./hooks/usePreferences";
 import { AppHeader } from "./components/AppHeader";
 import { DEFAULT_MONTH, type PageId } from "./app-config";
 const MONTH_KEY_LENGTH = 7;
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { type BillFilter } from "./components/Transactions";
 import { RecordDetail } from "./components/RecordDetail";
 import { Dialog } from "./components/Dialog";
 import { useLedger } from "./hooks/useLedger";
+import { useNetworkController } from "./hooks/useNetworkController";
 import {
   type Source,
   type Category,
@@ -28,7 +30,8 @@ import {
 
 export function App(): React.JSX.Element {
   const auth = useAuth();
-  const controller = useLedger();
+  const local = useLedger();
+  const controller = useNetworkController(local);
   const { ledger, mode } = controller;
   const sync = useCloudSync(controller);
   const [page, setPage] = useState<PageId>(() =>
@@ -38,6 +41,14 @@ export function App(): React.JSX.Element {
   );
   const [month, setMonth] = useState(DEFAULT_MONTH);
   const [recordMonth, setRecordMonth] = useState(DEFAULT_MONTH);
+  useEffect(() => {
+    const selected =
+      mode === "demo"
+        ? DEFAULT_MONTH
+        : new Date().toLocaleDateString("sv-SE").slice(0, MONTH_KEY_LENGTH);
+    setMonth(selected);
+    setRecordMonth(selected);
+  }, [mode]);
   const [filter, setFilter] = useState<BillFilter>({
     source: "",
     category: "",
@@ -111,6 +122,7 @@ export function App(): React.JSX.Element {
         跳到主要内容
       </a>
       <Sidebar
+        isNetwork={controller.network?.isConnected}
         bookName={
           controller.books.find((book) => book.id === mode)?.name ?? "我的账本"
         }
@@ -181,6 +193,13 @@ export function App(): React.JSX.Element {
       </main>
       {selected ? (
         <RecordDetail
+          attachmentPanel={
+            <RecordAttachments controller={controller} recordId={selected.id} />
+          }
+          bookId={
+            controller.books.find((book) => book.id === controller.mode)?.cloud
+              ?.id
+          }
           key={selected.id}
           ledger={ledger}
           onRelated={setSelected}
@@ -200,6 +219,17 @@ export function App(): React.JSX.Element {
       ) : null}
       {editor ? (
         <EntryEditor
+          bookId={
+            controller.books.find((book) => book.id === controller.mode)?.cloud
+              ?.id
+          }
+          onCommit={async (next, date) => {
+            await controller.commit(next);
+            setMonth(
+              cycleMonthForDate(date, ledger.preferences?.cycleStartDay ?? 1),
+            );
+            controller.notify("账单已保存。");
+          }}
           key={editor.revision ?? 0}
           onReload={() => {
             const latest = ledger.records.find(

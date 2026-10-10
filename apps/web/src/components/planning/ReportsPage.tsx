@@ -1,3 +1,4 @@
+import { ExtendedReports } from "./ExtendedReports";
 import { Button } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
 import { DateField } from "../../ui/DateField";
@@ -38,8 +39,13 @@ const COLORS = [
 interface Props {
   ledger: Ledger;
   month: string;
+  bookId?: string;
 }
-export function ReportsPage({ ledger, month }: Props): React.JSX.Element {
+export function ReportsPage({
+  ledger,
+  month,
+  bookId,
+}: Props): React.JSX.Element {
   const initial = cycleRange(month, ledger.preferences?.cycleStartDay ?? 1);
   const [start, setStart] = useState(initial.start);
   const [end, setEnd] = useState(
@@ -118,7 +124,7 @@ export function ReportsPage({ ledger, month }: Props): React.JSX.Element {
       </div>
       <div className="report-grid">
         <section className="panel">
-          <div className="section-heading">
+          <div className="section-heading report-distribution-heading">
             <h2>收支分布</h2>
             <div className="report-controls">
               <Choice
@@ -233,6 +239,14 @@ export function ReportsPage({ ledger, month }: Props): React.JSX.Element {
           </details>
         </section>
       </div>
+      <ExtendedReports
+        ledger={ledger}
+        records={records}
+        start={start}
+        end={end}
+        kind={kind}
+        bookId={bookId}
+      />
     </section>
   );
 }
