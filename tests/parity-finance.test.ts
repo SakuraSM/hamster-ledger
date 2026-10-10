@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   EMPTY_LEDGER,
+  applyLedgerPatch,
+  ledgerPatch,
   convertToCny,
   parseMinor,
   migrateLedger,
@@ -169,4 +171,23 @@ describe("advanced transaction accounting", () => {
     invalid.detail.splits = [{ memberId: "a", amount: 10 }];
     expect(() => saveAdvancedEntry(ledger(), invalid)).toThrow("合计");
   });
+});
+
+it("rejects changing the kind of an existing account through a shared-book patch", () => {
+  const before = saveAdvancedEntry(ledger(), entry());
+  const after: Ledger = {
+    ...before,
+    accounts: before.accounts.map((current) =>
+      current.id === "cash"
+        ? { ...current, kind: "liability", type: "贷款" }
+        : current,
+    ),
+  };
+  expect(() =>
+    applyLedgerPatch({
+      ledger: before,
+      patch: ledgerPatch(before, after),
+      actor: { userId: "synthetic-owner", role: "owner" },
+    }),
+  ).toThrow("资产/负债类型不能更改");
 });

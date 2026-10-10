@@ -140,7 +140,7 @@ export async function attachmentsApi(context) {
   if (!match) return false;
   const bookId = match[1] ?? null,
     id = match[2];
-  const access = bookId ? membership(database, bookId, userId) : null;
+  if (bookId) membership(database, bookId, userId);
   if (!id && request.method === "POST") {
     const body = await readBody();
     json(
@@ -192,6 +192,7 @@ export async function attachmentsApi(context) {
   if (id && request.method === "DELETE") {
     await readBody();
     const row = getAttachment(database, id, userId, bookId);
+    const access = bookId ? membership(database, bookId, userId) : null;
     if (
       access?.role === "viewer" ||
       (row.user_id !== userId && !["owner", "admin"].includes(access?.role))

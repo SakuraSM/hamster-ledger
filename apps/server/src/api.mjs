@@ -18,6 +18,19 @@ function parseBook(body) {
     throw new HttpError(400, "账本名称需为 1–40 个字符。");
   return { name, serialized: JSON.stringify(parsed.data) };
 }
+function requireSnapshotBook(database, bookId, userId) {
+  const row = database
+    .prepare("SELECT * FROM books WHERE id=? AND user_id=?")
+    .get(bookId, userId);
+  if (!row) throw new HttpError(404, "云端账本不存在。");
+  if (row.authority === "server")
+    throw new HttpError(
+      426,
+      "此账本已启用联网编辑，请升级客户端并从联网账本打开。",
+      "network_book_required",
+    );
+  return row;
+}
 export function createApi({
   database,
   publicOrigin,
@@ -152,16 +165,7 @@ export function createApi({
     }
     const match = path.match(/^\/api\/books\/([a-z0-9-]+)$/);
     if (match && ["GET", "PUT"].includes(method)) {
-      const row = database
-        .prepare("SELECT * FROM books WHERE id=? AND user_id=?")
-        .get(match[1], user.id);
-      if (!row) throw new HttpError(404, "云端账本不存在。");
-      if (row.authority === "server")
-        throw new HttpError(
-          426,
-          "此账本已启用联网编辑，请升级客户端并从联网账本打开。",
-          "network_book_required",
-        );
+      let row = requireSnapshotBook(database, match[1], user.id);
       if (method === "GET") {
         json(response, 200, {
           id: row.id,
@@ -173,6 +177,7 @@ export function createApi({
         return;
       }
       const body = await readJson(request);
+      row = requireSnapshotBook(database, match[1], user.id);
       if (JSON.parse(row.ledger).version === 2 && body.ledger?.version !== 2)
         throw new HttpError(
           426,

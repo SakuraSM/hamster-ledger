@@ -19,6 +19,7 @@ export const COLLECTIONS = [
   "notifications",
   "aiDrafts",
 ] as const;
+const MAX_PATCH_CHANGES = 20000;
 const changeSchema = z.object({
   collection: z.enum(COLLECTIONS),
   id: z.string().min(1),
@@ -26,7 +27,7 @@ const changeSchema = z.object({
 });
 export const ledgerPatchSchema = z
   .object({
-    changes: z.array(changeSchema).max(20000),
+    changes: z.array(changeSchema).max(MAX_PATCH_CHANGES),
     rules: z.record(z.string(), z.string()).optional(),
     preferences: ledgerSchema.shape.preferences,
     files: ledgerSchema.shape.files.optional(),
@@ -90,6 +91,14 @@ export function applyLedgerPatch(input: {
       throw new Error("修改共享配置需要管理员权限。");
     if (change.collection === "accounts") {
       const account = next.accounts.find((item) => item.id === change.id);
+      if (
+        account &&
+        change.value &&
+        typeof change.value === "object" &&
+        "kind" in change.value &&
+        change.value.kind !== account.kind
+      )
+        throw new Error("已有账户的资产/负债类型不能更改，请新增账户。");
       if (
         account &&
         (change.value === null ||
