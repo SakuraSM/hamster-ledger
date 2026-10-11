@@ -1,3 +1,5 @@
+import { AmountText } from "../ui/AmountText";
+import { recordAmountTone } from "../ui/amount-tones";
 import { RecordAttachments } from "./RecordAttachments";
 import { TransactionFacts } from "./TransactionFacts";
 import { useState } from "react";
@@ -45,7 +47,13 @@ export function RecordDetail({
   return (
     <FormSheet title="账单详情" onClose={onClose}>
       <Text variant="headlineMedium">{current.merchant}</Text>
-      <Text variant="displaySmall">{signedMoney(current)}</Text>
+      <AmountText
+        variant="displaySmall"
+        amount={current.amount}
+        tone={recordAmountTone(current)}
+      >
+        {signedMoney(current)}
+      </AmountText>
       <View style={styles.row}>
         <Chip>{current.kind}</Chip>
         <Chip>{current.category}</Chip>

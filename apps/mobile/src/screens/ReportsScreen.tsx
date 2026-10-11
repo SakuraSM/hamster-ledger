@@ -1,3 +1,5 @@
+import { AmountText, useAmountColors } from "../ui/AmountText";
+import { balanceAmountTone } from "../ui/amount-tones";
 import { ExtendedReports } from "./ExtendedReports";
 import { DATE_KEY_LENGTH, MONTH_KEY_LENGTH } from "../constants";
 import { useState } from "react";
@@ -21,6 +23,7 @@ export function ReportsScreen({
   ledger,
   bookId,
 }: ReportsScreenProps): React.JSX.Element {
+  const colors = useAmountColors();
   const [start, setStart] = useState(
     localNow().slice(0, MONTH_KEY_LENGTH) + "-01",
   );
@@ -47,9 +50,33 @@ export function ReportsScreen({
         <Text accessibilityLiveRegion="polite">结束日期不能早于开始日期。</Text>
       ) : (
         <>
-          <Text variant="titleLarge">支出 ¥{money(totals.expense)}</Text>
           <Text variant="titleLarge">
-            收入 ¥{money(totals.income)} · 结余 ¥{money(totals.net)}
+            支出{" "}
+            <AmountText
+              variant="titleLarge"
+              amount={totals.expense}
+              tone="expense"
+            >
+              ¥{money(totals.expense)}
+            </AmountText>
+          </Text>
+          <Text variant="titleLarge">
+            收入{" "}
+            <AmountText
+              variant="titleLarge"
+              amount={totals.income}
+              tone="income"
+            >
+              ¥{money(totals.income)}
+            </AmountText>{" "}
+            · 结余{" "}
+            <AmountText
+              variant="titleLarge"
+              amount={totals.net}
+              tone={balanceAmountTone(totals.net)}
+            >
+              ¥{money(totals.net)}
+            </AmountText>
           </Text>
           <SegmentedButtons
             value={kind}
@@ -71,9 +98,18 @@ export function ReportsScreen({
             {groups.map((group) => (
               <View key={group.name} style={{ gap: 8 }}>
                 <Text>
-                  {group.name} · ¥{money(group.amount)}
+                  {group.name} ·{" "}
+                  <AmountText
+                    amount={group.amount}
+                    tone={kind === "支出" ? "expense" : "income"}
+                  >
+                    ¥{money(group.amount)}
+                  </AmountText>
                 </Text>
-                <ProgressBar progress={Math.max(0, group.amount / maximum)} />
+                <ProgressBar
+                  color={kind === "支出" ? colors.expense : colors.income}
+                  progress={Math.max(0, group.amount / maximum)}
+                />
               </View>
             ))}
           </Section>
@@ -82,8 +118,14 @@ export function ReportsScreen({
               .filter((day) => day.expense || day.income)
               .map((day) => (
                 <Text key={day.date}>
-                  {day.date} · 支出 ¥{money(day.expense)} · 收入 ¥
-                  {money(day.income)}
+                  {day.date} · 支出{" "}
+                  <AmountText amount={day.expense} tone="expense">
+                    ¥{money(day.expense)}
+                  </AmountText>{" "}
+                  · 收入{" "}
+                  <AmountText amount={day.income} tone="income">
+                    ¥{money(day.income)}
+                  </AmountText>
                 </Text>
               ))}
           </Section>
