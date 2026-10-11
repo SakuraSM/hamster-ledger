@@ -17,7 +17,7 @@ import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { Screen, Section, ErrorMessage } from "../ui/Screen";
 import { FormSheet } from "../ui/FormSheet";
 import { AccountEditor } from "./AccountEditor";
-import { RecordRow } from "./RecordRow";
+import { AccountRecordList } from "./AccountRecordList";
 import { localNow } from "../platform/runtime";
 interface AssetsScreenProps {
   controller: LedgerController;
@@ -173,25 +173,14 @@ export function AssetsScreen({
             {account.isArchived ? "恢复账户" : "归档账户"}
           </Button>
           <Section title="关联流水">
-            {controller.ledger.records
-              .filter(
-                (record) =>
-                  !record.isDeleted &&
-                  (record.accountId === account.id ||
-                    record.transferToAccountId === account.id),
-              )
-              .slice()
-              .sort((left, right) => right.date.localeCompare(left.date))
-              .map((record) => (
-                <RecordRow
-                  key={record.id}
-                  record={record}
-                  onPress={(item) => {
-                    setSelected(null);
-                    onRecord(item);
-                  }}
-                />
-              ))}
+            <AccountRecordList
+              ledger={controller.ledger}
+              accountId={account.id}
+              onRecord={(record) => {
+                setSelected(null);
+                onRecord(record);
+              }}
+            />
           </Section>
           <Section title="余额校准记录">
             {account.checkpoints.map((checkpoint) => (
