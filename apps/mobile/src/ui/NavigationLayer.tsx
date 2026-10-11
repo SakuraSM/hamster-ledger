@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect, type ReactNode } from "react";
+import { Keyboard, StyleSheet, View } from "react-native";
 
 interface NavigationLayerProps {
   children: ReactNode;
@@ -10,6 +10,9 @@ export function NavigationLayer({
   tool,
 }: NavigationLayerProps): React.JSX.Element {
   const isToolOpen = Boolean(tool);
+  useEffect(() => {
+    if (isToolOpen) Keyboard.dismiss();
+  }, [isToolOpen]);
   return (
     <View style={styles.fill}>
       <View
