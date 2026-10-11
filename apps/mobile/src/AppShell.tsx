@@ -1,15 +1,10 @@
 import { deliverPlanningNotifications } from "./platform/planning-notifications";
 import { MONTH_KEY_LENGTH } from "./constants";
-const FAB_WITH_NOTICE_BOTTOM = 176;
-const FAB_BOTTOM = 106;
-const TOOL_NOTICE_BOTTOM = 12;
-const NOTICE_BOTTOM = 88;
-import hamsterLogo from "../assets/hamster-logo.png";
+const FLOATING_GAP = 16;
+const MIN_NOTICE_HEIGHT = 48;
 import { useEffect, useState } from "react";
-import { BackHandler, View, Image, AccessibilityInfo } from "react-native";
+import { BackHandler, View } from "react-native";
 import {
-  Appbar,
-  BottomNavigation,
   FAB,
   PaperProvider,
   Snackbar,
@@ -17,8 +12,19 @@ import {
   Text,
   Banner,
 } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { AppHeader } from "./ui/AppHeader";
+import {
+  AppNavigation,
+  APP_ROUTES,
+  NAVIGATION_BAR_HEIGHT,
+} from "./ui/AppNavigation";
+import { SystemBars } from "./ui/SystemBars";
+import { useReducedMotion } from "./hooks/useReducedMotion";
+import { useKeyboardVisibility } from "./hooks/useKeyboardVisibility";
 import { saveEntry, type BillRecord } from "@hamster-ledger/core";
 import { useLedger } from "./hooks/useLedger";
 import { useNetworkController } from "./hooks/useNetworkController";
@@ -40,17 +46,13 @@ import { RecordMetadataEditor } from "./screens/RecordMetadataEditor";
 import { localNow } from "./platform/runtime";
 import { useNativeAccount } from "./auth/NativeAccount";
 import { AccountScreen } from "./screens/AccountScreen";
-const ROUTES = [
-  { key: "overview", title: "总览", focusedIcon: "home-outline" },
-  { key: "records", title: "账单", focusedIcon: "format-list-bulleted" },
-  { key: "assets", title: "资产", focusedIcon: "wallet-outline" },
-  { key: "reports", title: "报表", focusedIcon: "chart-pie" },
-  { key: "tools", title: "更多", focusedIcon: "dots-horizontal" },
-];
 export function AppShell(): React.JSX.Element {
   const local = useLedger();
   const controller = useNetworkController(local);
   const account = useNativeAccount();
+  const insets = useSafeAreaInsets();
+  const isKeyboardVisible = useKeyboardVisibility();
+  const [noticeHeight, setNoticeHeight] = useState(MIN_NOTICE_HEIGHT);
   const [index, setIndex] = useState(0);
   const [tool, setTool] = useState<ToolPageName | null>(null);
   const [month, setMonth] = useState("2026-09");
@@ -60,7 +62,7 @@ export function AppShell(): React.JSX.Element {
   } | null>(null);
   const [detail, setDetail] = useState<BillRecord | null>(null);
   const [metadata, setMetadata] = useState<BillRecord | null>(null);
-  const [hasReducedMotion, setHasReducedMotion] = useState(false);
+  const hasReducedMotion = useReducedMotion();
   useEffect(() => {
     if (!controller.ledger.preferences?.reminderEnabled) return;
     void deliverPlanningNotifications(
@@ -79,20 +81,6 @@ export function AppShell(): React.JSX.Element {
   if (controller.ledger.preferences?.theme === "sage")
     theme.colors.primary = "#456445";
   theme.animation.scale = hasReducedMotion ? 0 : 1;
-  useEffect(() => {
-    let isActive = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
-      if (isActive) setHasReducedMotion(value);
-    });
-    const listener = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      setHasReducedMotion,
-    );
-    return () => {
-      isActive = false;
-      listener.remove();
-    };
-  }, []);
   useEffect(() => {
     setMonth(
       controller.mode === "demo"
@@ -161,103 +149,79 @@ export function AppShell(): React.JSX.Element {
     };
     return pages[route.key];
   }
+  const hasNavigation = !controller.isLoading && !account.needsEntry && !tool;
+  const navigationHeight =
+    insets.bottom + (hasNavigation ? NAVIGATION_BAR_HEIGHT : 0);
+  const pageTitle = tool
+    ? (TOOLS.find((item) => item.key === tool)?.title ?? "更多功能")
+    : APP_ROUTES[index].header;
   return (
     <PaperProvider theme={theme} settings={iconSettings}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <SafeAreaView
-        edges={["top", "left", "right"]}
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <Appbar.Header statusBarHeight={0}>
-          {tool ? (
-            <Appbar.Action
-              icon="arrow-left"
-              onPress={() => setTool(null)}
-              accessibilityLabel="返回更多功能"
+      <SystemBars isDark={isDark} />
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader
+          title={
+            controller.isLoading || account.needsEntry ? "仓鼠记账" : pageTitle
+          }
+          bookName={
+            controller.books.find((book) => book.id === controller.mode)?.name
+          }
+          canUndo={controller.canUndo}
+          onUndo={controller.undo}
+          onBooks={() => setTool("books")}
+          onBack={tool ? () => setTool(null) : undefined}
+        />
+        <SafeAreaView
+          edges={
+            hasNavigation ? ["left", "right"] : ["left", "right", "bottom"]
+          }
+          style={{ flex: 1 }}
+        >
+          <Banner
+            visible={Boolean(controller.error)}
+            actions={[]}
+            icon="shield-check-outline"
+          >
+            {controller.error}
+          </Banner>
+          {controller.isLoading ? (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <ActivityIndicator animating={!controller.error} />
+              <Text>
+                {controller.error
+                  ? "本机数据已保留，读取失败时禁止写入。"
+                  : "正在打开加密账本…"}
+              </Text>
+            </View>
+          ) : account.needsEntry ? (
+            <AccountScreen onLocal={() => undefined} />
+          ) : tool ? (
+            <ToolPage
+              key={`${controller.mode}:${tool}`}
+              page={tool}
+              controller={controller}
+              onRecord={setDetail}
+              onAdd={(date) => setEditor({ date })}
+              onReview={() => setTool("review")}
             />
           ) : (
-            <Image
-              source={hamsterLogo}
-              style={{ width: 40, height: 40, marginLeft: 16 }}
-              accessibilityLabel="仓鼠记账"
+            <AppNavigation
+              index={index}
+              onIndexChange={setIndex}
+              renderScene={renderScene}
+              hasReducedMotion={hasReducedMotion}
+              bottomInset={insets.bottom}
             />
           )}
-          <Appbar.Content
-            title={
-              <View>
-                <Text variant="titleLarge">
-                  {tool
-                    ? TOOLS.find((item) => item.key === tool)?.title
-                    : "仓鼠记账"}
-                </Text>
-                <Text variant="labelSmall">
-                  {
-                    controller.books.find((book) => book.id === controller.mode)
-                      ?.name
-                  }
-                </Text>
-              </View>
-            }
-          />
-          {controller.canUndo ? (
-            <Appbar.Action
-              icon="undo"
-              accessibilityLabel="撤销上一次修改"
-              onPress={controller.undo}
-            />
-          ) : null}
-          <Appbar.Action
-            icon="book-open-variant"
-            accessibilityLabel="切换账本"
-            onPress={() => setTool("books")}
-          />
-        </Appbar.Header>
-        <Banner
-          visible={Boolean(controller.error)}
-          actions={[]}
-          icon="shield-check-outline"
-        >
-          {controller.error}
-        </Banner>
-        {controller.isLoading ? (
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
-            <ActivityIndicator animating={!controller.error} />
-            <Text>
-              {controller.error
-                ? "本机数据已保留，读取失败时禁止写入。"
-                : "正在打开加密账本…"}
-            </Text>
-          </View>
-        ) : account.needsEntry ? (
-          <AccountScreen onLocal={() => undefined} />
-        ) : tool ? (
-          <ToolPage
-            key={`${controller.mode}:${tool}`}
-            page={tool}
-            controller={controller}
-            onRecord={setDetail}
-            onAdd={(date) => setEditor({ date })}
-            onReview={() => setTool("review")}
-          />
-        ) : (
-          <BottomNavigation
-            navigationState={{ index, routes: ROUTES }}
-            onIndexChange={setIndex}
-            renderScene={renderScene}
-            sceneAnimationEnabled={!hasReducedMotion}
-            labeled
-            shifting={false}
-            keyboardHidesNavigationBar
-          />
-        )}
-        {!controller.isLoading && !account.needsEntry && !tool ? (
+        </SafeAreaView>
+        {hasNavigation && !isKeyboardVisible ? (
           <FAB
             icon="plus"
             label="记一笔"
@@ -265,13 +229,17 @@ export function AppShell(): React.JSX.Element {
             onPress={() => setEditor({})}
             style={{
               position: "absolute",
-              right: 20,
-              bottom: controller.notice ? FAB_WITH_NOTICE_BOTTOM : FAB_BOTTOM,
+              right: Math.max(FLOATING_GAP, insets.right + FLOATING_GAP),
+              bottom:
+                navigationHeight +
+                FLOATING_GAP +
+                (controller.notice ? noticeHeight + FLOATING_GAP : 0),
             }}
           />
         ) : null}
         <Snackbar
-          wrapperStyle={{ bottom: tool ? TOOL_NOTICE_BOTTOM : NOTICE_BOTTOM }}
+          wrapperStyle={{ bottom: navigationHeight, paddingBottom: 0 }}
+          onLayout={(event) => setNoticeHeight(event.nativeEvent.layout.height)}
           visible={Boolean(controller.notice)}
           onDismiss={controller.dismissNotice}
           action={
@@ -319,7 +287,7 @@ export function AppShell(): React.JSX.Element {
             onClose={() => setMetadata(null)}
           />
         ) : null}
-      </SafeAreaView>
+      </View>
     </PaperProvider>
   );
 }

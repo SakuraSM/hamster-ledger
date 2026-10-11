@@ -55,6 +55,12 @@
           "cameraPermission": "拍摄账单凭证。",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
       ]
     ]
   }

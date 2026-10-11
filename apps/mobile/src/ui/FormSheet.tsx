@@ -1,7 +1,9 @@
+import { MIN_TOUCH_TARGET } from "../constants";
 import type { ReactNode } from "react";
 import { Modal, View, Keyboard, Alert } from "react-native";
 import { Appbar, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SystemBars } from "./SystemBars";
 import { Screen } from "./Screen";
 interface FormSheetProps {
   title: string;
@@ -36,12 +38,19 @@ export function FormSheet({
       animationType={theme.animation.scale === 0 ? "none" : "slide"}
       onRequestClose={requestClose}
       statusBarTranslucent
+      navigationBarTranslucent
     >
+      <SystemBars isDark={theme.dark} />
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
-        <Appbar.Header statusBarHeight={0}>
+        <Appbar.Header
+          mode="small"
+          statusBarHeight={0}
+          style={{ backgroundColor: theme.colors.background }}
+        >
           <Appbar.Action
+            style={{ width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET }}
             icon="arrow-left"
             onPress={requestClose}
             accessibilityLabel="返回"
