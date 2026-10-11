@@ -4,19 +4,14 @@ const FLOATING_GAP = 16;
 const MIN_NOTICE_HEIGHT = 48;
 import { useEffect, useState } from "react";
 import { BackHandler, View } from "react-native";
-import {
-  FAB,
-  PaperProvider,
-  Snackbar,
-  ActivityIndicator,
-  Text,
-  Banner,
-} from "react-native-paper";
+import { FAB, PaperProvider, Snackbar, Banner } from "react-native-paper";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { AppHeader } from "./ui/AppHeader";
+import { LedgerLoading } from "./ui/LedgerLoading";
+import { NavigationLayer } from "./ui/NavigationLayer";
 import {
   AppNavigation,
   APP_ROUTES,
@@ -150,6 +145,10 @@ export function AppShell(): React.JSX.Element {
     return pages[route.key];
   }
   const hasNavigation = !controller.isLoading && !account.needsEntry && !tool;
+  const isReportPage = APP_ROUTES[index].key === "reports";
+  function openEntry(): void {
+    setEditor({});
+  }
   const navigationHeight =
     insets.bottom + (hasNavigation ? NAVIGATION_BAR_HEIGHT : 0);
   const pageTitle = tool
@@ -170,6 +169,7 @@ export function AppShell(): React.JSX.Element {
           onUndo={controller.undo}
           onBooks={() => setTool("books")}
           onBack={tool ? () => setTool(null) : undefined}
+          onAdd={hasNavigation && isReportPage ? openEntry : undefined}
         />
         <SafeAreaView
           edges={
@@ -185,48 +185,40 @@ export function AppShell(): React.JSX.Element {
             {controller.error}
           </Banner>
           {controller.isLoading ? (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <ActivityIndicator animating={!controller.error} />
-              <Text>
-                {controller.error
-                  ? "本机数据已保留，读取失败时禁止写入。"
-                  : "正在打开加密账本…"}
-              </Text>
-            </View>
+            <LedgerLoading error={controller.error} />
           ) : account.needsEntry ? (
             <AccountScreen onLocal={() => undefined} />
-          ) : tool ? (
-            <ToolPage
-              key={`${controller.mode}:${tool}`}
-              page={tool}
-              controller={controller}
-              onRecord={setDetail}
-              onAdd={(date) => setEditor({ date })}
-              onReview={() => setTool("review")}
-            />
           ) : (
-            <AppNavigation
-              index={index}
-              onIndexChange={setIndex}
-              renderScene={renderScene}
-              hasReducedMotion={hasReducedMotion}
-              bottomInset={insets.bottom}
-            />
+            <NavigationLayer
+              tool={
+                tool ? (
+                  <ToolPage
+                    key={`${controller.mode}:${tool}`}
+                    page={tool}
+                    controller={controller}
+                    onRecord={setDetail}
+                    onAdd={(date) => setEditor({ date })}
+                    onReview={() => setTool("review")}
+                  />
+                ) : null
+              }
+            >
+              <AppNavigation
+                index={index}
+                onIndexChange={setIndex}
+                renderScene={renderScene}
+                hasReducedMotion={hasReducedMotion}
+                bottomInset={insets.bottom}
+              />
+            </NavigationLayer>
           )}
         </SafeAreaView>
-        {hasNavigation && !isKeyboardVisible ? (
+        {hasNavigation && !isReportPage && !isKeyboardVisible ? (
           <FAB
             icon="plus"
             label="记一笔"
             accessibilityLabel="记一笔"
-            onPress={() => setEditor({})}
+            onPress={openEntry}
             style={{
               position: "absolute",
               right: Math.max(FLOATING_GAP, insets.right + FLOATING_GAP),

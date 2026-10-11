@@ -9,6 +9,7 @@ interface AppHeaderProps {
   onUndo: () => void;
   onBooks: () => void;
   onBack?: () => void;
+  onAdd?: () => void;
 }
 export function AppHeader({
   title,
@@ -17,6 +18,7 @@ export function AppHeader({
   onUndo,
   onBooks,
   onBack,
+  onAdd,
 }: AppHeaderProps): React.JSX.Element {
   const theme = useTheme();
   return (
@@ -59,6 +61,14 @@ export function AppHeader({
           icon="undo"
           accessibilityLabel="撤销上一次修改"
           onPress={onUndo}
+        />
+      ) : null}
+      {onAdd ? (
+        <Appbar.Action
+          style={styles.action}
+          icon="plus"
+          accessibilityLabel="记一笔"
+          onPress={onAdd}
         />
       ) : null}
       <Appbar.Action

@@ -22,7 +22,7 @@
     "dev": "npm run build:packages && npm run dev --workspace @hamster-ledger/web --",
     "build": "npm run build:packages && npm run build --workspace @hamster-ledger/web",
     "build:packages": "npm run build --workspace @hamster-ledger/core && npm run build --workspace @hamster-ledger/importers && npm run build --workspace @hamster-ledger/fixtures && npm run build --workspace @hamster-ledger/ledger-react",
-    "typecheck": "npm run build:packages && npm run typecheck --workspace @hamster-ledger/web && npm run typecheck --workspace @hamster-ledger/mobile && tsc --noEmit -p tsconfig.tests.json",
+    "typecheck": "npm run build:packages && npm run typecheck --workspace @hamster-ledger/web && npm run typecheck --workspace @hamster-ledger/mobile && tsc --noEmit -p tsconfig.tests.json && tsc --noEmit -p tsconfig.mobile-tests.json",
     "lint": "eslint apps/web/src apps/mobile/src apps/mobile/App.tsx \"packages/*/src/**/*.{ts,tsx}\" tests",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
