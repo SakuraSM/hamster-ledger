@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useEffect, useState, type ReactNode } from "react";
-import type { ViewProps } from "react-native";
+import { Keyboard, type ViewProps } from "react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createDemoLedger } from "@hamster-ledger/fixtures";
@@ -11,6 +11,7 @@ import { NavigationLayer } from "../../apps/mobile/src/ui/NavigationLayer";
 // These adapters expose native component behavior to React DOM; pixels and hit
 // testing are verified separately with the actual Android APK.
 vi.mock("react-native", () => ({
+  Keyboard: { dismiss: vi.fn() },
   View: (props: ViewProps) => (
     <div
       aria-hidden={
@@ -165,6 +166,7 @@ function ReportProbe({ onUnmount }: ReportProbeProps): React.JSX.Element {
 }
 describe("native navigation session", () => {
   it("retains range and point state while hiding background input during a tool visit", () => {
+    vi.mocked(Keyboard.dismiss).mockClear();
     const unmount = vi.fn();
     const view = render(
       <NavigationLayer tool={null}>
@@ -175,6 +177,7 @@ describe("native navigation session", () => {
       target: { value: "2026-09-01" },
     });
     fireEvent.click(screen.getByRole("button", { name: "选择月末" }));
+    expect(Keyboard.dismiss).not.toHaveBeenCalled();
     view.rerender(
       <NavigationLayer tool={<button>记账偏好</button>}>
         <ReportProbe onUnmount={unmount} />
@@ -188,6 +191,7 @@ describe("native navigation session", () => {
         .closest('[data-pointer-events="none"]'),
     ).toBeTruthy();
     expect(unmount).not.toHaveBeenCalled();
+    expect(Keyboard.dismiss).toHaveBeenCalledOnce();
     view.rerender(
       <NavigationLayer tool={null}>
         <ReportProbe onUnmount={unmount} />
