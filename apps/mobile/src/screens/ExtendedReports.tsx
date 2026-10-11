@@ -1,3 +1,4 @@
+import { AmountText } from "../ui/AmountText";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, Text, useTheme } from "react-native-paper";
@@ -86,11 +87,25 @@ export function ExtendedReports({
         {categories.map((item) =>
           item.hasChildren ? (
             <Button key={item.id} onPress={() => setParent(item.id)}>
-              {item.name} · ¥{money(item.amount)} · 查看子分类
+              {item.name} ·{" "}
+              <AmountText
+                variant="labelLarge"
+                amount={item.amount}
+                tone={kind === "支出" ? "expense" : "income"}
+              >
+                ¥{money(item.amount)}
+              </AmountText>{" "}
+              · 查看子分类
             </Button>
           ) : (
             <Text key={item.id}>
-              {item.name} · ¥{money(item.amount)}
+              {item.name} ·{" "}
+              <AmountText
+                amount={item.amount}
+                tone={kind === "支出" ? "expense" : "income"}
+              >
+                ¥{money(item.amount)}
+              </AmountText>
             </Text>
           ),
         )}
@@ -103,7 +118,10 @@ export function ExtendedReports({
               ? "未分配成员"
               : (members.find((member) => member.id === item.memberId)
                   ?.username ?? item.memberId)}{" "}
-            · ¥{money(item.amount)}
+            ·{" "}
+            <AmountText amount={item.amount} tone="expense">
+              ¥{money(item.amount)}
+            </AmountText>
           </Text>
         ))}
         {!shares.length ? <Text>当前范围没有支出。</Text> : null}
