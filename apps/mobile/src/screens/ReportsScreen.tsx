@@ -1,6 +1,8 @@
 import { AmountText, useAmountColors } from "../ui/AmountText";
 import { balanceAmountTone } from "../ui/amount-tones";
 import { ExtendedReports } from "./ExtendedReports";
+import { NetWorthReport } from "./NetWorthReport";
+import { ReportRangePresets } from "../ui/ReportRangePresets";
 import { DATE_KEY_LENGTH, MONTH_KEY_LENGTH } from "../constants";
 import { useState } from "react";
 import { View } from "react-native";
@@ -39,11 +41,21 @@ export function ReportsScreen({
   const maximum = Math.max(1, ...groups.map((group) => group.amount));
   const totals = summarize(records);
   const trend = start <= end ? reportTrend({ records, start, end }) : [];
+  function changeRange(nextStart: string, nextEnd: string): void {
+    setStart(nextStart);
+    setEnd(nextEnd);
+  }
   return (
     <Screen>
       <Text variant="headlineSmall" accessibilityRole="header">
         收支报表
       </Text>
+      <ReportRangePresets
+        today={localNow().slice(0, DATE_KEY_LENGTH)}
+        start={start}
+        end={end}
+        onChange={changeRange}
+      />
       <DateField label="开始日期" value={start} onChange={setStart} />
       <DateField label="结束日期" value={end} onChange={setEnd} />
       {start > end ? (
@@ -78,6 +90,12 @@ export function ReportsScreen({
               ¥{money(totals.net)}
             </AmountText>
           </Text>
+          <NetWorthReport
+            key={`${start}:${end}`}
+            ledger={ledger}
+            start={start}
+            end={end}
+          />
           <SegmentedButtons
             value={kind}
             onValueChange={(value) => setKind(value as "支出" | "收入")}
@@ -132,8 +150,6 @@ export function ReportsScreen({
           <ExtendedReports
             ledger={ledger}
             records={records}
-            start={start}
-            end={end}
             kind={kind}
             bookId={bookId}
           />
