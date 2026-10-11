@@ -1,0 +1,303 @@
+{
+  "period": "2026-10-11/2026-10-12",
+  "scope": "local features and unauthenticated network entry gates",
+  "data": "three separate synthetic QA books; existing book records unchanged",
+  "app": {
+    "package": "top.nings.hamsterledger",
+    "version": "0.2.0",
+    "versionCode": 2,
+    "abi": "arm64-v8a",
+    "signing": "development"
+  },
+  "sourceCommit": "8324d1e5a99a90a35ffb929a4b76224a639158c1",
+  "finalApk": {
+    "filename": "hamster-ledger-oppo-fixes-0.2.0-arm64.apk",
+    "sha256": "f650e85e362f7e15e577ea9273ac99f38212477b36d30415d052fa58c354b804",
+    "build": "npm run android:apk passed with JDK 17",
+    "installedOnOppo": false,
+    "oppoValidation": "not run: device disconnected before final build",
+    "emulatorInstalledMatchesDelivery": true
+  },
+  "checks": {
+    "command": "npm run check",
+    "result": "passed",
+    "tests": {
+      "vitest": 187,
+      "server": 50,
+      "sites": 4,
+      "dependency": 9,
+      "total": 250
+    },
+    "newRegressionTests": 13,
+    "includes": [
+      "format",
+      "tokens",
+      "types",
+      "eslint",
+      "boundaries",
+      "web build"
+    ]
+  },
+  "oppo": {
+    "model": "PKJ110",
+    "manufacturer": "OPPO",
+    "androidVersion": 16,
+    "api": 36,
+    "screenPixels": [1080, 2376],
+    "densityDpi": 420,
+    "fontScaleInitial": 1.0,
+    "initialApkSha256": "3c7d3bfbbd2f9fbfa1e6ac31b84eb33a04c15833414476cbc90eec5bdf799f73",
+    "lastInstalledApkSha256": "2bd0d65cd9ccd796d0adaa837209a240952f134c3f13eee07a92f2b078deeef1",
+    "confirmedOnIntermediateApk": {
+      "homeAmountPrivacy": true,
+      "choicePickerUnfocusedAfterReturn": true,
+      "datePickerUnfocusedAfterReturn": true,
+      "galleryAfterFontCycle": true,
+      "cameraAfterFontCycle": true,
+      "photosCaptured": 0,
+      "selectedSyntheticImages": 2,
+      "fontDraftRetained": true
+    },
+    "fontLayoutIntermediate": {
+      "passed": false,
+      "dateHeightFont1": 84,
+      "dateHeightFont13": 84,
+      "reason": "font glyphs grew but native frames did not; final event-driven layout fix was not installed on OPPO"
+    },
+    "planningColdStarts": {
+      "confirmedRecordsAfterUpgrade": 6,
+      "confirmedRecordsAfterSecondColdStart": 6,
+      "duplicateRecurringPosts": 0
+    },
+    "dailyReminder": {
+      "target": "00:01",
+      "ownNotificationCount": 1,
+      "dailyDelivered": true,
+      "bodyVerified": true,
+      "observedTime": "00:05"
+    },
+    "endState": {
+      "fontScale": 1.0,
+      "densityDpi": 420,
+      "testDailyReminderEnabled": false,
+      "testSubscriptionsAndRecurringRulesPaused": true,
+      "selectedBook": "OPPO-QA-PLANS",
+      "page": "reports",
+      "originalBookSelectionRestored": false,
+      "reason": "phone disconnected",
+      "testDataRetained": true,
+      "applicationDataCleared": false
+    }
+  },
+  "syntheticBookTotalsMinorCny": [
+    {
+      "name": "OPPO-QA-20261011",
+      "stage": "after cross-platform review",
+      "records": 12,
+      "confirmed": 9,
+      "duplicate": 3,
+      "expense": 1843,
+      "income": 21011,
+      "net": 19168,
+      "netAssets": 129168,
+      "accounts": {
+        "cash": 114168,
+        "wallet": 15000
+      }
+    },
+    {
+      "name": "OPPO-QA-RESTORED",
+      "stage": "import snapshot restored as a new book",
+      "records": 10,
+      "confirmed": 8,
+      "duplicate": 2,
+      "expense": 1732,
+      "income": 21011,
+      "net": 19279,
+      "netAssets": 129279,
+      "attachments": 0
+    },
+    {
+      "name": "OPPO-QA-PLANS",
+      "stage": "last OPPO check",
+      "records": 6,
+      "confirmed": 6,
+      "duplicate": 0,
+      "expense": 2010,
+      "income": 100,
+      "net": -1910,
+      "netAssets": 98090,
+      "accounts": {
+        "cash": 95090,
+        "receivable": 3000
+      }
+    }
+  ],
+  "nativeExports": {
+    "backup": {
+      "sha256": "3275653b93227f65792556fe8a2ac61c3132ae721490de17dccfa30a979fd934",
+      "records": 10,
+      "accounts": 2,
+      "attachments": 0,
+      "restoredAsNewBook": true
+    },
+    "excel": {
+      "sha256": "5b2160db2f2eceecc82862047808f61bc40a7a365a32363f1e62dde25e4de6bc",
+      "sheet": "账单",
+      "rows": 10,
+      "confirmed": 8,
+      "duplicate": 2
+    }
+  },
+  "oppoScreenshotProvenanceByApkSha256": {
+    "3c7d3bfbbd2f9fbfa1e6ac31b84eb33a04c15833414476cbc90eec5bdf799f73": [
+      "01-assets-baseline.png",
+      "02-assets-transfers.png",
+      "03-overview-reconciled.png",
+      "04-transactions-restored.png",
+      "05-report-totals.png",
+      "06-trend-details.png",
+      "07-calendar.png",
+      "08-report-return.png",
+      "09-budget.png",
+      "10-category-budget.png",
+      "11-recurring-future.png",
+      "12-category-created.png",
+      "13-category-renamed-restored.png",
+      "14-notifications.png",
+      "15-import-preview.png",
+      "16-import-committed.png",
+      "17-import-duplicates.png",
+      "18-import-report-reconciled.png",
+      "19-backup-restore-preview.png",
+      "20-restored-report.png",
+      "21-cross-platform-pending.png",
+      "22-review-pairs.png",
+      "23-review-completed.png",
+      "24-final-main-report.png",
+      "25-notifications-read.png",
+      "26-theme-sage.png",
+      "27-night-overview-before.png",
+      "28-large-font-report.png",
+      "29-debt-partial-repayment.png",
+      "30-debt-assets.png",
+      "31-savings-allocation.png",
+      "32-subscription-charged-skipped.png",
+      "33-local-text-draft.png",
+      "34-draft-discarded.png",
+      "35-images-local-guard.png",
+      "36-home-mask-summary-before.png",
+      "37-home-mask-leak-before.png",
+      "38-picker-open-before.png",
+      "38-picker-return-keyboard-before.png",
+      "39-gallery-font-failure-before.png",
+      "40-network-entry.png",
+      "41-sync-entry.png",
+      "42-account-entry.png",
+      "43-invalid-report-range.png",
+      "44-single-point-report.png",
+      "45-invalid-amount.png"
+    ],
+    "9feec5f794ecfae804d9bfd6c7bb524c8ed4a915312a964645adbfb374c73551": [
+      "46-home-privacy-after.png",
+      "47-plan-report-persisted.png",
+      "48-picker-focus-after.png",
+      "50-gallery-after-font-cycle.png",
+      "51-batch-restored.png",
+      "52-wallet-recipient-link.png"
+    ],
+    "2bd0d65cd9ccd796d0adaa837209a240952f134c3f13eee07a92f2b078deeef1": [
+      "49-font-layout-intermediate.png",
+      "53-font-draft-retained.png"
+    ]
+  },
+  "finalEmulator": {
+    "avd": "HamsterLedger_API36",
+    "api": 36,
+    "screenPixels": [1080, 2400],
+    "densityDpi": 420,
+    "fontCycle": [1.0, 1.3, 1.0],
+    "observations": {
+      "draftCycle": [
+        {
+          "scale": 1,
+          "dateButtonBounds": [56, 1232, 1026, 1358],
+          "dateButtonHeight": 126,
+          "draftRetained": true
+        },
+        {
+          "scale": 1.3,
+          "dateButtonBounds": [56, 1250, 1026, 1376],
+          "dateButtonHeight": 126,
+          "draftRetained": true
+        },
+        {
+          "scale": 1,
+          "dateButtonBounds": [56, 1232, 1026, 1358],
+          "dateButtonHeight": 126,
+          "draftRetained": true
+        }
+      ],
+      "galleryAfterFontCycle": true,
+      "cameraAfterFontCycle": true,
+      "reportDateButtonBounds": [56, 654, 1026, 780],
+      "reportDateTextBounds": [306, 686, 823, 748],
+      "reportDateTextContained": true,
+      "newFormAfterFontChangeRetainsDraftOnReturn": true,
+      "fontRestored": "1.0",
+      "originalBookRestored": true,
+      "noDraftsSaved": true,
+      "installedApkSha256": "f650e85e362f7e15e577ea9273ac99f38212477b36d30415d052fa58c354b804",
+      "installedApkMatchesDelivery": true
+    },
+    "visualInspection": {
+      "formTextNotClippedAt13": true,
+      "reportDateTextNotClippedAt13": true
+    },
+    "screenshots": [
+      "emulator-font-fix/01-draft-font-1.png",
+      "emulator-font-fix/02-draft-font-13.png",
+      "emulator-font-fix/03-draft-restored.png",
+      "emulator-font-fix/04-report-font-13.png"
+    ],
+    "shutdownAfterVerification": true
+  },
+  "fixtures": [
+    {
+      "file": "fixtures/bank-OPPO-QA-duplicate.csv",
+      "sha256": "63465e1bd136a02f63836b0ee151b93ede666dda08febe535499d35db0d30359",
+      "synthetic": true
+    },
+    {
+      "file": "fixtures/bank-OPPO-QA.csv",
+      "sha256": "a592cb53e7afd489b8d9d6052c270ef207ed4f9b920ea00347a1cd4cda11e961",
+      "synthetic": true
+    },
+    {
+      "file": "fixtures/bank-OPPO-QA.xlsx",
+      "sha256": "f870c15b26582a7675e029f8a499d5cd716d5829e2c4f5bc8b56a9d2d9316bb5",
+      "synthetic": true
+    },
+    {
+      "file": "fixtures/wechat-OPPO-QA.csv",
+      "sha256": "6b300ca58484fb6a155351e664cfdf2555153c1183b70ff6b5b6830baeb43e94",
+      "synthetic": true
+    }
+  ],
+  "notTested": [
+    "final APK on OPPO",
+    "actual camera capture",
+    "record attachment add/view/unlink",
+    "backup roundtrip with attachments",
+    "asset account rename/calibration/archive",
+    "foreign exchange and multicurrency",
+    "AA split",
+    "manual TalkBack reading"
+  ],
+  "excludedByUser": [
+    "authenticated login",
+    "family book sharing/invitations",
+    "cloud sync",
+    "remote image recognition"
+  ]
+}
