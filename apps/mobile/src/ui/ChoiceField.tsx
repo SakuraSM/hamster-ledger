@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FlatList } from "react-native";
+import { FlatList, Keyboard } from "react-native";
 import { Button, RadioButton, Searchbar } from "react-native-paper";
 import { FormSheet } from "./FormSheet";
 interface ChoiceOption {
@@ -32,6 +32,7 @@ export function ChoiceField({
         disabled={disabled}
         accessibilityLabel={`${label}：${current?.label ?? "请选择"}`}
         onPress={() => {
+          Keyboard.dismiss();
           setQuery("");
           setIsOpen(true);
         }}

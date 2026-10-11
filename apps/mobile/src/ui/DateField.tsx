@@ -1,5 +1,6 @@
 import { DATE_PART_WIDTH, DATE_KEY_LENGTH } from "../constants";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { Keyboard } from "react-native";
 import { Button } from "react-native-paper";
 import { localNow } from "../platform/runtime";
 interface DateFieldProps {
@@ -20,6 +21,7 @@ export function DateField({
   withTime = false,
 }: DateFieldProps): React.JSX.Element {
   function pick(): void {
+    Keyboard.dismiss();
     const parsed = new Date((value || localNow()).replace(" ", "T"));
     DateTimePickerAndroid.open({
       value: parsed,
