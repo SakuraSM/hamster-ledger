@@ -5,6 +5,7 @@ import { Appbar, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SystemBars } from "./SystemBars";
 import { Screen } from "./Screen";
+import { useSystemFontScale } from "../hooks/useSystemFontScale";
 interface FormSheetProps {
   title: string;
   onClose: () => void;
@@ -18,6 +19,7 @@ export function FormSheet({
   hasUnsavedChanges = false,
 }: FormSheetProps): React.JSX.Element {
   const theme = useTheme();
+  const fontScale = useSystemFontScale();
   function requestClose(): void {
     if (Keyboard.isVisible()) {
       Keyboard.dismiss();
@@ -45,6 +47,7 @@ export function FormSheet({
         style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
         <Appbar.Header
+          key={fontScale}
           mode="small"
           statusBarHeight={0}
           style={{ backgroundColor: theme.colors.background }}

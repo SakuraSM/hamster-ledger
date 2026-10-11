@@ -1,7 +1,8 @@
-import { MONTH_KEY_LENGTH } from "../constants";
+import { HIDDEN_AMOUNT, MONTH_KEY_LENGTH } from "../constants";
 const RECENT_RECORD_LIMIT = 5;
 const MIN_SUMMARY_METRIC_WIDTH = 132;
-import { View, useWindowDimensions } from "react-native";
+import { View } from "react-native";
+import { useSystemFontScale } from "../hooks/useSystemFontScale";
 import { Button, Card, Text, ProgressBar } from "react-native-paper";
 import {
   money,
@@ -34,7 +35,7 @@ export function OverviewScreen({
   onReview,
 }: OverviewScreenProps): React.JSX.Element {
   const colors = useAmountColors();
-  const { fontScale } = useWindowDimensions();
+  const fontScale = useSystemFontScale();
   const metricStyle = {
     flexGrow: 1,
     flexShrink: 1,
@@ -57,7 +58,7 @@ export function OverviewScreen({
     .sort()
     .reverse();
   const amount = (value: number): string =>
-    ledger.preferences?.hideAmounts ? "••••" : `¥${money(value)}`;
+    isAmountHidden ? HIDDEN_AMOUNT : `¥${money(value)}`;
   return (
     <Screen>
       <Text variant="headlineMedium" accessibilityRole="header">
@@ -148,13 +149,17 @@ export function OverviewScreen({
         )}
       </Section>
       <Section title="最近账单">
-        {records
-          .filter((record) => record.status !== "duplicate")
-          .sort((left, right) => right.date.localeCompare(left.date))
-          .slice(0, RECENT_RECORD_LIMIT)
-          .map((record) => (
-            <RecordRow key={record.id} record={record} onPress={onRecord} />
-          ))}
+        {isAmountHidden ? (
+          <Text>金额已隐藏，可前往账单页查看明细。</Text>
+        ) : (
+          records
+            .filter((record) => record.status !== "duplicate")
+            .sort((left, right) => right.date.localeCompare(left.date))
+            .slice(0, RECENT_RECORD_LIMIT)
+            .map((record) => (
+              <RecordRow key={record.id} record={record} onPress={onRecord} />
+            ))
+        )}
       </Section>
     </Screen>
   );

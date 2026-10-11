@@ -61,7 +61,8 @@
         {
           "enforceContrast": false
         }
-      ]
+      ],
+      "./plugins/with-android-font-scale.cjs"
     ]
   }
 }

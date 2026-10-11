@@ -4,6 +4,7 @@ const FLOATING_GAP = 16;
 const MIN_NOTICE_HEIGHT = 48;
 import { useEffect, useState } from "react";
 import { BackHandler, View } from "react-native";
+import { useSystemFontScale } from "./hooks/useSystemFontScale";
 import { FAB, PaperProvider, Snackbar, Banner } from "react-native-paper";
 import {
   SafeAreaView,
@@ -42,6 +43,7 @@ import { localNow } from "./platform/runtime";
 import { useNativeAccount } from "./auth/NativeAccount";
 import { AccountScreen } from "./screens/AccountScreen";
 export function AppShell(): React.JSX.Element {
+  const fontScale = useSystemFontScale();
   const local = useLedger();
   const controller = useNetworkController(local);
   const account = useNativeAccount();
@@ -159,6 +161,7 @@ export function AppShell(): React.JSX.Element {
       <SystemBars isDark={isDark} />
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader
+          key={fontScale}
           title={
             controller.isLoading || account.needsEntry ? "仓鼠记账" : pageTitle
           }
