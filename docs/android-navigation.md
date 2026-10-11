@@ -40,3 +40,5 @@
 - [Expo NavigationBar](https://docs.expo.dev/versions/latest/sdk/navigation-bar/)：运行时图标样式与 `enforceContrast` 配置。
 
 交付 APK 为 `hamster-ledger-android-ui-0.2.0-arm64.apk`，使用开发签名，仅供安装验证。
+
+APK SHA256：`9dae8dd81c3ac966a6dd83c352bd840813f62190532d47d153d8a0411c5614da`。
