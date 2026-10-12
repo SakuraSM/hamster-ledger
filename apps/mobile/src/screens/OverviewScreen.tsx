@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { HIDDEN_AMOUNT, MONTH_KEY_LENGTH } from "../constants";
 const RECENT_RECORD_LIMIT = 5;
 const MIN_SUMMARY_METRIC_WIDTH = 132;
@@ -25,7 +26,7 @@ interface OverviewScreenProps {
   onRecord: (record: BillRecord) => void;
   onReview: () => void;
 }
-export function OverviewScreen({
+export const OverviewScreen = memo(function OverviewScreen({
   ledger,
   month,
   onMonth,
@@ -162,4 +163,4 @@ export function OverviewScreen({
       </Section>
     </Screen>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { AmountText, useAmountColors } from "../ui/AmountText";
 import { ExtendedReports } from "./ExtendedReports";
 import { NetWorthReport } from "./NetWorthReport";
@@ -20,7 +21,7 @@ interface ReportsScreenProps {
   ledger: Ledger;
   bookId?: string;
 }
-export function ReportsScreen({
+export const ReportsScreen = memo(function ReportsScreen({
   ledger,
   bookId,
 }: ReportsScreenProps): React.JSX.Element {
@@ -152,4 +153,4 @@ export function ReportsScreen({
       )}
     </Screen>
   );
-}
+});
