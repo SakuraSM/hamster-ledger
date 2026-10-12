@@ -22,9 +22,9 @@ export async function runScheduledBook({
   fetcher = fetch,
   isStopped = () => false,
 }) {
-  const book = database
+  const book = await database
     .prepare(
-      "SELECT b.*,m.user_id AS owner FROM books b JOIN book_members m ON b.id=m.book_id AND m.role='owner' WHERE b.id=? AND b.authority='server'",
+      "SELECT b.*,m.user_id AS owner FROM books b JOIN book_members m ON b.id=m.book_id AND m.role='owner' WHERE b.id=$1 AND b.authority='server'",
     )
     .get(bookId);
   if (!book) return { changed: false };
@@ -62,7 +62,7 @@ export async function runScheduledBook({
   )
     return { changed: false };
   try {
-    const result = applyOperation({
+    const result = await applyOperation({
       database,
       bookId,
       userId: book.owner,
@@ -80,7 +80,7 @@ export async function runScheduledBook({
     throw error;
   }
 }
-export function startScheduler({
+export async function startScheduler({
   database,
   now = Date.now,
   timeZone = "Asia/Shanghai",
@@ -94,12 +94,12 @@ export function startScheduler({
     if (stopped || running) return;
     running = true;
     try {
-      database
+      await database
         .prepare(
-          "DELETE FROM attachments WHERE book_id IS NULL AND created_at < ?",
+          "DELETE FROM attachments WHERE book_id IS NULL AND created_at < $1",
         )
         .run(now() - 24 * 60 * 60 * 1000);
-      const books = database
+      const books = await database
         .prepare("SELECT id FROM books WHERE authority='server'")
         .all();
       for (const book of books) {
@@ -125,11 +125,19 @@ export function startScheduler({
       running = false;
     }
   };
-  const timer = setInterval(() => void tick(), intervalMs);
+  let active = Promise.resolve();
+  function trigger() {
+    if (stopped || running) return;
+    active = tick().catch((error) =>
+      console.error("Scheduler tick failed", error.code ?? "scheduler_error"),
+    );
+  }
+  const timer = setInterval(trigger, intervalMs);
   timer.unref();
-  void tick();
-  return () => {
+  void trigger();
+  return async () => {
     stopped = true;
     clearInterval(timer);
+    await active;
   };
 }

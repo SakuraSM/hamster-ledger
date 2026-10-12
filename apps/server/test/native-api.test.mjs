@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
 import { setup, register, TEST_PASSWORD, EMPTY } from "./helpers.mjs";
 function native(
   client,
@@ -84,18 +83,18 @@ test("native login uses independent bearer sessions and rejects cookie or browse
     401,
   );
   assert.equal((await client.request("/api/books", { cookie })).status, 200);
-  const db = new DatabaseSync(client.databasePath);
+  const db = await client.openDatabase();
   try {
-    const row = db
+    const row = await db
       .prepare(
-        "SELECT token_hash, transport, device_name FROM sessions WHERE id=?",
+        "SELECT token_hash, transport, device_name FROM sessions WHERE id=$1",
       )
       .get(receipt.session.id);
     assert.notEqual(row.token_hash, receipt.accessToken);
     assert.equal(row.transport, "native");
     assert.equal(row.device_name, "Android 应用");
   } finally {
-    db.close();
+    await db.close();
   }
 });
 test("native books share snapshots with web and protect CAS revision and user binding", async (context) => {

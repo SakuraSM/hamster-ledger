@@ -4,6 +4,8 @@ import {
   FileMagnifyingGlassIcon,
   TargetIcon,
   BellIcon,
+  ChatTextIcon,
+  ArrowsClockwiseIcon,
   UsersIcon,
 } from "phosphor-react-native";
 import { HouseIcon as House } from "phosphor-react-native";
@@ -90,6 +92,8 @@ const ICONS: Record<string, Icon> = {
   "radiobox-blank": Circle,
   "radiobox-marked": RadioButton,
   delete: Trash,
+  "delete-outline": Trash,
+  refresh: ArrowsClockwiseIcon,
   cog: Gear,
   "cog-outline": Gear,
   "image-outline": ImageIcon,
@@ -97,6 +101,7 @@ const ICONS: Record<string, Icon> = {
   "text-box-search-outline": FileMagnifyingGlassIcon,
   target: TargetIcon,
   "bell-outline": BellIcon,
+  "message-text-outline": ChatTextIcon,
   "account-group": UsersIcon,
   "account-outline": User,
   "account-circle-outline": User,

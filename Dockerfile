@@ -24,7 +24,7 @@ WORKDIR /app
 LABEL org.opencontainers.image.source="https://github.com/SakuraSM/hamster-ledger" \
       org.opencontainers.image.title="Hamster Ledger" \
       org.opencontainers.image.licenses="MIT"
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=4180 DATABASE_PATH=/data/ledger.sqlite LEDGER_TIMEZONE=Asia/Shanghai
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=4180 LEDGER_DATA_DIR=/data LEDGER_TIMEZONE=Asia/Shanghai
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=build /app/packages/ledger-core/package.json ./packages/ledger-core/package.json
 COPY --from=build /app/packages/ledger-core/dist ./packages/ledger-core/dist

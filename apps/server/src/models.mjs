@@ -1,21 +1,21 @@
 import { HttpError, json } from "./http.mjs";
 import { modelUrl } from "./model-transport.mjs";
 import { aiCandidateSchema } from "@hamster-ledger/core";
-export function readModelProfile(database, userId) {
-  const row = database
-    .prepare("SELECT * FROM model_profiles WHERE user_id=?")
+export async function readModelProfile(database, userId) {
+  const row = await database
+    .prepare("SELECT * FROM model_profiles WHERE user_id=$1")
     .get(userId);
   return row
     ? { config: JSON.parse(row.configuration), secret: row.secret }
     : null;
 }
-export function modelCredentials({
+export async function modelCredentials({
   database,
   userId,
   secrets,
   requireModel = true,
 }) {
-  const profile = readModelProfile(database, userId);
+  const profile = await readModelProfile(database, userId);
   if (!profile) throw new HttpError(400, "尚未配置模型服务。");
   if (requireModel && !profile.config.model)
     throw new HttpError(400, "请选择模型并保存配置后重试。");
@@ -102,7 +102,7 @@ export async function modelsApi(context) {
   } = context;
   if (!path.startsWith("/api/models/")) return false;
   if (path === "/api/models/profile" && request.method === "GET") {
-    const profile = readModelProfile(database, userId);
+    const profile = await readModelProfile(database, userId);
     json(response, 200, {
       config: profile?.config ?? null,
       hasKey: Boolean(profile?.secret),
@@ -124,7 +124,7 @@ export async function modelsApi(context) {
     if (config.model.length > 200 || config.endpoint.length > 1000)
       throw new HttpError(400, "模型地址或模型名格式无效。");
     modelUrl(config.endpoint, config.allowLan);
-    const old = readModelProfile(database, userId);
+    const old = await readModelProfile(database, userId);
     let secret = old?.secret ?? null;
     if (body.clearKey === true) secret = null;
     if (body.key !== undefined && body.key !== "") {
@@ -146,9 +146,9 @@ export async function modelsApi(context) {
         400,
         "更换服务地址时须重新填写密钥或明确清除旧密钥。",
       );
-    database
+    await database
       .prepare(
-        "INSERT INTO model_profiles VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET configuration=excluded.configuration,secret=excluded.secret",
+        "INSERT INTO model_profiles VALUES($1,$2,$3) ON CONFLICT(user_id) DO UPDATE SET configuration=excluded.configuration,secret=excluded.secret",
       )
       .run(userId, JSON.stringify(config), secret);
     json(response, 200, { config, hasKey: Boolean(secret) });
@@ -156,13 +156,15 @@ export async function modelsApi(context) {
   }
   if (path === "/api/models/profile" && request.method === "DELETE") {
     await readBody();
-    database.prepare("DELETE FROM model_profiles WHERE user_id=?").run(userId);
+    await database
+      .prepare("DELETE FROM model_profiles WHERE user_id=$1")
+      .run(userId);
     json(response, 200, { ok: true });
     return true;
   }
   if (path === "/api/models/list" && request.method === "GET") {
     const result = await modelTransport({
-      ...modelCredentials({ ...context, requireModel: false }),
+      ...(await modelCredentials({ ...context, requireModel: false })),
       path: "/models",
     });
     const models = Array.isArray(result?.data)
@@ -176,7 +178,7 @@ export async function modelsApi(context) {
   }
   if (path === "/api/models/test" && request.method === "POST") {
     const body = await readBody(),
-      credentials = modelCredentials(context);
+      credentials = await modelCredentials(context);
     if (body.vision && !credentials.config.vision)
       throw new HttpError(400, "请先开启视觉能力。");
     const result = await modelTransport({

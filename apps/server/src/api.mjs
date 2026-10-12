@@ -18,9 +18,9 @@ function parseBook(body) {
     throw new HttpError(400, "账本名称需为 1–40 个字符。");
   return { name, serialized: JSON.stringify(parsed.data) };
 }
-function requireSnapshotBook(database, bookId, userId) {
-  const row = database
-    .prepare("SELECT * FROM books WHERE id=? AND user_id=?")
+async function requireSnapshotBook(database, bookId, userId) {
+  const row = await database
+    .prepare("SELECT * FROM books WHERE id=$1 AND user_id=$2")
     .get(bookId, userId);
   if (!row) throw new HttpError(404, "云端账本不存在。");
   if (row.authority === "server")
@@ -82,12 +82,17 @@ export function createApi({
         : requestedPath;
     const method = request.method;
     if (path === "/api/health" && method === "GET") {
-      json(response, 200, { ok: true, storage: "sqlite" });
+      try {
+        await database.query("SELECT 1");
+      } catch {
+        throw new HttpError(503, "数据库暂不可用。", "database_unavailable");
+      }
+      json(response, 200, { ok: true, storage: "postgresql" });
       return;
     }
     if (await auth(request, response, { path, isSecure })) return;
     if (await exchangeApi({ database, request, response, now })) return;
-    const session = requireSession(request, database, {
+    const session = await requireSession(request, database, {
       write: !["GET", "HEAD"].includes(method),
       now: now(),
     });
@@ -109,11 +114,11 @@ export function createApi({
       now,
       modelTransport,
       secrets,
-      revalidate: () =>
-        requireSession(request, database, { write: true, now: now() }),
+      revalidate: async () =>
+        await requireSession(request, database, { write: true, now: now() }),
       readBody: async () => {
         const body = await readJson(request);
-        requireSession(request, database, { write: true, now: now() });
+        await requireSession(request, database, { write: true, now: now() });
         return body;
       },
     };
@@ -134,7 +139,7 @@ export function createApi({
         now,
         readBody: async () => {
           const body = await readJson(request);
-          requireSession(request, database, { write: true, now: now() });
+          await requireSession(request, database, { write: true, now: now() });
           return body;
         },
       })
@@ -142,9 +147,9 @@ export function createApi({
       return;
     if (path === "/api/books" && method === "GET") {
       json(response, 200, {
-        books: database
+        books: await database
           .prepare(
-            "SELECT id,name,revision,updated_at AS updatedAt FROM books WHERE user_id=? AND authority='snapshot' ORDER BY updated_at DESC",
+            "SELECT id,name,revision,updated_at AS \"updatedAt\" FROM books WHERE user_id=$1 AND authority='snapshot' ORDER BY updated_at DESC",
           )
           .all(user.id),
       });
@@ -152,12 +157,12 @@ export function createApi({
     }
     if (path === "/api/books" && method === "POST") {
       const book = parseBook(await readJson(request));
-      requireSession(request, database, { write: true, now: now() });
+      await requireSession(request, database, { write: true, now: now() });
       const id = randomUUID();
       const updatedAt = new Date(now()).toISOString();
-      database
+      await database
         .prepare(
-          "INSERT INTO books(id,user_id,name,revision,ledger,updated_at) VALUES(?,?,?,?,?,?)",
+          "INSERT INTO books(id,user_id,name,revision,ledger,updated_at) VALUES($1,$2,$3,$4,$5,$6)",
         )
         .run(id, user.id, book.name, 1, book.serialized, updatedAt);
       json(response, 201, { id, name: book.name, revision: 1, updatedAt });
@@ -165,7 +170,7 @@ export function createApi({
     }
     const match = path.match(/^\/api\/books\/([a-z0-9-]+)$/);
     if (match && ["GET", "PUT"].includes(method)) {
-      let row = requireSnapshotBook(database, match[1], user.id);
+      let row = await requireSnapshotBook(database, match[1], user.id);
       if (method === "GET") {
         json(response, 200, {
           id: row.id,
@@ -177,32 +182,35 @@ export function createApi({
         return;
       }
       const body = await readJson(request);
-      row = requireSnapshotBook(database, match[1], user.id);
-      if (JSON.parse(row.ledger).version === 2 && body.ledger?.version !== 2)
-        throw new HttpError(
-          426,
-          "账本已升级，请更新客户端后再写入。",
-          "upgrade_required",
-        );
       const book = parseBook(body);
-      requireSession(request, database, { write: true, now: now() });
       if (!Number.isSafeInteger(body.revision) || body.revision < 1)
         throw new HttpError(400, "缺少有效的账本版本。");
       const updatedAt = new Date(now()).toISOString();
-      const result = database
-        .prepare(
-          "UPDATE books SET name=?,ledger=?,revision=revision+1,updated_at=? WHERE id=? AND user_id=? AND revision=?",
-        )
-        .run(
-          book.name,
-          book.serialized,
-          updatedAt,
-          row.id,
-          user.id,
-          body.revision,
-        );
-      if (result.changes === 0)
-        throw new HttpError(409, "云端已有更新，请先保留或下载云端版本。");
+      await database.transaction(async () => {
+        await database.lockBook(match[1]);
+        await requireSession(request, database, { write: true, now: now() });
+        row = await requireSnapshotBook(database, match[1], user.id);
+        if (JSON.parse(row.ledger).version === 2 && body.ledger?.version !== 2)
+          throw new HttpError(
+            426,
+            "账本已升级，请更新客户端后再写入。",
+            "upgrade_required",
+          );
+        const result = await database
+          .prepare(
+            "UPDATE books SET name=$1,ledger=$2,revision=revision+1,updated_at=$3 WHERE id=$4 AND user_id=$5 AND authority='snapshot' AND revision=$6",
+          )
+          .run(
+            book.name,
+            book.serialized,
+            updatedAt,
+            row.id,
+            user.id,
+            body.revision,
+          );
+        if (result.rowCount === 0)
+          throw new HttpError(409, "云端已有更新，请先保留或下载云端版本。");
+      });
       json(response, 200, {
         id: row.id,
         name: book.name,

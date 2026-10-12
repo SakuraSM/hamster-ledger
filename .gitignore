@@ -13,3 +13,5 @@ coverage/
 /imports/
 /backups/
 *.local.*
+
+apps/mobile/modules/*/android/build/

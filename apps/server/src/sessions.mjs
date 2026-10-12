@@ -42,12 +42,12 @@ function deviceName(value = "") {
   if (/Safari\//.test(value)) return "Safari";
   return "其他客户端";
 }
-export function getSession(request, database, now = Date.now()) {
+export async function getSession(request, database, now = Date.now()) {
   const token = sessionToken(request);
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
-  const session = database
+  const session = await database
     .prepare(
-      "SELECT sessions.*,users.username,users.must_change_password,users.credential_version AS current_version FROM sessions JOIN users ON users.id=sessions.user_id WHERE token_hash=?",
+      "SELECT sessions.*,users.username,users.must_change_password,users.credential_version AS current_version FROM sessions JOIN users ON users.id=sessions.user_id WHERE token_hash=$1",
     )
     .get(tokenHash(token));
   if (!session || session.transport !== (request.authTransport ?? "cookie"))
@@ -57,15 +57,15 @@ export function getSession(request, database, now = Date.now()) {
     session.last_seen_at + session.idle_seconds * 1000 <= now ||
     session.credential_version !== session.current_version
   ) {
-    database
-      .prepare("DELETE FROM sessions WHERE token_hash=?")
+    await database
+      .prepare("DELETE FROM sessions WHERE token_hash=$1")
       .run(session.token_hash);
     return null;
   }
   return session;
 }
-export function requireSession(request, database, options = {}) {
-  const session = getSession(request, database, options.now);
+export async function requireSession(request, database, options = {}) {
+  const session = await getSession(request, database, options.now);
   if (!session)
     throw new HttpError(
       401,
@@ -98,8 +98,8 @@ export function requireSession(request, database, options = {}) {
         "登录状态需要刷新，请重新登录后重试。",
         "csrf_invalid",
       );
-    database
-      .prepare("UPDATE sessions SET last_seen_at=? WHERE id=?")
+    await database
+      .prepare("UPDATE sessions SET last_seen_at=$1 WHERE id=$2")
       .run(options.now ?? Date.now(), session.id);
   }
   return session;
@@ -119,7 +119,7 @@ export function sessionResponse(session) {
     },
   };
 }
-export function createSession({
+export async function createSession({
   request,
   database,
   user,
@@ -136,19 +136,19 @@ export function createSession({
   const idleSeconds = remember
     ? AUTH_POLICY.rememberIdleSeconds
     : AUTH_POLICY.sessionIdleSeconds;
-  database
+  await database
     .prepare(
-      "DELETE FROM sessions WHERE expires_at<=? OR last_seen_at+idle_seconds*1000<=?",
+      "DELETE FROM sessions WHERE expires_at<=$1 OR last_seen_at+idle_seconds*1000<=$2",
     )
     .run(now, now);
   const previous = sessionToken(request);
   if (previous)
-    database
-      .prepare("DELETE FROM sessions WHERE token_hash=? AND transport=?")
+    await database
+      .prepare("DELETE FROM sessions WHERE token_hash=$1 AND transport=$2")
       .run(tokenHash(previous), request.authTransport ?? "cookie");
-  database
+  await database
     .prepare(
-      "INSERT INTO sessions(token_hash,user_id,expires_at,id,created_at,last_seen_at,idle_seconds,remember,csrf_token,credential_version,device_name,transport) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO sessions(token_hash,user_id,expires_at,id,created_at,last_seen_at,idle_seconds,remember,csrf_token,credential_version,device_name,transport) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
     )
     .run(
       tokenHash(token),
@@ -166,9 +166,9 @@ export function createSession({
         : deviceName(request.headers["user-agent"]),
       request.authTransport ?? "cookie",
     );
-  database
+  await database
     .prepare(
-      "DELETE FROM sessions WHERE user_id=? AND id NOT IN (SELECT id FROM sessions WHERE user_id=? ORDER BY created_at DESC,rowid DESC LIMIT ?)",
+      "DELETE FROM sessions WHERE user_id=$1 AND id NOT IN (SELECT id FROM sessions WHERE user_id=$2 ORDER BY created_at DESC,created_seq DESC LIMIT $3)",
     )
     .run(user.id, user.id, AUTH_POLICY.maximumSessions);
   return {
@@ -188,25 +188,26 @@ export function createSession({
         : cookie(token, isSecure, remember),
   };
 }
-export function logout(request, database, isSecure) {
+export async function logout(request, database, isSecure) {
   const token = sessionToken(request);
   if (token)
-    database
-      .prepare("DELETE FROM sessions WHERE token_hash=? AND transport=?")
+    await database
+      .prepare("DELETE FROM sessions WHERE token_hash=$1 AND transport=$2")
       .run(tokenHash(token), request.authTransport ?? "cookie");
   return request.authTransport === "native"
     ? null
     : clearSessionCookie(isSecure);
 }
-export function listSessions(database, session, now = Date.now()) {
-  return database
-    .prepare(
-      "SELECT id,created_at AS createdAt,last_seen_at AS lastSeenAt,expires_at AS expiresAt,remember,device_name AS deviceName FROM sessions WHERE user_id=? AND expires_at>? AND last_seen_at+idle_seconds*1000>? ORDER BY created_at DESC",
-    )
-    .all(session.user_id, now, now)
-    .map((item) => ({
-      ...item,
-      remember: Boolean(item.remember),
-      isCurrent: item.id === session.id,
-    }));
+export async function listSessions(database, session, now = Date.now()) {
+  return (
+    await database
+      .prepare(
+        'SELECT id,created_at AS "createdAt",last_seen_at AS "lastSeenAt",expires_at AS "expiresAt",remember,device_name AS "deviceName" FROM sessions WHERE user_id=$1 AND expires_at>$2 AND last_seen_at+idle_seconds*1000>$3 ORDER BY created_at DESC',
+      )
+      .all(session.user_id, now, now)
+  ).map((item) => ({
+    ...item,
+    remember: Boolean(item.remember),
+    isCurrent: item.id === session.id,
+  }));
 }

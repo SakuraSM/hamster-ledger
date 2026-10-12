@@ -2,6 +2,12 @@ import { List, Text } from "react-native-paper";
 import { Screen } from "../ui/Screen";
 export const TOOLS = [
   {
+    key: "payment-inbox",
+    title: "支付消息记账",
+    description: "支付宝、微信通知与本机待确认收件箱",
+    icon: "message-text-outline",
+  },
+  {
     key: "ai",
     title: "AI 记账与凭证",
     description: "文本、多图、拍照与待确认草稿",

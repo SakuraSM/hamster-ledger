@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 const image = process.env.HAMSTER_TEST_IMAGE ?? "hamster-ledger:parity-arm64";
 const prefix = `hamster-test-${randomUUID().slice(0, 8)}`;
 const containers = [prefix + "-primary", prefix + "-restored"];
+const databaseContainers = [prefix + "-pg", prefix + "-pg-restored"];
+const network = prefix + "-network";
 const volumes = [prefix + "-data", prefix + "-copy", prefix + "-backup"];
 const docker = (...args) =>
   execFileSync("docker", args, {
@@ -13,12 +15,67 @@ const docker = (...args) =>
 const png =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1X8AAAAASUVORK5CYII=";
 const origin = "http://127.0.0.1:4180";
-async function launch(name, volume) {
+async function launchDatabase(name) {
   docker(
     "run",
     "-d",
     "--name",
     name,
+    "--network",
+    network,
+    "-e",
+    "POSTGRES_PASSWORD=synthetic-admin-only",
+    "-e",
+    "POSTGRES_DB=hamster",
+    "-e",
+    "LEDGER_DB_PASSWORD=synthetic-app-only",
+    "-v",
+    new URL("../deploy/postgres/init-app.sh", import.meta.url).pathname +
+      ":/docker-entrypoint-initdb.d/10-app.sh:ro",
+    "postgres:18.6-bookworm",
+  );
+  for (let attempt = 0; attempt < 80; attempt++) {
+    try {
+      docker(
+        "exec",
+        name,
+        "pg_isready",
+        "-h",
+        "127.0.0.1",
+        "-U",
+        "postgres",
+        "-d",
+        "hamster",
+      );
+      return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+  throw new Error("PostgreSQL container did not become healthy.");
+}
+async function launch(name, volume, databaseHost = databaseContainers[0]) {
+  const databaseUrl = `postgresql://hamster:synthetic-app-only@${databaseHost}:5432/hamster`;
+  docker(
+    "run",
+    "--rm",
+    "--network",
+    network,
+    "-e",
+    `DATABASE_URL=${databaseUrl}`,
+    image,
+    "node",
+    "apps/server/src/migrate.mjs",
+  );
+  docker(
+    "run",
+    "-d",
+    "--name",
+    name,
+    "--network",
+    network,
+    "-e",
+    `DATABASE_URL=${databaseUrl}`,
     "-p",
     "127.0.0.1::4180",
     "-e",
@@ -86,6 +143,8 @@ async function request(url, path, method = "GET", body, open = false, key) {
   return result;
 }
 try {
+  docker("network", "create", network);
+  await launchDatabase(databaseContainers[0]);
   for (const volume of volumes) docker("volume", "create", volume);
   const url = await launch(containers[0], volumes[0]);
   await request(url, "/api/auth/register", "POST", {
@@ -242,7 +301,47 @@ try {
     "-c",
     "tar -C /data -xzf /backup/ledger.tar.gz && chown -R 1000:1000 /data",
   );
-  const restored = await launch(containers[1], volumes[1]);
+  const dump = execFileSync(
+    "docker",
+    [
+      "exec",
+      databaseContainers[0],
+      "pg_dump",
+      "-Fc",
+      "--no-owner",
+      "--no-privileges",
+      "-U",
+      "postgres",
+      "-d",
+      "hamster",
+    ],
+    { maxBuffer: 16 * 1024 * 1024 },
+  );
+  await launchDatabase(databaseContainers[1]);
+  execFileSync(
+    "docker",
+    [
+      "exec",
+      "-i",
+      databaseContainers[1],
+      "pg_restore",
+      "--clean",
+      "--if-exists",
+      "--no-owner",
+      "--no-privileges",
+      "--role=hamster",
+      "-U",
+      "postgres",
+      "-d",
+      "hamster",
+    ],
+    { input: dump, maxBuffer: 16 * 1024 * 1024 },
+  );
+  const restored = await launch(
+    containers[1],
+    volumes[1],
+    databaseContainers[1],
+  );
   await verify(restored);
   assert.equal(
     docker("exec", containers[1], "sha256sum", "/data/.model-key").split(
@@ -263,6 +362,7 @@ try {
       health: "passed",
       restart: "passed",
       isolatedVolumeRestore: "passed",
+      postgresDumpRestore: "passed",
       records: 1,
       attachments: 1,
       tokenAndIdempotency: "preserved",
@@ -270,13 +370,16 @@ try {
     }),
   );
 } finally {
-  for (const name of containers) {
+  for (const name of [...containers, ...databaseContainers]) {
     try {
-      docker("rm", "-f", name);
+      docker("rm", "-fv", name);
     } catch {
       /* A failed startup may not have created this container. */
     }
   }
+  try {
+    docker("network", "rm", network);
+  } catch {}
   for (const volume of volumes) {
     try {
       docker("volume", "rm", volume);

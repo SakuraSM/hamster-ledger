@@ -1,7 +1,8 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-export function modelSecrets(databasePath) {
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+export function modelSecrets(dataDirectory) {
+  mkdirSync(dataDirectory, { recursive: true, mode: 0o700 });
   let key;
   function master() {
     if (key) return key;
@@ -11,7 +12,7 @@ export function modelSecrets(databasePath) {
         throw new Error("LEDGER_MODEL_MASTER_KEY 必须是 32 字节的 Base64。");
       return key;
     }
-    const file = join(dirname(databasePath), ".model-key");
+    const file = join(dataDirectory, ".model-key");
     try {
       key = readFileSync(file);
     } catch (error) {

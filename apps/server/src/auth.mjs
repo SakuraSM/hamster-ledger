@@ -19,23 +19,20 @@ import {
   clearSessionCookie,
 } from "./sessions.mjs";
 import { HttpError, json, readJson } from "./http.mjs";
-function transaction(database, operation) {
-  database.exec("BEGIN IMMEDIATE");
-  try {
-    const result = operation();
-    database.exec("COMMIT");
-    return result;
-  } catch (error) {
-    database.exec("ROLLBACK");
-    throw error;
-  }
+async function transaction(database, operation) {
+  return await database.transaction(operation);
 }
-function account(database, username) {
-  return database.prepare("SELECT * FROM users WHERE username=?").get(username);
+async function account(database, username) {
+  return await database
+    .prepare("SELECT * FROM users WHERE username=$1")
+    .get(username);
 }
-function assertCurrentPassword(database, user) {
-  const current = database
-    .prepare("SELECT * FROM users WHERE id=?")
+async function assertCurrentPassword(database, user) {
+  const current = await database
+    .prepare(
+      "SELECT * FROM users WHERE id=$1" +
+        (database.isInTransaction() ? " FOR UPDATE" : ""),
+    )
     .get(user.id);
   if (
     !current ||
@@ -48,32 +45,32 @@ function assertCurrentPassword(database, user) {
 export function createAuthApi({ database, allowRegistration, now = Date.now }) {
   const limiter = createAuthLimiter(database, now);
   async function verifyCurrent(request, body, { allowTemporary = false } = {}) {
-    const session = requireSession(request, database, {
+    const session = await requireSession(request, database, {
       write: true,
       now: now(),
       allowTemporary,
     });
-    limiter.ip(request);
-    limiter.account(session.username);
-    const user = account(database, session.username);
+    await limiter.ip(request);
+    await limiter.account(session.username);
+    const user = await account(database, session.username);
     if (
       !isLoginPassword(body.currentPassword) ||
       !(await verifyPassword(body.currentPassword, user))
     )
       throw new HttpError(401, "当前密码不正确。", "invalid_credentials");
-    assertCurrentPassword(database, user);
-    requireSession(request, database, {
+    await assertCurrentPassword(database, user);
+    await requireSession(request, database, {
       write: true,
       now: now(),
       allowTemporary,
     });
-    limiter.resetAccount(user.username);
+    await limiter.resetAccount(user.username);
     return { session, user };
   }
   return async (request, response, { path, isSecure }) => {
     const method = request.method;
     if (path === "/api/auth/me" && method === "GET") {
-      const session = getSession(request, database, now());
+      const session = await getSession(request, database, now());
       json(response, 200, {
         ...(session
           ? sessionResponse(session)
@@ -86,7 +83,7 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
       ["/api/auth/register", "/api/auth/login"].includes(path) &&
       method === "POST"
     ) {
-      limiter.ip(request);
+      await limiter.ip(request);
       const body = await readJson(request, AUTH_POLICY.authBodyLimit);
       const username = normalizeUsername(body.username);
       const isRegister = path.endsWith("register");
@@ -104,23 +101,23 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
             : AUTH_FAILURE,
           "invalid_credentials",
         );
-      limiter.account(username);
-      const existing = account(database, username);
+      await limiter.account(username);
+      const existing = await account(database, username);
       let user;
       if (isRegister) {
-        limiter.registration(request);
+        await limiter.registration(request);
         const password = await createPassword(body.password);
-        user = transaction(database, () => {
-          if (account(database, username))
+        user = await transaction(database, async () => {
+          if (await account(database, username))
             throw new HttpError(
               409,
               "此账号不可用，请更换账号或尝试登录。",
               "account_unavailable",
             );
           const created = { id: randomUUID(), username, credential_version: 1 };
-          database
+          await database
             .prepare(
-              "INSERT INTO users(id,username,password_hash,salt,password_version,credential_version) VALUES(?,?,?,?,?,1)",
+              "INSERT INTO users(id,username,password_hash,salt,password_version,credential_version) VALUES($1,$2,$3,$4,$5,1)",
             )
             .run(
               created.id,
@@ -134,14 +131,14 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
       } else {
         if (!(await verifyPassword(body.password, existing)))
           throw new HttpError(401, AUTH_FAILURE, "invalid_credentials");
-        user = assertCurrentPassword(database, existing);
+        user = await assertCurrentPassword(database, existing);
         if (existing.password_version !== 2) {
           const password = await createPasswordForLegacy(body.password);
-          user = transaction(database, () => {
-            const current = assertCurrentPassword(database, existing);
-            database
+          user = await transaction(database, async () => {
+            const current = await assertCurrentPassword(database, existing);
+            await database
               .prepare(
-                "UPDATE users SET password_hash=?,salt=?,password_version=2 WHERE id=?",
+                "UPDATE users SET password_hash=$1,salt=$2,password_version=2 WHERE id=$3",
               )
               .run(password.passwordHash, password.salt, current.id);
             return {
@@ -153,13 +150,16 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
           });
         }
       }
-      const result = transaction(database, () => {
-        const current = database
-          .prepare("SELECT * FROM users WHERE id=?")
+      const result = await transaction(database, async () => {
+        const current = await database
+          .prepare(
+            "SELECT * FROM users WHERE id=$1" +
+              (database.isInTransaction() ? " FOR UPDATE" : ""),
+          )
           .get(user.id);
         if (current.credential_version !== user.credential_version)
           throw new HttpError(401, AUTH_FAILURE, "invalid_credentials");
-        return createSession({
+        return await createSession({
           request,
           database,
           user: current,
@@ -168,7 +168,7 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
           now: now(),
         });
       });
-      limiter.resetAccount(username);
+      await limiter.resetAccount(username);
       json(
         response,
         isRegister ? 201 : 200,
@@ -178,13 +178,13 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
       return true;
     }
     if (path === "/api/auth/logout" && method === "POST") {
-      if (getSession(request, database, now()))
-        requireSession(request, database, {
+      if (await getSession(request, database, now()))
+        await requireSession(request, database, {
           write: true,
           now: now(),
           allowTemporary: true,
         });
-      const cleared = logout(request, database, isSecure);
+      const cleared = await logout(request, database, isSecure);
       json(
         response,
         200,
@@ -194,19 +194,21 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
       return true;
     }
     if (path === "/api/auth/activity" && method === "POST") {
-      const session = requireSession(request, database, {
+      const session = await requireSession(request, database, {
         write: true,
         now: now(),
       });
-      database
-        .prepare("UPDATE sessions SET last_seen_at=? WHERE id=?")
+      await database
+        .prepare("UPDATE sessions SET last_seen_at=$1 WHERE id=$2")
         .run(now(), session.id);
       json(response, 200, { ok: true });
       return true;
     }
     if (path === "/api/auth/sessions" && method === "GET") {
-      const session = requireSession(request, database, { now: now() });
-      json(response, 200, { sessions: listSessions(database, session, now()) });
+      const session = await requireSession(request, database, { now: now() });
+      json(response, 200, {
+        sessions: await listSessions(database, session, now()),
+      });
       return true;
     }
     if (path === "/api/auth/password" && method === "POST") {
@@ -218,20 +220,22 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
       if (body.newPassword === body.currentPassword)
         throw new HttpError(400, "新密码需要与当前密码不同。", "same_password");
       const password = await createPassword(body.newPassword);
-      const result = transaction(database, () => {
-        assertCurrentPassword(database, user);
-        requireSession(request, database, {
+      const result = await transaction(database, async () => {
+        await assertCurrentPassword(database, user);
+        await requireSession(request, database, {
           write: true,
           now: now(),
           allowTemporary: true,
         });
-        database
+        await database
           .prepare(
-            "UPDATE users SET password_hash=?,salt=?,password_version=2,must_change_password=0,credential_version=credential_version+1 WHERE id=?",
+            "UPDATE users SET password_hash=$1,salt=$2,password_version=2,must_change_password=FALSE,credential_version=credential_version+1 WHERE id=$3",
           )
           .run(password.passwordHash, password.salt, user.id);
-        database.prepare("DELETE FROM sessions WHERE user_id=?").run(user.id);
-        return createSession({
+        await database
+          .prepare("DELETE FROM sessions WHERE user_id=$1")
+          .run(user.id);
+        return await createSession({
           request,
           database,
           user: {
@@ -255,20 +259,20 @@ export function createAuthApi({ database, allowRegistration, now = Date.now }) {
     if (path === "/api/auth/logout-others" && method === "POST") {
       const body = await readJson(request, AUTH_POLICY.authBodyLimit);
       const { session } = await verifyCurrent(request, body);
-      const result = database
-        .prepare("DELETE FROM sessions WHERE user_id=? AND id<>?")
+      const result = await database
+        .prepare("DELETE FROM sessions WHERE user_id=$1 AND id<>$2")
         .run(session.user_id, session.id);
-      json(response, 200, { ok: true, revoked: result.changes });
+      json(response, 200, { ok: true, revoked: result.rowCount });
       return true;
     }
     const match = path.match(/^\/api\/auth\/sessions\/([a-z0-9-]+)$/);
     if (match && method === "DELETE") {
       const body = await readJson(request, AUTH_POLICY.authBodyLimit);
       const { session } = await verifyCurrent(request, body);
-      const result = database
-        .prepare("DELETE FROM sessions WHERE id=? AND user_id=?")
+      const result = await database
+        .prepare("DELETE FROM sessions WHERE id=$1 AND user_id=$2")
         .run(match[1], session.user_id);
-      if (!result.changes)
+      if (!result.rowCount)
         throw new HttpError(404, "该会话已失效。", "session_not_found");
       json(
         response,

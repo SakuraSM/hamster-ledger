@@ -4,7 +4,7 @@
 
 ```text
 apps/
-  server/                    Node.js、SQLite、账号与版本化同步 API
+  server/                    Node.js、PostgreSQL、账号与版本化同步 API
   mobile/                    Expo、React Native Paper 与 Android 适配器
   web/                       React、Mantine 与 Vite 应用
     src/components/          界面组件
@@ -51,7 +51,7 @@ Android 的第一步由 Expo DocumentPicker、FileSystem 和 Crypto 完成，系
 
 Web 通过 `protectedStore` 保存数据。启用密码后，将所有账本键加密为一个 AES-GCM 信封，密码经 PBKDF2 派生密钥。成功写入密文后才移除旧明文键。写入与迁移共用同源 Web Locks；迁移发现明文变化时中止并保留原数据。旧标签页在迁移后需要重新解锁，多标签页的过期写入会被拒绝。
 
-服务端通过 `apps/server` 实现，与 `KeyValueStore` 分离。SQLite 按用户隔离账本，写入携带已知 revision，条件更新失败返回 409。Web 保存连接对应的 revision 和内容摘要，在本机与远端同时修改时停止自动同步，允许恢复云端版本到新账本。同步单位为完整账本，不提供记录级自动合并。
+服务端通过 `apps/server` 实现，与 `KeyValueStore` 分离。PostgreSQL 按用户隔离账本，写入携带已知 revision，条件更新失败返回 409。Web 保存连接对应的 revision 和内容摘要，在本机与远端同时修改时停止自动同步，允许恢复云端版本到新账本。同步单位为完整账本，不提供记录级自动合并。
 
 Web 自动同步在页面打开时运行。Android 由用户主动上传和同步；远端更新先预览，再恢复为新账本，原本机账本保留。Android 的 `/api/native/` 使用独立 Bearer 会话，拒绝 Cookie 和 Origin，并保留 CSRF 与预期用户校验；浏览器 Cookie 会话不能用于此通道。本机密码保护不等于端到端加密，服务端数据库仍包含明文账务数据。增量迁移、持久化操作历史和跨多服务实例的协同尚未实现。
 

@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-12",
+  "implementationCommit": "26accd7322bf25a6f37c93a52850c5c7ac1b5e64",
+  "serverCommit": "61ace77",
+  "check": {
+    "result": "passed",
+    "vitest": 221,
+    "serverRealPostgres": 55,
+    "sites": 4,
+    "dependencies": 9,
+    "total": 289
+  },
+  "androidTests": {
+    "unit": 3,
+    "instrumentation": 6,
+    "result": "passed",
+    "instrumentationNamespace": "expo.modules.paymentinbox.test"
+  },
+  "runtime": {
+    "device": "Android Emulator",
+    "api": 36,
+    "abi": "arm64-v8a",
+    "syntheticOnly": true,
+    "expectedFinancialRecords": 2,
+    "defaultOff": true,
+    "preEnableNotificationIgnored": true,
+    "pendingBeforeConfirmation": 2,
+    "captureAfterProcessRestartWithoutActivity": true,
+    "rawPlaintextAbsent": true,
+    "accountRequired": true,
+    "confirmedExpenseMinor": 1234,
+    "balanceAfterExpenseMinor": 98766,
+    "duplicateOrderLinked": true,
+    "confirmedIncomeMinor": 2000,
+    "netAfterConfirmationMinor": 766,
+    "finalCashBalanceMinor": 100766,
+    "clearCancellationKeepsPending": true,
+    "clearAndReconnectNoReplay": true,
+    "disabledStopsCapture": true,
+    "reenableDoesNotBackfill": true,
+    "upgradeRetainsConfirmedLedger": true,
+    "fontScale130Renders": true
+  },
+  "apk": {
+    "name": "hamster-ledger-pg-notifications-0.2.0-arm64.apk",
+    "sha256": "89c2a84309362ca93ef9d739e5929359876db4797b00230b53052c6c7585aa53",
+    "bytes": 41923864,
+    "applicationId": "top.nings.hamsterledger",
+    "versionName": "0.2.0",
+    "versionCode": 2,
+    "minSdk": 24,
+    "targetSdk": 36,
+    "abis": ["arm64-v8a"],
+    "signing": "development",
+    "build": "passed",
+    "upgradeInstall": "passed"
+  },
+  "container": {
+    "imageSha256": "d9892701fa33b70cb3f2e66f7a099762e1d5d17d16848cd64115b9271dc20966",
+    "image": "hamster-ledger:postgres-notifications-qa",
+    "architecture": "arm64",
+    "health": "passed",
+    "restart": "passed",
+    "isolatedVolumeRestore": "passed",
+    "postgresDumpRestore": "passed",
+    "records": 1,
+    "attachments": 1,
+    "tokenAndIdempotency": "preserved",
+    "modelMasterKey": "preserved"
+  },
+  "acceptancePending": [
+    "Real WeChat and Alipay notification formats on OPPO",
+    "Lock-screen redaction and OEM background restrictions",
+    "Physical device reboot and post-reboot delivery"
+  ],
+  "productionCutoverExecuted": false,
+  "actualLegacyDatabaseImported": false,
+  "formalReleasePublished": false,
+  "screenshots": {
+    "01-10": "Synthetic feature walk-through before final icon mapping correction; financial behavior unchanged",
+    "11-15": "Final source APK; synthetic amounts only"
+  }
+}

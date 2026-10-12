@@ -1,3 +1,4 @@
+import { PaymentInboxScreen } from "./PaymentInboxScreen";
 import { AiScreen } from "./AiScreen";
 import { PlanningScreen } from "./PlanningScreen";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
@@ -30,6 +31,9 @@ export function ToolPage({
   onReview,
 }: ToolPageProps): React.JSX.Element {
   const pages: Record<ToolPageName, React.JSX.Element> = {
+    "payment-inbox": (
+      <PaymentInboxScreen key={controller.mode} controller={controller} />
+    ),
     ai: <AiScreen key={controller.mode} controller={controller} />,
     planning: <PlanningScreen key={controller.mode} controller={controller} />,
     notifications: (
