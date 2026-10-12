@@ -1,0 +1,106 @@
+{
+  "auditBaseCommit": "84f2907a91a59135897311e8db7ad89e8706aced",
+  "sourceCommit": "dd2b1a95cd8dc8959faa824df6fb024511474c2c",
+  "apkSha256": "3c7d3bfbbd2f9fbfa1e6ac31b84eb33a04c15833414476cbc90eec5bdf799f73",
+  "installedApkMatches": true,
+  "checks": {
+    "vitest": 174,
+    "server": 50,
+    "sites": 4,
+    "dependency": 9,
+    "total": 237,
+    "androidArm64Release": true
+  },
+  "cases": {
+    "legacyAccountRecords": {
+      "passed": true,
+      "linkedRowsInUnitFixture": 123,
+      "nativeCoffeeDetailAmount": 1800,
+      "emptyStateVerified": true
+    },
+    "reportNavigation": {
+      "passed": true,
+      "start": "2026-09-01",
+      "end": "2026-10-11",
+      "kind": "收入",
+      "dimension": "tag",
+      "selectedDate": "2026-09-30",
+      "detailsExpanded": true,
+      "noSaveReturnRetainsState": true,
+      "themeSaveRetainsState": true,
+      "backgroundNavigationExcludedFromAccessibility": true,
+      "bookChangeResetsState": true
+    },
+    "narrowReportActions": {
+      "passed": true,
+      "nextBounds": [712, 1847, 959, 2009],
+      "addBounds": [682, 163, 844, 325],
+      "oldReproductionTap": [835, 1917],
+      "floatingAddAbsent": true,
+      "selectedDateAfterTap": "2026-10-11",
+      "headerEntryOpensForm": true
+    },
+    "toolKeyboard": {
+      "passed": true,
+      "searchQuery": "__qa_keyboard__",
+      "keyboardVisibleBefore": true,
+      "keyboardVisibleInTool": false,
+      "returnedInputFocused": false,
+      "queryRetained": true
+    }
+  },
+  "baselineAndAfter": {
+    "records": 124,
+    "expense": 864230,
+    "income": 1850000,
+    "net": 985770,
+    "unit": "CNY minor"
+  },
+  "restoredOriginalState": true,
+  "screenshots": [
+    {
+      "file": "01-account-linked-records.png",
+      "sha256": "5ee48a8f825b62d273a531a57db2b9ad3a46d99e14a8762ed5b7101fffec48b2"
+    },
+    {
+      "file": "02-empty-account.png",
+      "sha256": "94e058cf60cd5c1bc54dd8ae34eaa613f0548a3ec4a69867d0401418704e25a7"
+    },
+    {
+      "file": "03-report-before-tools.png",
+      "sha256": "ecc874f12a3438546aa8bbcec611c57b0b6c620e52205b00f407df25fcbb33a7"
+    },
+    {
+      "file": "04-report-return-retained.png",
+      "sha256": "ecc874f12a3438546aa8bbcec611c57b0b6c620e52205b00f407df25fcbb33a7"
+    },
+    {
+      "file": "05-theme-retained.png",
+      "sha256": "6ae7fa2e8801db2ed55c3fa4fc6c10996ba56c15dc6240caf3a6b6d5875f4531"
+    },
+    {
+      "file": "06-narrow-before-next.png",
+      "sha256": "1223983cfeb9896fd8ab6fab1ddf07d25b7fe9a4249c9d2e72bf6a359f4544da"
+    },
+    {
+      "file": "07-narrow-after-next.png",
+      "sha256": "9ca80a38c4661e49befc7d120f3579abd1a495b35d35aae2c4acfbe895f5ee80"
+    },
+    {
+      "file": "08-header-entry.png",
+      "sha256": "a06452239715545c6e60b0fd09e443ea64e467b57c77c9e06b5d02d4099e4c8e"
+    },
+    {
+      "file": "09-restored-demo-summary.png",
+      "sha256": "1f685c2bcd974119d8993e18aa960a2c524984ab87f3381287dd805fcfe23b32"
+    },
+    {
+      "file": "10-search-keyboard.png",
+      "sha256": "bff705b1a2774cf88fb50ba4c790ae0ec0158ffcfce0939cde60d0f55172be85"
+    },
+    {
+      "file": "11-search-after-tools.png",
+      "sha256": "e7d0b6a26181cebbcf681230eaba777d4b6c89b1c68edd178c4d490cf8ca7b28"
+    }
+  ]
+}

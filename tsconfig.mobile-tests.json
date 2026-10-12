@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.tests.json",
+  "compilerOptions": { "resolveJsonModule": true },
+  "include": [
+    "tests/mobile/**/*.ts",
+    "tests/mobile/**/*.tsx",
+    "apps/mobile/src/platform/assets.d.ts"
+  ],
+  "exclude": []
+}

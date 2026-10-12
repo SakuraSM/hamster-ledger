@@ -1,0 +1,121 @@
+{
+  "sourceCommit": "84f2907a91a59135897311e8db7ad89e8706aced",
+  "installedApkSha256": "dfe01d9974c180ea0545c22f9eaecaf6cad85f0e0cd3b95726604e984fd9080f",
+  "platform": {
+    "api": 36,
+    "width": 1080,
+    "height": 2400,
+    "normalDensity": 420,
+    "normalFontScale": 1.0,
+    "narrowDensity": 540,
+    "narrowFontScale": 1.3
+  },
+  "baseline": {
+    "records": 124,
+    "expense": 864230,
+    "income": 1850000,
+    "net": 985770,
+    "unit": "CNY minor"
+  },
+  "after": {
+    "records": 124,
+    "expense": 864230,
+    "income": 1850000,
+    "net": 985770,
+    "unit": "CNY minor"
+  },
+  "findings": [
+    {
+      "id": "A",
+      "priority": "P2",
+      "expectedLinkedRows": 123,
+      "strictIdRows": 0,
+      "screenshots": ["03-record-detail.png", "04-asset-detail.png"]
+    },
+    {
+      "id": "B",
+      "priority": "P2",
+      "nextBounds": [712, 1836, 959, 1998],
+      "fabBounds": [590, 1806, 1026, 1995],
+      "nextEnabled": "true",
+      "nextCenter": [835, 1917],
+      "centerCovered": true,
+      "screenshots": [
+        "10-narrow-overlap.png",
+        "11-wrong-destination.png",
+        "12-narrow-workaround.png"
+      ]
+    },
+    {
+      "id": "C",
+      "priority": "P3",
+      "beforeStart": "2026-09-01",
+      "afterStart": "2026-10-01",
+      "end": "2026-10-11",
+      "screenshots": ["06-chart.png", "09-range-reset.png"]
+    }
+  ],
+  "restored": true,
+  "screenshots": [
+    {
+      "file": "01-overview.png",
+      "sha256": "a295e1b5702839801bead3b704707fe125d8f5728fa7bb766a0b9681dfd6a89a"
+    },
+    {
+      "file": "02-records.png",
+      "sha256": "c5e1ea0af51fb5252987ba5b9e4cbbbdc58504b9e819abe6b655eda48c8393b2"
+    },
+    {
+      "file": "03-record-detail.png",
+      "sha256": "d746e7d4f4d058810772ad6741538633a900f75e61d8ab408e42e16e363b5e1a"
+    },
+    {
+      "file": "04-asset-detail.png",
+      "sha256": "e41824fefdf92a4e535e8bc6bb77dcdb4b1cf7a86802f28d4ec456607f5243b4"
+    },
+    {
+      "file": "05-date-validation.png",
+      "sha256": "154a337d56982d2d41d783a28723cda4e16cf885485c7b30ca05a21e1a92c96b"
+    },
+    {
+      "file": "06-chart.png",
+      "sha256": "2b3c758ba7f49978696f537fdc426fbbb0e29e7efc1110afdf1901dbb65d14c5"
+    },
+    {
+      "file": "07-chart-details.png",
+      "sha256": "c50adae609be2903f1dcec1fa130c2718ead1640a48322caeddea6617b87700d"
+    },
+    {
+      "file": "08-entry-keyboard.png",
+      "sha256": "f92a8399b9f213646d88b7b368a65dfd290adcae3d3c18f4812af84259b5f28c"
+    },
+    {
+      "file": "08-entry-unsaved-dialog.png",
+      "sha256": "ec66f98e258114b821220ab3713243234251a7ca0e6b458dc7e2ccd5ccc27b5d"
+    },
+    {
+      "file": "08-entry.png",
+      "sha256": "f60ccf45db1058a8cd2c03c4aa4b891fa088b2e7ae567597b088548539112407"
+    },
+    {
+      "file": "09-range-reset.png",
+      "sha256": "fa27bbf4ed7ff076ca42ca41d972d2b0e8c26d991a7a867309bd0c610052c928"
+    },
+    {
+      "file": "10-narrow-overlap.png",
+      "sha256": "457d3c8e2fec623f5baf0225d151ba92a56b3221ce3ff4cd6efddddd1dbf53b9"
+    },
+    {
+      "file": "11-wrong-destination.png",
+      "sha256": "955bc1018745652bc935467e5284335f6c70e18acdf876e866887e85adb7d70d"
+    },
+    {
+      "file": "12-narrow-workaround.png",
+      "sha256": "4a479cdfdf31eeecb1ffb56c7b74d098611e29f4ac9637f2b0c726d597373904"
+    },
+    {
+      "file": "13-baseline-after.png",
+      "sha256": "1bd7e41bfd9e641389d373f3c1bb59c7a1d1ace20e5eadb0ee63eb678db9655b"
+    }
+  ]
+}
