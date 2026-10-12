@@ -101,6 +101,8 @@ export async function tokensApi(context) {
       expiresAt = now() + days * 86400000;
     await transaction(database, async () => {
       access = await membership(database, bookId, userId);
+      if (access.role === "viewer" && scopes.some(isWrite))
+        throw new HttpError(403, "只读成员只能创建读取令牌。");
       const count = (
         await database
           .prepare(

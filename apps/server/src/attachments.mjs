@@ -49,7 +49,10 @@ export function referencedAttachmentIds(ledger) {
 export async function getAttachment(database, id, userId, bookId) {
   if (bookId) await membership(database, bookId, userId);
   const row = await database
-    .prepare("SELECT * FROM attachments WHERE id=$1")
+    .prepare(
+      "SELECT * FROM attachments WHERE id=$1" +
+        (database.isInTransaction() ? " FOR UPDATE" : ""),
+    )
     .get(id);
   if (
     !row ||
@@ -185,7 +188,7 @@ export async function attachmentsApi(context) {
         : new Set();
       const rows = await database
         .prepare(
-          "SELECT id,created_at FROM attachments WHERE book_id IS NOT DISTINCT FROM $1 AND user_id=$2",
+          "SELECT id,created_at FROM attachments WHERE book_id IS NOT DISTINCT FROM $1 AND user_id=$2 ORDER BY id FOR UPDATE",
         )
         .all(bookId, userId);
       let removed = 0;

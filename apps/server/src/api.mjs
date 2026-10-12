@@ -182,32 +182,35 @@ export function createApi({
         return;
       }
       const body = await readJson(request);
-      row = await requireSnapshotBook(database, match[1], user.id);
-      if (JSON.parse(row.ledger).version === 2 && body.ledger?.version !== 2)
-        throw new HttpError(
-          426,
-          "账本已升级，请更新客户端后再写入。",
-          "upgrade_required",
-        );
       const book = parseBook(body);
-      await requireSession(request, database, { write: true, now: now() });
       if (!Number.isSafeInteger(body.revision) || body.revision < 1)
         throw new HttpError(400, "缺少有效的账本版本。");
       const updatedAt = new Date(now()).toISOString();
-      const result = await database
-        .prepare(
-          "UPDATE books SET name=$1,ledger=$2,revision=revision+1,updated_at=$3 WHERE id=$4 AND user_id=$5 AND revision=$6",
-        )
-        .run(
-          book.name,
-          book.serialized,
-          updatedAt,
-          row.id,
-          user.id,
-          body.revision,
-        );
-      if (result.rowCount === 0)
-        throw new HttpError(409, "云端已有更新，请先保留或下载云端版本。");
+      await database.transaction(async () => {
+        await database.lockBook(match[1]);
+        await requireSession(request, database, { write: true, now: now() });
+        row = await requireSnapshotBook(database, match[1], user.id);
+        if (JSON.parse(row.ledger).version === 2 && body.ledger?.version !== 2)
+          throw new HttpError(
+            426,
+            "账本已升级，请更新客户端后再写入。",
+            "upgrade_required",
+          );
+        const result = await database
+          .prepare(
+            "UPDATE books SET name=$1,ledger=$2,revision=revision+1,updated_at=$3 WHERE id=$4 AND user_id=$5 AND authority='snapshot' AND revision=$6",
+          )
+          .run(
+            book.name,
+            book.serialized,
+            updatedAt,
+            row.id,
+            user.id,
+            body.revision,
+          );
+        if (result.rowCount === 0)
+          throw new HttpError(409, "云端已有更新，请先保留或下载云端版本。");
+      });
       json(response, 200, {
         id: row.id,
         name: book.name,

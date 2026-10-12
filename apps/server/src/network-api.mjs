@@ -65,11 +65,15 @@ async function convertBook({ database, userId, body, now }) {
         .run(randomUUID(), id, previous.ledger, previous.revision, at);
     }
     const attachmentMap = body.attachmentMap ?? {};
-    const refs = attachmentReferences(ledger);
+    const refs = attachmentReferences(ledger).sort((left, right) =>
+      String(attachmentMap[left] ?? "").localeCompare(
+        String(attachmentMap[right] ?? ""),
+      ),
+    );
     for (const ref of refs) {
       const uploaded = await database
         .prepare(
-          "SELECT id FROM attachments WHERE id=$1 AND user_id=$2 AND book_id IS NULL",
+          "SELECT id FROM attachments WHERE id=$1 AND user_id=$2 AND book_id IS NULL FOR UPDATE",
         )
         .get(attachmentMap[ref] ?? "", userId);
       if (!uploaded) throw new HttpError(400, "转换前须上传全部附件凭证。");
