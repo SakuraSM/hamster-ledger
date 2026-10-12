@@ -9,5 +9,6 @@
     "jsx": "react-jsx",
     "noEmit": true
   },
-  "include": ["tests/**/*.ts", "tests/**/*.tsx"]
+  "include": ["tests/**/*.ts", "tests/**/*.tsx"],
+  "exclude": ["tests/mobile"]
 }

@@ -5,6 +5,7 @@ export function ledgerTheme(isDark: boolean): MD3Theme {
   return {
     ...base,
     roundness: 3,
+    animation: { ...base.animation },
     colors: {
       ...base.colors,
       primary: isDark ? "#f0b38e" : tokens.color.primary,
@@ -16,6 +17,7 @@ export function ledgerTheme(isDark: boolean): MD3Theme {
       surface: isDark ? "#28221d" : tokens.color.canvas,
       surfaceVariant: isDark ? "#44382f" : tokens.color.sidebar,
       onSurface: isDark ? "#f3e4d5" : tokens.color.text,
+      onSurfaceVariant: isDark ? "#cbb7a7" : tokens.color.muted,
       secondaryContainer: isDark ? "#493a2e" : tokens.color.selected,
       onSecondaryContainer: isDark ? "#f3e4d5" : tokens.color.text,
       tertiary: isDark ? "#b9c9a8" : tokens.color.positive,
@@ -30,6 +32,9 @@ export function ledgerTheme(isDark: boolean): MD3Theme {
         level5: isDark ? "#3e2f23" : "#f0e4d2",
       },
       outlineVariant: isDark ? "#574536" : tokens.color.divider,
+      inverseSurface: isDark ? "#f3e4d5" : tokens.color.text,
+      inverseOnSurface: isDark ? tokens.color.text : tokens.color.canvas,
+      inversePrimary: isDark ? tokens.color.primaryHover : "#f0b38e",
     },
   };
 }

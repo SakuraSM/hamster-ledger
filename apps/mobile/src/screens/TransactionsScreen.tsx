@@ -8,6 +8,7 @@ import { BatchActions } from "./BatchActions";
 import { RecordFilters, type FinanceFilter } from "./RecordFilters";
 import { useState } from "react";
 import { FlatList, View } from "react-native";
+import { useSystemFontScale } from "../hooks/useSystemFontScale";
 import {
   Searchbar,
   SegmentedButtons,
@@ -26,6 +27,7 @@ export function TransactionsScreen({
   controller,
   onRecord,
 }: TransactionsScreenProps): React.JSX.Element {
+  const fontScale = useSystemFontScale();
   const ledger = controller.ledger,
     batch = useBatchRecords(controller);
   const remoteMembers = useBookMembers(
@@ -83,6 +85,7 @@ export function TransactionsScreen({
   return (
     <View style={{ flex: 1, paddingHorizontal: 16 }}>
       <FlatList
+        key={fontScale}
         ListHeaderComponent={
           <>
             <Searchbar

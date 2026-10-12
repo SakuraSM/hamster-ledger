@@ -1,6 +1,8 @@
-import { MONTH_KEY_LENGTH } from "../constants";
+import { HIDDEN_AMOUNT, MONTH_KEY_LENGTH } from "../constants";
 const RECENT_RECORD_LIMIT = 5;
+const MIN_SUMMARY_METRIC_WIDTH = 132;
 import { View } from "react-native";
+import { useSystemFontScale } from "../hooks/useSystemFontScale";
 import { Button, Card, Text, ProgressBar } from "react-native-paper";
 import {
   money,
@@ -12,6 +14,8 @@ import {
 } from "@hamster-ledger/core";
 import { Screen, Section, styles } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
+import { AmountText, useAmountColors } from "../ui/AmountText";
+import { balanceAmountTone } from "../ui/amount-tones";
 import { RecordRow } from "./RecordRow";
 import { localNow } from "../platform/runtime";
 interface OverviewScreenProps {
@@ -30,6 +34,14 @@ export function OverviewScreen({
   onRecord,
   onReview,
 }: OverviewScreenProps): React.JSX.Element {
+  const colors = useAmountColors();
+  const fontScale = useSystemFontScale();
+  const metricStyle = {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: MIN_SUMMARY_METRIC_WIDTH * fontScale,
+  };
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const records = periodRecords(ledger, month);
   const summary = summarize(records);
   const groups = reportGroups({ records, dimension: "category", kind: "支出" });
@@ -46,7 +58,7 @@ export function OverviewScreen({
     .sort()
     .reverse();
   const amount = (value: number): string =>
-    ledger.preferences?.hideAmounts ? "••••" : `¥${money(value)}`;
+    isAmountHidden ? HIDDEN_AMOUNT : `¥${money(value)}`;
   return (
     <Screen>
       <Text variant="headlineMedium" accessibilityRole="header">
@@ -62,19 +74,37 @@ export function OverviewScreen({
       <Card mode="contained">
         <Card.Content style={{ gap: 12 }}>
           <Text variant="titleMedium">本期支出</Text>
-          <Text variant="displayMedium" style={styles.amount}>
+          <AmountText
+            variant="displayMedium"
+            style={styles.amount}
+            amount={summary.expense}
+            tone="expense"
+            isMuted={isAmountHidden}
+          >
             {amount(summary.expense)}
-          </Text>
-          <View style={styles.row}>
-            <View style={{ flex: 1 }}>
+          </AmountText>
+          <View style={[styles.row, { alignItems: "flex-start" }]}>
+            <View style={metricStyle}>
               <Text>收入</Text>
-              <Text variant="titleLarge">{amount(summary.income)}</Text>
+              <AmountText
+                variant="titleLarge"
+                amount={summary.income}
+                tone="income"
+                isMuted={isAmountHidden}
+              >
+                {amount(summary.income)}
+              </AmountText>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={metricStyle}>
               <Text>结余</Text>
-              <Text variant="titleLarge">
-                {amount(summary.income - summary.expense)}
-              </Text>
+              <AmountText
+                variant="titleLarge"
+                amount={summary.net}
+                tone={balanceAmountTone(summary.net)}
+                isMuted={isAmountHidden}
+              >
+                {amount(summary.net)}
+              </AmountText>
             </View>
           </View>
           <Text variant="bodySmall">已确认账单，转账不计入收支</Text>
@@ -96,9 +126,16 @@ export function OverviewScreen({
                 }}
               >
                 <Text>{group.name}</Text>
-                <Text>{amount(group.amount)}</Text>
+                <AmountText
+                  amount={group.amount}
+                  tone="expense"
+                  isMuted={isAmountHidden}
+                >
+                  {amount(group.amount)}
+                </AmountText>
               </View>
               <ProgressBar
+                color={colors.expense}
                 progress={
                   summary.expense > 0
                     ? Math.max(0, Math.min(1, group.amount / summary.expense))
@@ -112,13 +149,17 @@ export function OverviewScreen({
         )}
       </Section>
       <Section title="最近账单">
-        {records
-          .filter((record) => record.status !== "duplicate")
-          .sort((left, right) => right.date.localeCompare(left.date))
-          .slice(0, RECENT_RECORD_LIMIT)
-          .map((record) => (
-            <RecordRow key={record.id} record={record} onPress={onRecord} />
-          ))}
+        {isAmountHidden ? (
+          <Text>金额已隐藏，可前往账单页查看明细。</Text>
+        ) : (
+          records
+            .filter((record) => record.status !== "duplicate")
+            .sort((left, right) => right.date.localeCompare(left.date))
+            .slice(0, RECENT_RECORD_LIMIT)
+            .map((record) => (
+              <RecordRow key={record.id} record={record} onPress={onRecord} />
+            ))
+        )}
       </Section>
     </Screen>
   );

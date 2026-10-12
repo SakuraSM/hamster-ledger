@@ -7,17 +7,20 @@ import {
   Platform,
 } from "react-native";
 import { Text, HelperText } from "react-native-paper";
+import { useSystemFontScale } from "../hooks/useSystemFontScale";
 export function Screen({
   children,
 }: {
   children: ReactNode;
 }): React.JSX.Element {
+  const fontScale = useSystemFontScale();
   return (
     <KeyboardAvoidingView
       style={styles.fill}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
+        key={fontScale}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >

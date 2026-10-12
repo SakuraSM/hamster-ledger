@@ -1,0 +1,118 @@
+{
+  "method": "WCAG relative luminance, opaque sRGB foreground/background",
+  "minimum": 4.9309,
+  "checks": [
+    {
+      "theme": "light",
+      "role": "income",
+      "foreground": "#25664d",
+      "surface": "canvas",
+      "background": "#fffcf7",
+      "ratio": 6.6483
+    },
+    {
+      "theme": "light",
+      "role": "income",
+      "foreground": "#25664d",
+      "surface": "surfaceVariant",
+      "background": "#f6f0e7",
+      "ratio": 6.0059
+    },
+    {
+      "theme": "light",
+      "role": "income",
+      "foreground": "#25664d",
+      "surface": "selected",
+      "background": "#f5e3cf",
+      "ratio": 5.4339
+    },
+    {
+      "theme": "light",
+      "role": "expense",
+      "foreground": "#a3432f",
+      "surface": "canvas",
+      "background": "#fffcf7",
+      "ratio": 6.0329
+    },
+    {
+      "theme": "light",
+      "role": "expense",
+      "foreground": "#a3432f",
+      "surface": "surfaceVariant",
+      "background": "#f6f0e7",
+      "ratio": 5.45
+    },
+    {
+      "theme": "light",
+      "role": "expense",
+      "foreground": "#a3432f",
+      "surface": "selected",
+      "background": "#f5e3cf",
+      "ratio": 4.9309
+    },
+    {
+      "theme": "dark",
+      "role": "income",
+      "foreground": "#94d1ad",
+      "surface": "canvas",
+      "background": "#201b17",
+      "ratio": 9.7377
+    },
+    {
+      "theme": "dark",
+      "role": "income",
+      "foreground": "#94d1ad",
+      "surface": "surface",
+      "background": "#28221d",
+      "ratio": 8.9639
+    },
+    {
+      "theme": "dark",
+      "role": "income",
+      "foreground": "#94d1ad",
+      "surface": "surfaceVariant",
+      "background": "#44382f",
+      "ratio": 6.4684
+    },
+    {
+      "theme": "dark",
+      "role": "income",
+      "foreground": "#94d1ad",
+      "surface": "selected",
+      "background": "#493a2e",
+      "ratio": 6.2152
+    },
+    {
+      "theme": "dark",
+      "role": "expense",
+      "foreground": "#ffb09c",
+      "surface": "canvas",
+      "background": "#201b17",
+      "ratio": 9.7047
+    },
+    {
+      "theme": "dark",
+      "role": "expense",
+      "foreground": "#ffb09c",
+      "surface": "surface",
+      "background": "#28221d",
+      "ratio": 8.9336
+    },
+    {
+      "theme": "dark",
+      "role": "expense",
+      "foreground": "#ffb09c",
+      "surface": "surfaceVariant",
+      "background": "#44382f",
+      "ratio": 6.4465
+    },
+    {
+      "theme": "dark",
+      "role": "expense",
+      "foreground": "#ffb09c",
+      "surface": "selected",
+      "background": "#493a2e",
+      "ratio": 6.1942
+    }
+  ]
+}

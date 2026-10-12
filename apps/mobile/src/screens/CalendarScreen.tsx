@@ -5,6 +5,7 @@ import {
   DATE_PART_WIDTH,
 } from "../constants";
 const MONDAY_OFFSET = 6;
+const EXPENSE_HEAT_OPACITY = ["1a", "33", "4d", "66"];
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, Text, IconButton, useTheme } from "react-native-paper";
@@ -16,6 +17,7 @@ import {
   type BillRecord,
 } from "@hamster-ledger/core";
 import { Screen } from "../ui/Screen";
+import { AmountText, useAmountColors } from "../ui/AmountText";
 import { RecordRow } from "./RecordRow";
 import { localNow } from "../platform/runtime";
 interface CalendarScreenProps {
@@ -38,6 +40,7 @@ export function CalendarScreen({
     (new Date(year, monthNumber - 1, 1).getDay() + MONDAY_OFFSET) %
     DAYS_PER_WEEK;
   const theme = useTheme();
+  const colors = useAmountColors();
   const records = ledger.records.filter(
     (record) => !record.isDeleted && record.status === "confirmed",
   );
@@ -46,10 +49,7 @@ export function CalendarScreen({
   const heat = calendarHeat(ledger, month);
   const heatColors = [
     theme.colors.surface,
-    "#faf0e5",
-    "#f4dfca",
-    "#edc5a6",
-    "#e0a780",
+    ...EXPENSE_HEAT_OPACITY.map((opacity) => colors.expense + opacity),
   ];
   function move(delta: number): void {
     const date = new Date(year, monthNumber - 1 + delta, 1);
@@ -88,7 +88,7 @@ export function CalendarScreen({
           </Text>
         ))}
       </View>
-      <Text>底色越深，当日净支出越多。</Text>
+      <Text>底色越明显，当日净支出越多。</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {Array.from({ length: offset }, (_, index) => (
           <View key={`offset-${index}`} style={{ width: "14.285%" }} />
@@ -113,6 +113,11 @@ export function CalendarScreen({
                       ? theme.colors.primary
                       : heatColors[heat[index]?.level ?? 0],
                 }}
+                textColor={
+                  date === selected
+                    ? theme.colors.onPrimary
+                    : theme.colors.onSurface
+                }
                 contentStyle={{ minHeight: 48 }}
               >
                 {day}
@@ -133,8 +138,18 @@ export function CalendarScreen({
         })}
       </View>
       <Text variant="titleMedium">
-        {selected} · 支出 ¥{money(totals.expense)} · 收入 ¥
-        {money(totals.income)}
+        {selected} · 支出{" "}
+        <AmountText
+          variant="titleMedium"
+          amount={totals.expense}
+          tone="expense"
+        >
+          ¥{money(totals.expense)}
+        </AmountText>{" "}
+        · 收入{" "}
+        <AmountText variant="titleMedium" amount={totals.income} tone="income">
+          ¥{money(totals.income)}
+        </AmountText>
       </Text>
       <Button mode="outlined" icon="plus" onPress={() => onAdd(selected)}>
         为这一天记一笔

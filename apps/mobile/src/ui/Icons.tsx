@@ -47,7 +47,7 @@ import { GearIcon as Gear } from "phosphor-react-native";
 import { UserIcon as User } from "phosphor-react-native";
 import { ShieldCheckIcon as ShieldCheck } from "phosphor-react-native";
 import { QuestionIcon as Question } from "phosphor-react-native";
-import type { Icon } from "phosphor-react-native";
+import type { Icon, IconWeight } from "phosphor-react-native";
 const ICONS: Record<string, Icon> = {
   "home-outline": House,
   home: House,
@@ -106,12 +106,14 @@ export function AppIcon({
   name,
   size,
   color,
+  weight = "regular",
 }: {
   name: string;
   size: number;
   color?: string;
+  weight?: IconWeight;
 }): React.JSX.Element {
   const Component = ICONS[name] ?? Question;
-  return <Component size={size} color={color} weight="regular" />;
+  return <Component size={size} color={color} weight={weight} />;
 }
 export const iconSettings = { icon: AppIcon };
