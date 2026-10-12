@@ -1,16 +1,48 @@
+x-ledger-environment: &ledger-environment
+  DATABASE_URL: ${DATABASE_URL:-postgresql://hamster:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/hamster}
+  LEDGER_DATA_DIR: /data
 services:
+  postgres:
+    image: postgres:18.6-bookworm
+    environment:
+      POSTGRES_DB: hamster
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD}
+      LEDGER_DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./deploy/postgres/init-app.sh:/docker-entrypoint-initdb.d/10-app.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d hamster"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+  migrate:
+    image: ${HAMSTER_IMAGE:-hamster-ledger:postgres-local}
+    build: .
+    command: ["node", "apps/server/src/migrate.mjs"]
+    environment: *ledger-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
   ledger:
-    image: ${HAMSTER_IMAGE:-ghcr.io/sakurasm/hamster-ledger:0.2.0}
+    image: ${HAMSTER_IMAGE:-hamster-ledger:postgres-local}
     build: .
     ports:
       - "127.0.0.1:${LEDGER_PORT:-4180}:4180"
     environment:
+      <<: *ledger-environment
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://127.0.0.1:4180}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
       LEDGER_TIMEZONE: ${LEDGER_TIMEZONE:-Asia/Shanghai}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ledger-data:/data
     restart: unless-stopped
     stop_grace_period: 30s
 volumes:
   ledger-data:
+  postgres-data:

@@ -14,7 +14,6 @@ import {
   applyOperation,
 } from "./network-service.mjs";
 import { memberRoute, acceptInvite } from "./network-members.mjs";
-
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
   if (value && typeof value === "object")
@@ -25,8 +24,8 @@ function canonical(value) {
     );
   return value;
 }
-function convertBook({ database, userId, body, now }) {
-  return transaction(database, () => {
+async function convertBook({ database, userId, body, now }) {
+  return await transaction(database, async () => {
     if (body.confirm !== true)
       throw new HttpError(400, "请确认联网账本将使用在线编辑。");
     let ledger;
@@ -43,8 +42,9 @@ function convertBook({ database, userId, body, now }) {
     let id = randomUUID(),
       revision = 1;
     if (body.sourceBookId) {
-      const previous = database
-        .prepare("SELECT * FROM books WHERE id=? AND user_id=?")
+      await database.lockBook(body.sourceBookId);
+      const previous = await database
+        .prepare("SELECT * FROM books WHERE id=$1 AND user_id=$2")
         .get(body.sourceBookId, userId);
       if (!previous || previous.authority !== "snapshot")
         throw new HttpError(409, "原同步账本不存在或已转换。");
@@ -60,16 +60,16 @@ function convertBook({ database, userId, body, now }) {
         );
       id = previous.id;
       revision = previous.revision + 1;
-      database
-        .prepare("INSERT INTO book_backups VALUES(?,?,?,?,?)")
+      await database
+        .prepare("INSERT INTO book_backups VALUES($1,$2,$3,$4,$5)")
         .run(randomUUID(), id, previous.ledger, previous.revision, at);
     }
     const attachmentMap = body.attachmentMap ?? {};
     const refs = attachmentReferences(ledger);
     for (const ref of refs) {
-      const uploaded = database
+      const uploaded = await database
         .prepare(
-          "SELECT id FROM attachments WHERE id=? AND user_id=? AND book_id IS NULL",
+          "SELECT id FROM attachments WHERE id=$1 AND user_id=$2 AND book_id IS NULL",
         )
         .get(attachmentMap[ref] ?? "", userId);
       if (!uploaded) throw new HttpError(400, "转换前须上传全部附件凭证。");
@@ -94,29 +94,29 @@ function convertBook({ database, userId, body, now }) {
         : record.detail,
     }));
     if (body.sourceBookId)
-      database
+      await database
         .prepare(
-          "UPDATE books SET name=?,ledger=?,revision=?,updated_at=?,authority='server' WHERE id=?",
+          "UPDATE books SET name=$1,ledger=$2,revision=$3,updated_at=$4,authority='server' WHERE id=$5",
         )
         .run(name, JSON.stringify(ledger), revision, at, id);
     else {
-      database
+      await database
         .prepare(
-          "INSERT INTO books(id,user_id,name,revision,ledger,updated_at,authority) VALUES(?,?,?,?,?,?,'server')",
+          "INSERT INTO books(id,user_id,name,revision,ledger,updated_at,authority) VALUES($1,$2,$3,$4,$5,$6,'server')",
         )
         .run(id, userId, name, revision, JSON.stringify(ledger), at);
-      database
-        .prepare("INSERT INTO book_backups VALUES(?,?,?,?,?)")
+      await database
+        .prepare("INSERT INTO book_backups VALUES($1,$2,$3,$4,$5)")
         .run(randomUUID(), id, JSON.stringify(body.ledger), 0, at);
     }
-    database
-      .prepare("INSERT INTO book_members VALUES(?,?,'owner')")
+    await database
+      .prepare("INSERT INTO book_members VALUES($1,$2,'owner')")
       .run(id, userId);
     for (const ref of refs)
-      database
-        .prepare("UPDATE attachments SET book_id=? WHERE id=?")
+      await database
+        .prepare("UPDATE attachments SET book_id=$1 WHERE id=$2")
         .run(id, attachmentMap[ref]);
-    return snapshot(membership(database, id, userId));
+    return snapshot(await membership(database, id, userId));
   });
 }
 export async function networkApi({
@@ -133,25 +133,25 @@ export async function networkApi({
   const body = ["GET", "HEAD"].includes(method) ? {} : await readBody();
   if (path === "/api/network/books" && method === "GET") {
     json(response, 200, {
-      books: database
+      books: await database
         .prepare(
-          "SELECT b.id,b.name,b.revision,b.updated_at AS updatedAt,m.role FROM books b JOIN book_members m ON m.book_id=b.id WHERE m.user_id=? AND b.authority='server' ORDER BY b.updated_at DESC",
+          "SELECT b.id,b.name,b.revision,b.updated_at AS \"updatedAt\",m.role FROM books b JOIN book_members m ON m.book_id=b.id WHERE m.user_id=$1 AND b.authority='server' ORDER BY b.updated_at DESC",
         )
         .all(userId),
     });
     return true;
   }
   if (path === "/api/network/books" && method === "POST") {
-    json(response, 201, convertBook({ database, userId, body, now }));
+    json(response, 201, await convertBook({ database, userId, body, now }));
     return true;
   }
   if (path === "/api/network/invites/accept" && method === "POST") {
-    json(response, 200, acceptInvite({ database, userId, body, now }));
+    json(response, 200, await acceptInvite({ database, userId, body, now }));
     return true;
   }
   const match = path.match(/^\/api\/network\/books\/([a-z0-9-]+)(.*)$/);
   if (!match) throw new HttpError(404, "联网账本接口不存在。");
-  const access = membership(database, match[1], userId),
+  const access = await membership(database, match[1], userId),
     rest = match[2];
   if (!rest && method === "GET") {
     json(response, 200, snapshot(access));
@@ -160,7 +160,12 @@ export async function networkApi({
   if (!rest && method === "DELETE") {
     requireManager(access, true);
     if (body.confirm !== true) throw new HttpError(400, "请确认删除联网账本。");
-    database.prepare("DELETE FROM books WHERE id=?").run(access.book.id);
+    await database.transaction(async () => {
+      requireManager(await membership(database, access.book.id, userId), true);
+      await database
+        .prepare("DELETE FROM books WHERE id=$1")
+        .run(access.book.id);
+    });
     json(response, 200, { ok: true });
     return true;
   }
@@ -168,15 +173,15 @@ export async function networkApi({
     json(
       response,
       200,
-      applyOperation({ database, bookId: match[1], userId, body, now }),
+      await applyOperation({ database, bookId: match[1], userId, body, now }),
     );
     return true;
   }
   if (rest === "/history" && method === "GET") {
     json(response, 200, {
-      history: database
+      history: await database
         .prepare(
-          "SELECT o.id,o.user_id AS userId,u.username,o.source,o.summary,o.revision,o.created_at AS createdAt FROM book_operations o JOIN users u ON u.id=o.user_id WHERE o.book_id=? ORDER BY o.created_at DESC,o.rowid DESC LIMIT 100",
+          'SELECT o.id,o.user_id AS "userId",u.username,o.source,o.summary,o.revision,o.created_at AS "createdAt" FROM book_operations o JOIN users u ON u.id=o.user_id WHERE o.book_id=$1 ORDER BY o.created_at DESC,o.created_seq DESC LIMIT 100',
         )
         .all(match[1]),
     });
@@ -184,9 +189,9 @@ export async function networkApi({
   }
   if (rest === "/backup" && method === "GET") {
     requireManager(access);
-    const backup = database
+    const backup = await database
       .prepare(
-        "SELECT ledger,revision,created_at AS createdAt FROM book_backups WHERE book_id=? ORDER BY created_at DESC LIMIT 1",
+        'SELECT ledger,revision,created_at AS "createdAt" FROM book_backups WHERE book_id=$1 ORDER BY created_at DESC LIMIT 1',
       )
       .get(match[1]);
     json(
@@ -198,7 +203,9 @@ export async function networkApi({
     );
     return true;
   }
-  if (memberRoute({ database, response, access, rest, method, body, now }))
+  if (
+    await memberRoute({ database, response, access, rest, method, body, now })
+  )
     return true;
   throw new HttpError(404, "联网账本接口不存在。");
 }

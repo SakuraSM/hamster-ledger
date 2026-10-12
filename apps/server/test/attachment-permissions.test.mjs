@@ -1,10 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
 import { setup, register } from "./helpers.mjs";
 import { book, image, path } from "./ai-fixtures.mjs";
 import { attachmentsApi } from "../src/attachments.mjs";
-
 for (const scenario of [
   { before: "member", after: "viewer", own: true },
   { before: "admin", after: "member", own: false },
@@ -34,8 +32,8 @@ for (const scenario of [
       })
     ).json();
     const memberId = client.sessions.get(memberCookie).user.id;
-    const database = new DatabaseSync(client.databasePath);
-    context.after(() => database.close());
+    const database = await client.openDatabase();
+    context.after(async () => await database.close());
     await assert.rejects(
       attachmentsApi({
         database,
@@ -45,9 +43,9 @@ for (const scenario of [
         userId: memberId,
         now: Date.now,
         readBody: async () => {
-          database
+          await database
             .prepare(
-              "UPDATE book_members SET role=? WHERE book_id=? AND user_id=?",
+              "UPDATE book_members SET role=$1 WHERE book_id=$2 AND user_id=$3",
             )
             .run(scenario.after, current.id, memberId);
           return {};
@@ -56,8 +54,8 @@ for (const scenario of [
       (error) => error.status === 403,
     );
     assert.ok(
-      database
-        .prepare("SELECT id FROM attachments WHERE id=?")
+      await database
+        .prepare("SELECT id FROM attachments WHERE id=$1")
         .get(uploaded.id),
     );
   });

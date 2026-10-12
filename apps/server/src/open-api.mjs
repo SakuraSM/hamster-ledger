@@ -25,9 +25,9 @@ const ROUTES = {
   "POST /ai/confirm": "ai:confirm",
   "POST /attachments": "attachments:write",
 };
-function bookContext(context, token) {
+async function bookContext(context, token) {
   const current = snapshot(
-    membership(context.database, token.book_id, token.user_id),
+    await membership(context.database, token.book_id, token.user_id),
   );
   return {
     bookId: current.id,
@@ -36,9 +36,9 @@ function bookContext(context, token) {
     categories: current.ledger.categories,
   };
 }
-function listRecords(context, token, url) {
+async function listRecords(context, token, url) {
   const current = snapshot(
-    membership(context.database, token.book_id, token.user_id),
+    await membership(context.database, token.book_id, token.user_id),
   );
   const limit = Number(url.searchParams.get("limit") ?? 50),
     offset = Number(url.searchParams.get("offset") ?? 0);
@@ -79,9 +79,9 @@ function listRecords(context, token, url) {
     nextOffset: offset + limit < records.length ? offset + limit : null,
   };
 }
-function createRecord(context, token, body) {
+async function createRecord(context, token, body) {
   const current = snapshot(
-    membership(context.database, token.book_id, token.user_id),
+    await membership(context.database, token.book_id, token.user_id),
   );
   const id = "api:" + randomUUID();
   let next;
@@ -95,7 +95,7 @@ function createRecord(context, token, body) {
   } catch (error) {
     throw new HttpError(400, error.message);
   }
-  const result = applyOperation({
+  const result = await applyOperation({
     ...context,
     bookId: token.book_id,
     source: "open-api",
@@ -120,10 +120,10 @@ export async function openApi(context) {
   const route = `${request.method} ${path}`;
   const scope =
     attachment && request.method === "GET" ? "attachments:read" : ROUTES[route];
-  const token = requireOpenToken(context, scope);
-  limitOpenRequest(database, token, now);
+  const token = await requireOpenToken(context, scope);
+  await limitOpenRequest(database, token, now);
   if (scope === undefined) throw new HttpError(404, "开放 API 接口不存在。");
-  const revalidate = () => requireOpenToken(context, scope);
+  const revalidate = async () => await requireOpenToken(context, scope);
   const scoped = {
     ...context,
     userId: token.user_id,
@@ -143,11 +143,11 @@ export async function openApi(context) {
             scopes: token.scopes,
           }
         : path === "/context"
-          ? bookContext(context, token)
+          ? await bookContext(context, token)
           : path === "/records"
-            ? listRecords(context, token, url)
+            ? await listRecords(context, token, url)
             : attachmentJson(
-                getAttachment(
+                await getAttachment(
                   database,
                   attachment[1],
                   token.user_id,
@@ -165,10 +165,10 @@ export async function openApi(context) {
       "idempotency_required",
     );
   const raw = await readJson(request);
-  revalidate();
+  await revalidate();
   const requestDigest = digest({ route, body: raw });
-  const previous = database
-    .prepare("SELECT * FROM open_requests WHERE token_id=? AND request_key=?")
+  const previous = await database
+    .prepare("SELECT * FROM open_requests WHERE token_id=$1 AND request_key=$2")
     .get(token.id, key);
   if (previous) {
     if (previous.digest !== requestDigest)
@@ -184,9 +184,9 @@ export async function openApi(context) {
   // Ledger operations keep a durable receipt for crash recovery. Attachment
   // uploads commit their response receipt and audit in the same transaction.
   if (path === "/records") {
-    const persisted = database
+    const persisted = await database
       .prepare(
-        "SELECT digest,result FROM book_requests WHERE book_id=? AND user_id=? AND request_key=?",
+        "SELECT digest,result FROM book_requests WHERE book_id=$1 AND user_id=$2 AND request_key=$3",
       )
       .get(token.book_id, token.user_id, body.key);
     if (persisted) {
@@ -202,8 +202,8 @@ export async function openApi(context) {
       )
         throw new HttpError(409, "幂等键已用于另一项操作。");
       const saved = JSON.parse(persisted.result);
-      const operation = database
-        .prepare("SELECT before_json FROM book_operations WHERE id=?")
+      const operation = await database
+        .prepare("SELECT before_json FROM book_operations WHERE id=$1")
         .get(saved.operationId);
       const beforeIds = new Set(
         JSON.parse(operation.before_json).records.map((record) => record.id),
@@ -215,7 +215,7 @@ export async function openApi(context) {
           (record) => !beforeIds.has(record.id),
         ),
       };
-    } else result = createRecord(scoped, token, body);
+    } else result = await createRecord(scoped, token, body);
     status = 201;
   } else if (path === "/ai/recognize") {
     const saved = await recognizeAi(scoped, token.book_id, body);
@@ -225,7 +225,7 @@ export async function openApi(context) {
       drafts: saved.drafts,
     };
   } else if (path === "/ai/confirm") {
-    const saved = confirmNetworkDraft(scoped, token.book_id, body);
+    const saved = await confirmNetworkDraft(scoped, token.book_id, body);
     const draft = saved.ledger.aiDrafts.find(
       (item) => item.id === body.draftId,
     );
@@ -238,8 +238,8 @@ export async function openApi(context) {
     };
   } else if (path === "/attachments") {
     status = 201;
-    transaction(database, () => {
-      const stored = storeAttachment({
+    await transaction(database, async () => {
+      const stored = await storeAttachment({
         ...scoped,
         bookId: token.book_id,
         body,
@@ -247,7 +247,7 @@ export async function openApi(context) {
       });
       const { base64: _bytes, ...metadata } = stored;
       result = metadata;
-      auditMembership(
+      await auditMembership(
         database,
         token.book_id,
         token.user_id,
@@ -255,8 +255,10 @@ export async function openApi(context) {
         now,
         "open-api",
       );
-      database
-        .prepare("INSERT INTO open_requests VALUES(?,?,?,?,?,?)")
+      await database
+        .prepare(
+          "INSERT INTO open_requests VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING",
+        )
         .run(
           token.id,
           key,
@@ -269,9 +271,11 @@ export async function openApi(context) {
     json(response, status, result);
     return;
   }
-  revalidate();
-  database
-    .prepare("INSERT OR IGNORE INTO open_requests VALUES(?,?,?,?,?,?)")
+  await revalidate();
+  await database
+    .prepare(
+      "INSERT INTO open_requests VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING",
+    )
     .run(token.id, key, requestDigest, status, JSON.stringify(result), now());
   json(response, status, result);
 }

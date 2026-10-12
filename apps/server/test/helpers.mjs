@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { testDatabase } from "./postgres-fixture.mjs";
+import { importSqlite } from "../src/import-sqlite.mjs";
 import { createLedgerServer } from "../src/server.mjs";
 export const EMPTY = {
   version: 1,
@@ -13,25 +13,37 @@ export const EMPTY = {
 };
 export const TEST_PASSWORD = "synthetic-test-password-123";
 export async function setup(context, { initialize, ...options } = {}) {
-  const directory = await mkdtemp(join(tmpdir(), "hamster-auth-test-"));
-  const databasePath = join(directory, "ledger.sqlite");
-  if (initialize) await initialize(databasePath);
-  const server = createLedgerServer({
+  const fixture = await testDatabase(context);
+  const databasePath = join(fixture.dataDirectory, "legacy.sqlite");
+  if (initialize) {
+    await initialize(databasePath);
+    await importSqlite({
+      sourcePath: databasePath,
+      database: fixture.database,
+      dryRun: false,
+    });
+  }
+  const server = await createLedgerServer({
     enableScheduler: false,
-    databasePath,
+    databaseUrl: fixture.databaseUrl,
+    databaseSchema: fixture.schema,
+    dataDirectory: fixture.dataDirectory,
     webRoot: resolve(import.meta.dirname, "../../web/dist/client"),
     ...options,
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  context.after(async () => {
-    await new Promise((resolve) => server.close(resolve));
-    await rm(directory, { recursive: true, force: true });
-  });
+  fixture.cleanupTasks.push(
+    () =>
+      new Promise((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      ),
+  );
   const origin = `http://127.0.0.1:${server.address().port}`;
   const sessions = new Map();
   return {
     server,
     origin,
+    ...fixture,
     databasePath,
     sessions,
     request: async (

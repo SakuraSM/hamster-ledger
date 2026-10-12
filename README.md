@@ -36,10 +36,12 @@ git clone https://github.com/SakuraSM/hamster-ledger.git
 cd hamster-ledger
 npm ci
 npm run build
+# 通过部署环境设置 DATABASE_URL
+npm run db:migrate
 npm start
 ```
 
-打开 http://127.0.0.1:4180 。首次进入登录页，可登录或选择“仅在本机使用”；在示例账本导入时写入“我的账本”，其他账本导入时写入当前账本。需要同步时，通过登录页注册或登录，再在“更多功能”中连接账本。服务器数据默认保存在 `data/ledger.sqlite`。开发页面可单独运行 `npm run dev -- --host 127.0.0.1 --port 4187 --strictPort`，该 Vite 服务不提供同步 API。
+打开 http://127.0.0.1:4180 。首次进入登录页，可登录或选择“仅在本机使用”；在示例账本导入时写入“我的账本”，其他账本导入时写入当前账本。需要同步时，通过登录页注册或登录，再在“更多功能”中连接账本。服务器数据保存在 PostgreSQL；数据库和旧 SQLite 迁移步骤见 [自托管说明](docs/self-hosting.md)。开发页面可单独运行 `npm run dev -- --host 127.0.0.1 --port 4187 --strictPort`，该 Vite 服务不提供同步 API。
 
 ```sh
 npm run check       # 类型、边界、测试、构建与静态托管打包

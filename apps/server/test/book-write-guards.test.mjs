@@ -1,11 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
 import { Readable } from "node:stream";
 import { migrateLedger } from "@hamster-ledger/core";
 import { setup, register, EMPTY } from "./helpers.mjs";
 import { createApi } from "../src/api.mjs";
-
 for (const authority of ["snapshot", "server"]) {
   test(`legacy snapshot writes recheck ${authority} state after reading the body`, async (context) => {
     const client = await setup(context);
@@ -18,14 +16,14 @@ for (const authority of ["snapshot", "server"]) {
       })
     ).json();
     const session = client.sessions.get(cookie);
-    const database = new DatabaseSync(client.databasePath);
-    context.after(() => database.close());
+    const database = await client.openDatabase();
+    context.after(async () => await database.close());
     const upgraded = JSON.stringify(migrateLedger(EMPTY));
     const request = new Readable({
-      read() {
-        database
+      async read() {
+        await database
           .prepare(
-            "UPDATE books SET authority=?,ledger=?,revision=2 WHERE id=?",
+            "UPDATE books SET authority=$1,ledger=$2,revision=2 WHERE id=$3",
           )
           .run(authority, upgraded, original.id);
         this.push(
@@ -49,10 +47,10 @@ for (const authority of ["snapshot", "server"]) {
       createApi({ database })(request, { writeHead() {}, end() {} }),
       (error) => error.status === 426,
     );
-    const saved = database
-      .prepare("SELECT ledger,revision FROM books WHERE id=?")
+    const saved = await database
+      .prepare("SELECT ledger,revision FROM books WHERE id=$1")
       .get(original.id);
     assert.equal(saved.revision, 2);
-    assert.equal(saved.ledger, upgraded);
+    assert.deepEqual(JSON.parse(saved.ledger), JSON.parse(upgraded));
   });
 }
