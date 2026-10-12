@@ -23,12 +23,34 @@ vi.mock("react-native", () => ({
       {props.children}
     </div>
   ),
+  Animated: {
+    Value: class {
+      setValue(): void {}
+      interpolate(): number {
+        return 0;
+      }
+    },
+    timing: () => ({ start: () => undefined, stop: () => undefined }),
+    View: (props: ViewProps) => (
+      <div
+        aria-hidden={
+          props.accessibilityElementsHidden ||
+          props.importantForAccessibility === "no-hide-descendants"
+        }
+        data-pointer-events={props.pointerEvents}
+      >
+        {props.children}
+      </div>
+    ),
+  },
+  Easing: { bezier: () => (value: number) => value },
   StyleSheet: {
     create: <Styles,>(styles: Styles): Styles => styles,
     absoluteFill: {},
   },
 }));
 vi.mock("react-native-paper", () => ({
+  useTheme: () => ({ colors: { background: "#fffcf7" } }),
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 vi.mock("../../apps/mobile/src/screens/RecordRow", () => ({

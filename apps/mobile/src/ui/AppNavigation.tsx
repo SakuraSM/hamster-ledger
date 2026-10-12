@@ -5,6 +5,7 @@ import { AppIcon } from "./Icons";
 export const NAVIGATION_BAR_HEIGHT = 80;
 const NAVIGATION_ICON_SIZE = 24;
 const MAX_LABEL_FONT_SCALE = 1.3;
+import { NATIVE_SCENE_EASING } from "./motion";
 export const APP_ROUTES = [
   {
     key: "overview",
@@ -79,6 +80,7 @@ export function AppNavigation({
       renderIcon={renderNavigationIcon}
       getAccessibilityLabel={({ route }) => route.title}
       sceneAnimationEnabled={!hasReducedMotion}
+      sceneAnimationEasing={NATIVE_SCENE_EASING}
       activeColor={theme.colors.onSecondaryContainer}
       inactiveColor={theme.colors.onSurfaceVariant}
       activeIndicatorStyle={{

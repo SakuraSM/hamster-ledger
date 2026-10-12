@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { MINUTE_TIMESTAMP_LENGTH } from "../constants";
 import { List } from "react-native-paper";
 import { signedMoney, type BillRecord } from "@hamster-ledger/core";
@@ -12,7 +13,7 @@ const STATUS_LABEL = {
   pending: "待确认",
   duplicate: "重复",
 };
-export function RecordRow({
+export const RecordRow = memo(function RecordRow({
   record,
   onPress,
 }: RecordRowProps): React.JSX.Element {
@@ -50,4 +51,4 @@ export function RecordRow({
       )}
     />
   );
-}
+});
