@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-12",
+  "baseCommit": "1abd48d94c4554d2ca9c6e2f8a4ac6c5e6c058c8",
+  "check": {
+    "result": "passed",
+    "vitest": 228,
+    "server": 62,
+    "sites": 4,
+    "dependencies": 9,
+    "total": 303
+  },
+  "regression": {
+    "newTests": 7,
+    "unchangedRowOldRenderCount": 2,
+    "unchangedRowNewRenderCount": 1,
+    "changedRowStillUpdates": true,
+    "immediateToolUnmount": true,
+    "samePageRefreshDoesNotRestartAnimation": true,
+    "themeIdentityStable": true,
+    "reducedMotionPreservedThroughPaperProvider": true
+  },
+  "runtime": {
+    "reportSelectionRetained": true,
+    "reducedMotionNavigationPassed": true,
+    "animationSettingRestored": "null",
+    "immediateToolUnmountRegressionPassed": true,
+    "sourceRowRegressionOldFailsNewPasses": true,
+    "returnKeepsBasePageVisible": true,
+    "finalApkStateAndReducedMotionRechecked": true
+  },
+  "performance": {
+    "device": "Android API 36 ARM64 Emulator",
+    "workflow": "warm all 5 tabs; then 25 tab switches per run; 250ms gap; 3 runs per build",
+    "parallelBuildOrTestsDuringControlledMeasurement": false,
+    "runs": {
+      "before": [
+        {
+          "Total frames rendered": "254",
+          "Janky frames": "24 (9.45%)",
+          "50th percentile": "17ms",
+          "90th percentile": "18ms",
+          "95th percentile": "19ms",
+          "99th percentile": "61ms",
+          "elapsedSeconds": 8.06
+        },
+        {
+          "Total frames rendered": "251",
+          "Janky frames": "25 (9.96%)",
+          "50th percentile": "17ms",
+          "90th percentile": "17ms",
+          "95th percentile": "18ms",
+          "99th percentile": "19ms",
+          "elapsedSeconds": 8.1
+        },
+        {
+          "Total frames rendered": "250",
+          "Janky frames": "25 (10.00%)",
+          "50th percentile": "17ms",
+          "90th percentile": "18ms",
+          "95th percentile": "18ms",
+          "99th percentile": "19ms",
+          "elapsedSeconds": 8.02
+        }
+      ],
+      "after": [
+        {
+          "Total frames rendered": "251",
+          "Janky frames": "25 (9.96%)",
+          "50th percentile": "17ms",
+          "90th percentile": "18ms",
+          "95th percentile": "19ms",
+          "99th percentile": "21ms",
+          "elapsedSeconds": 8.01
+        },
+        {
+          "Total frames rendered": "253",
+          "Janky frames": "26 (10.28%)",
+          "50th percentile": "17ms",
+          "90th percentile": "18ms",
+          "95th percentile": "19ms",
+          "99th percentile": "27ms",
+          "elapsedSeconds": 8.02
+        },
+        {
+          "Total frames rendered": "252",
+          "Janky frames": "25 (9.92%)",
+          "50th percentile": "17ms",
+          "90th percentile": "17ms",
+          "95th percentile": "18ms",
+          "99th percentile": "19ms",
+          "elapsedSeconds": 8.03
+        }
+      ]
+    },
+    "medianP95Ms": {
+      "before": 18,
+      "after": 19
+    },
+    "conclusion": "No stable frame-rate improvement observed in this tab-switch workload; structural render reduction and new tool transitions verified. Emulator results are not OPPO acceptance."
+  },
+  "apk": {
+    "name": "hamster-ledger-motion-0.2.0-arm64.apk",
+    "sha256": "7340c6f6b53e8b24f83bdaea6135d86fb9f207b9278c1d5998939669f64238f1",
+    "signing": "development",
+    "build": "passed",
+    "upgradeInstall": "passed"
+  },
+  "originalFinancialDataModified": false,
+  "physicalDeviceVerified": false,
+  "sourceCommit": "a15e5a84256e2703eb89293eeb47f71d7cbb3910"
+}
