@@ -108,3 +108,5 @@ npm run android:apk     # 可独立安装的 arm64 APK，默认开发签名
 两端提供完整交易、多币种汇率快照、家庭联网账本、AI 草稿、凭证归档、订阅、借贷、目标与通知。功能入口及验证边界见 [功能对照与证据](docs/homeledger-parity.md)。
 
 机器人接入见 [开放 API](docs/open-api.md)，镜像、Compose、升级和恢复见 [Docker 运维](docs/container-operations.md)。
+
+Android 新增默认关闭的[支付消息记账](docs/android-payment-notifications.md)，支付通知仅在本机形成待核对候选。服务端 PostgreSQL 切换与旧库导入见[迁移记录](docs/postgresql-migration.md)。
