@@ -9,13 +9,19 @@ import { DateField } from "../ui/DateField";
 export function EntryMoneyFields({
   form,
   ledger,
+  accountCurrency,
 }: {
   form: AdvancedEntryController;
   ledger: Ledger;
+  accountCurrency?: "CNY";
 }): React.JSX.Element {
   const { draft, change, currency, destinationCurrency } = form;
   const accounts = ledger.accounts
-    .filter((item) => !item.isArchived)
+    .filter(
+      (item) =>
+        !item.isArchived &&
+        (!accountCurrency || (item.currency ?? "CNY") === accountCurrency),
+    )
     .map((item) => ({
       value: item.id,
       label: `${item.name} · ${item.currency ?? "CNY"}`,

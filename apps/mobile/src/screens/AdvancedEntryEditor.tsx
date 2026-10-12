@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from "react";
 import { Button, Checkbox, TextInput } from "react-native-paper";
 import {
   TRANSACTION_LABELS,
@@ -25,6 +26,9 @@ export function AdvancedEntryEditor({
   date,
   bookId,
   initialDraft,
+  intro,
+  accountCurrency,
+  requiresTypeConfirmation = false,
   onSave,
   onClose,
 }: {
@@ -33,9 +37,15 @@ export function AdvancedEntryEditor({
   date?: string;
   bookId?: string;
   initialDraft?: Partial<EntryDraft>;
+  intro?: ReactNode;
+  accountCurrency?: "CNY";
+  requiresTypeConfirmation?: boolean;
   onSave: (ledger: Ledger, date: string) => Promise<void>;
   onClose: () => void;
 }): React.JSX.Element {
+  const [isTypeConfirmed, setTypeConfirmed] = useState(
+    !requiresTypeConfirmation,
+  );
   const client = useNativeAccount().client;
   const form = useAdvancedEntry({
     ledger,
@@ -55,14 +65,18 @@ export function AdvancedEntryEditor({
       onClose={onClose}
       hasUnsavedChanges
     >
+      {intro}
       <ChoiceField
         label="交易类型"
-        value={draft.type}
+        value={isTypeConfirmed ? draft.type : ""}
         options={TRANSACTION_TYPES.map((value) => ({
           value,
           label: TRANSACTION_LABELS[value],
         }))}
-        onChange={(value) => change("type", value as typeof draft.type)}
+        onChange={(value) => {
+          change("type", value as typeof draft.type);
+          setTypeConfirmed(true);
+        }}
       />
       <TextInput
         label="商户 / 交易名称"
@@ -83,7 +97,11 @@ export function AdvancedEntryEditor({
           .map((value) => ({ value, label: value }))}
         onChange={(value) => change("category", value)}
       />
-      <EntryMoneyFields form={form} ledger={ledger} />
+      <EntryMoneyFields
+        form={form}
+        ledger={ledger}
+        accountCurrency={accountCurrency}
+      />
       {["refund", "reimburse"].includes(draft.type) ? (
         <ChoiceField
           label="关联原支出"
@@ -131,7 +149,7 @@ export function AdvancedEntryEditor({
       <Button
         mode="contained"
         loading={form.isBusy}
-        disabled={form.isBusy}
+        disabled={form.isBusy || !isTypeConfirmed}
         onPress={() => void form.save()}
       >
         保存完整交易

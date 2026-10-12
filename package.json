@@ -41,7 +41,9 @@
     "android:apk": "npm run build:packages && node scripts/build-android.mjs",
     "check:dependencies": "node scripts/check-dependencies.mjs && node --test scripts/check-dependencies.test.mjs",
     "db:migrate": "node apps/server/src/migrate.mjs",
-    "db:import-sqlite": "node apps/server/src/import-sqlite-cli.mjs"
+    "db:import-sqlite": "node apps/server/src/import-sqlite-cli.mjs",
+    "android:test-inbox": "node scripts/test-android-inbox.mjs",
+    "android:qa-publishers": "node scripts/build-notification-publishers.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
