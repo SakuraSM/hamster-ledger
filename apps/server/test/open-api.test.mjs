@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
 import { setup, register } from "./helpers.mjs";
 import {
   book,
@@ -71,10 +70,10 @@ async function fixture(context, options) {
 }
 test("open token plaintext is only returned once; browser credentials and insufficient scopes are rejected", async (context) => {
   const f = await fixture(context),
-    db = new DatabaseSync(f.databasePath);
-  context.after(() => db.close());
-  const row = db
-    .prepare("SELECT * FROM open_tokens WHERE id=?")
+    db = await f.openDatabase();
+  context.after(async () => await db.close());
+  const row = await db
+    .prepare("SELECT * FROM open_tokens WHERE id=$1")
     .get(f.token.id);
   assert.notEqual(row.token_hash, f.token.token);
   assert.equal(row.token_hash.length, 64);
@@ -160,9 +159,11 @@ test("record creation uses ledger validation, CAS, durable idempotency and API a
   ).json();
   assert.ok(history.history.some((op) => op.source === "open-api"));
   // Simulate restart between ledger commit and response receipt persistence.
-  const db = new DatabaseSync(f.databasePath);
-  db.prepare("DELETE FROM open_requests WHERE token_id=?").run(f.token.id);
-  db.close();
+  const db = await f.openDatabase();
+  await db
+    .prepare("DELETE FROM open_requests WHERE token_id=$1")
+    .run(f.token.id);
+  await db.close();
   assert.deepEqual(
     await (await f.call("/records", { method: "POST", body })).json(),
     result,
@@ -258,10 +259,10 @@ test("expiry, revocation, role changes, member removal and persisted rate limits
   assert.equal((await f.call("/ping", { bearer: expiring.token })).status, 401);
   now -= 86400001;
   const live = await f.mint();
-  const db = new DatabaseSync(f.databasePath);
-  db.prepare("UPDATE book_members SET role='viewer' WHERE book_id=?").run(
-    f.ledger.id,
-  );
+  const db = await f.openDatabase();
+  await db
+    .prepare("UPDATE book_members SET role='viewer' WHERE book_id=$1")
+    .run(f.ledger.id);
   assert.equal(
     (
       await f.call("/records", {
@@ -272,9 +273,11 @@ test("expiry, revocation, role changes, member removal and persisted rate limits
     ).status,
     403,
   );
-  db.prepare("DELETE FROM book_members WHERE book_id=?").run(f.ledger.id);
+  await db
+    .prepare("DELETE FROM book_members WHERE book_id=$1")
+    .run(f.ledger.id);
   assert.equal((await f.call("/ping", { bearer: live.token })).status, 404);
-  db.close();
+  await db.close();
 });
 test("revocation during model processing rejects the write and recognize-only tokens cannot auto-post", async (context) => {
   let release, entered;
@@ -333,7 +336,6 @@ test("revocation during model processing rejects the write and recognize-only to
   ).json();
   assert.equal(latest.revision, recognized.revision);
 });
-
 test("membership APIs revoke issued tokens on role change and exit; viewers cannot mint write scopes", async (context) => {
   const f = await fixture(context),
     memberCookie = await register(f, "token.member");

@@ -10,23 +10,16 @@ export const digest = (value) =>
   createHash("sha256")
     .update(typeof value === "string" ? value : JSON.stringify(value))
     .digest("hex");
-export function transaction(database, action) {
-  database.exec("BEGIN IMMEDIATE");
-  try {
-    const result = action();
-    database.exec("COMMIT");
-    return result;
-  } catch (error) {
-    database.exec("ROLLBACK");
-    throw error;
-  }
+export async function transaction(database, action) {
+  return await database.transaction(action);
 }
-export function membership(database, bookId, userId) {
-  const member = database
-    .prepare("SELECT role FROM book_members WHERE book_id=? AND user_id=?")
+export async function membership(database, bookId, userId) {
+  if (database.isInTransaction()) await database.lockBook(bookId);
+  const member = await database
+    .prepare("SELECT role FROM book_members WHERE book_id=$1 AND user_id=$2")
     .get(bookId, userId);
-  const book = database
-    .prepare("SELECT * FROM books WHERE id=? AND authority='server'")
+  const book = await database
+    .prepare("SELECT * FROM books WHERE id=$1 AND authority='server'")
     .get(bookId);
   if (!member || !book)
     throw new HttpError(404, "联网账本不存在或已失去权限。");
@@ -51,7 +44,7 @@ export function requireManager(access, ownerOnly = false) {
     throw new HttpError(403, "需要账本管理权限。");
 }
 // Membership changes have their own audit entries and cannot be undone as ledger patches.
-export function auditMembership(
+export async function auditMembership(
   database,
   bookId,
   userId,
@@ -59,11 +52,11 @@ export function auditMembership(
   now,
   source = "membership",
 ) {
-  const book = database
-    .prepare("SELECT revision FROM books WHERE id=?")
+  const book = await database
+    .prepare("SELECT revision FROM books WHERE id=$1")
     .get(bookId);
-  database
-    .prepare("INSERT INTO book_operations VALUES(?,?,?,?,?,?,?,?)")
+  await database
+    .prepare("INSERT INTO book_operations VALUES($1,$2,$3,$4,$5,$6,$7,$8)")
     .run(
       randomUUID(),
       bookId,
@@ -75,7 +68,7 @@ export function auditMembership(
       new Date(now()).toISOString(),
     );
 }
-export function applyOperation({
+export async function applyOperation({
   database,
   bookId,
   userId,
@@ -83,6 +76,7 @@ export function applyOperation({
   now,
   source = "app",
   command,
+  revalidate,
 }) {
   if (typeof body.key !== "string" || !/^[A-Za-z0-9:_-]{8,160}$/.test(body.key))
     throw new HttpError(400, "缺少有效的幂等键。");
@@ -91,13 +85,15 @@ export function applyOperation({
   const payload = digest(
     command ? { command } : { patch: body.patch, undoId: body.undoId },
   );
-  return transaction(database, () => {
-    const access = membership(database, bookId, userId);
+  return await transaction(database, async () => {
+    await database.lockBook(bookId);
+    await revalidate?.();
+    const access = await membership(database, bookId, userId);
     if (access.role === "viewer")
       throw new HttpError(403, "只读成员不能写入。");
-    const previous = database
+    const previous = await database
       .prepare(
-        "SELECT digest,result FROM book_requests WHERE book_id=? AND user_id=? AND request_key=?",
+        "SELECT digest,result FROM book_requests WHERE book_id=$1 AND user_id=$2 AND request_key=$3",
       )
       .get(bookId, userId, body.key);
     if (previous) {
@@ -114,8 +110,8 @@ export function applyOperation({
     const before = migrateLedger(JSON.parse(access.book.ledger));
     let patch = body.patch;
     if (body.undoId) {
-      const operation = database
-        .prepare("SELECT * FROM book_operations WHERE id=? AND book_id=?")
+      const operation = await database
+        .prepare("SELECT * FROM book_operations WHERE id=$1 AND book_id=$2")
         .get(body.undoId, bookId);
       if (
         !operation ||
@@ -183,9 +179,11 @@ export function applyOperation({
         continue;
       for (const split of record.detail?.splits ?? [])
         if (
-          !database
-            .prepare("SELECT 1 FROM book_members WHERE book_id=? AND user_id=?")
-            .get(bookId, split.memberId)
+          !(await database
+            .prepare(
+              "SELECT 1 FROM book_members WHERE book_id=$1 AND user_id=$2",
+            )
+            .get(bookId, split.memberId))
         )
           throw new HttpError(400, "AA 分摊须选择当前账本成员。");
     }
@@ -197,19 +195,21 @@ export function applyOperation({
     ]);
     for (const id of attachmentIds)
       if (
-        !database
-          .prepare("SELECT 1 FROM attachments WHERE id=? AND book_id=?")
-          .get(id, bookId)
+        !(await database
+          .prepare("SELECT 1 FROM attachments WHERE id=$1 AND book_id=$2")
+          .get(id, bookId))
       )
         throw new HttpError(400, "附件不存在或不属于当前账本。");
     const revision = access.book.revision + 1;
     const at = new Date(now()).toISOString();
     const operationId = randomUUID();
-    database
-      .prepare("UPDATE books SET ledger=?,revision=?,updated_at=? WHERE id=?")
+    await database
+      .prepare(
+        "UPDATE books SET ledger=$1,revision=$2,updated_at=$3 WHERE id=$4",
+      )
       .run(JSON.stringify(next), revision, at, bookId);
-    database
-      .prepare("INSERT INTO book_operations VALUES(?,?,?,?,?,?,?,?)")
+    await database
+      .prepare("INSERT INTO book_operations VALUES($1,$2,$3,$4,$5,$6,$7,$8)")
       .run(
         operationId,
         bookId,
@@ -230,9 +230,9 @@ export function applyOperation({
           (record.detail?.subscriptionId || record.recurringRuleId) &&
           !before.records.some((item) => item.id === record.id)
         )
-          database
+          await database
             .prepare(
-              "INSERT OR IGNORE INTO scheduler_runs(book_id,occurrence) VALUES(?,?)",
+              "INSERT INTO scheduler_runs(book_id,occurrence) VALUES($1,$2) ON CONFLICT DO NOTHING",
             )
             .run(bookId, record.id);
       }
@@ -243,8 +243,8 @@ export function applyOperation({
       ledger: next,
       operationId,
     };
-    database
-      .prepare("INSERT INTO book_requests VALUES(?,?,?,?,?)")
+    await database
+      .prepare("INSERT INTO book_requests VALUES($1,$2,$3,$4,$5)")
       .run(bookId, userId, body.key, payload, JSON.stringify(result));
     return result;
   });

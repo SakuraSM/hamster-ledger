@@ -51,7 +51,7 @@ export async function recognizeAi(context, bookId, body) {
     revalidate = () => {},
   } = context;
   const { text, ids } = payload(body);
-  let access = bookId ? membership(database, bookId, userId) : null;
+  let access = bookId ? await membership(database, bookId, userId) : null;
   if (access) manager(access);
   let ledger;
   try {
@@ -65,8 +65,12 @@ export async function recognizeAi(context, bookId, body) {
   } catch {
     throw new HttpError(400, "账户或分类上下文无效。");
   }
-  const images = ids.map((id) =>
-    attachmentJson(getAttachment(database, id, userId, bookId)),
+  const images = await Promise.all(
+    await Promise.all(
+      ids.map(async (id) =>
+        attachmentJson(await getAttachment(database, id, userId, bookId)),
+      ),
+    ),
   );
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Shanghai",
@@ -83,7 +87,7 @@ export async function recognizeAi(context, bookId, body) {
     ledger.aiDrafts?.filter((draft) => draft.sourceHash === sourceHash) ?? [];
   if (existing.length)
     return { ...snapshot(access), drafts: existing, reused: true };
-  const profile = readModelProfile(database, userId);
+  const profile = await readModelProfile(database, userId);
   if (images.length && !profile)
     throw new HttpError(
       400,
@@ -93,7 +97,7 @@ export async function recognizeAi(context, bookId, body) {
     throw new HttpError(409, "图片发送目标已变更，请核对服务地址后重试。");
   const candidates = profile
     ? await extractWithModel({
-        credentials: modelCredentials(context),
+        credentials: await modelCredentials(context),
         transport: modelTransport,
         text,
         images,
@@ -108,7 +112,7 @@ export async function recognizeAi(context, bookId, body) {
         today,
       })
     : parseRuleText(text, ledger, today);
-  revalidate();
+  await revalidate();
   const drafts = candidates.map((candidate) => ({
     id: randomUUID(),
     sourceHash,
@@ -127,7 +131,7 @@ export async function recognizeAi(context, bookId, body) {
     state: "pending",
   }));
   if (!access) return { drafts };
-  access = membership(database, bookId, userId);
+  access = await membership(database, bookId, userId);
   manager(access);
   if (access.book.revision !== body.revision)
     throw new HttpError(
@@ -137,20 +141,23 @@ export async function recognizeAi(context, bookId, body) {
     );
   const autoPost =
     !context.forceDrafts &&
-    database
-      .prepare("SELECT ai_auto_post FROM book_options WHERE book_id=?")
-      .get(bookId)?.ai_auto_post === 1;
+    (
+      await database
+        .prepare("SELECT ai_auto_post FROM book_options WHERE book_id=$1")
+        .get(bookId)
+    )?.ai_auto_post === true;
   let next;
   try {
     next = addAiDrafts(ledger, drafts, autoPost);
   } catch (error) {
     throw new HttpError(400, error.message);
   }
-  const result = applyOperation({
+  const result = await applyOperation({
     database,
     bookId,
     userId,
     now,
+    revalidate: context.revalidate,
     source: context.source ?? (autoPost ? "ai-auto" : "ai"),
     body: {
       key: body.key,
@@ -165,9 +172,9 @@ export async function recognizeAi(context, bookId, body) {
     ),
   };
 }
-export function confirmNetworkDraft(context, bookId, body) {
+export async function confirmNetworkDraft(context, bookId, body) {
   const { database, userId, now } = context;
-  const access = membership(database, bookId, userId);
+  const access = await membership(database, bookId, userId);
   manager(access);
   const ledger = snapshot(access).ledger,
     draft = ledger.aiDrafts?.find((item) => item.id === body.draftId);
@@ -178,9 +185,9 @@ export function confirmNetworkDraft(context, bookId, body) {
     draftId: body.draftId,
     entry: body.entry,
   };
-  const previous = database
+  const previous = await database
     .prepare(
-      "SELECT digest FROM book_requests WHERE book_id=? AND user_id=? AND request_key=?",
+      "SELECT digest FROM book_requests WHERE book_id=$1 AND user_id=$2 AND request_key=$3",
     )
     .get(bookId, userId, body.key ?? "");
   if (previous && previous.digest !== digest({ command }))
@@ -194,11 +201,12 @@ export function confirmNetworkDraft(context, bookId, body) {
   } catch (error) {
     throw new HttpError(400, error.message);
   }
-  return applyOperation({
+  return await applyOperation({
     database,
     bookId,
     userId,
     now,
+    revalidate: context.revalidate,
     source: context.source ?? "ai-confirm",
     command,
     body: {
@@ -221,38 +229,47 @@ export async function aiApi(context) {
     return true;
   }
   if (action === "confirm" && bookId && request.method === "POST") {
-    json(response, 200, confirmNetworkDraft(context, bookId, await readBody()));
+    json(
+      response,
+      200,
+      await confirmNetworkDraft(context, bookId, await readBody()),
+    );
     return true;
   }
   if (action === "options" && bookId) {
-    const access = membership(database, bookId, userId);
+    const access = await membership(database, bookId, userId);
     if (request.method === "GET") {
       json(response, 200, {
         autoPost:
-          database
-            .prepare("SELECT ai_auto_post FROM book_options WHERE book_id=?")
-            .get(bookId)?.ai_auto_post === 1,
+          (
+            await database
+              .prepare("SELECT ai_auto_post FROM book_options WHERE book_id=$1")
+              .get(bookId)
+          )?.ai_auto_post === true,
       });
       return true;
     }
     if (request.method === "PUT") {
       const body = await readBody();
-      requireManager(membership(database, bookId, userId));
+      requireManager(await membership(database, bookId, userId));
       if (typeof body.autoPost !== "boolean")
         throw new HttpError(400, "请选择是否自动入账。");
-      database
-        .prepare(
-          "INSERT INTO book_options VALUES(?,?) ON CONFLICT(book_id) DO UPDATE SET ai_auto_post=excluded.ai_auto_post",
-        )
-        .run(bookId, body.autoPost ? 1 : 0);
-      auditMembership(
-        database,
-        bookId,
-        userId,
-        body.autoPost ? "开启 AI 自动入账" : "关闭 AI 自动入账",
-        now,
-        "settings",
-      );
+      await database.transaction(async () => {
+        requireManager(await membership(database, bookId, userId));
+        await database
+          .prepare(
+            "INSERT INTO book_options VALUES($1,$2) ON CONFLICT(book_id) DO UPDATE SET ai_auto_post=excluded.ai_auto_post",
+          )
+          .run(bookId, body.autoPost ? 1 : 0);
+        await auditMembership(
+          database,
+          bookId,
+          userId,
+          body.autoPost ? "开启 AI 自动入账" : "关闭 AI 自动入账",
+          now,
+          "settings",
+        );
+      });
       json(response, 200, { autoPost: body.autoPost });
       return true;
     }

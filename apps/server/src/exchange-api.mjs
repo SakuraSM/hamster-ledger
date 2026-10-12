@@ -15,9 +15,9 @@ export async function fetchExchangeRate({
   dateSchema.parse(date);
   if (currency === "CNY")
     return { currency, date, rate: "1", source: "manual", isCached: false };
-  const exact = database
+  const exact = await database
     .prepare(
-      "SELECT currency,date,rate,source FROM fx_rates WHERE currency=? AND date=?",
+      "SELECT currency,date,rate,source FROM fx_rates WHERE currency=$1 AND date=$2",
     )
     .get(currency, date);
   if (exact) return { ...exact, isCached: true };
@@ -41,14 +41,16 @@ export async function fetchExchangeRate({
       rate: String(value.rate),
       source: "frankfurter",
     });
-    database
-      .prepare("INSERT OR REPLACE INTO fx_rates VALUES(?,?,?,?)")
+    await database
+      .prepare(
+        "INSERT INTO fx_rates VALUES($1,$2,$3,$4) ON CONFLICT(currency,date) DO UPDATE SET rate=excluded.rate,source=excluded.source",
+      )
       .run(result.currency, result.date, result.rate, result.source);
     return { ...result, isCached: false };
   } catch {
-    const cached = database
+    const cached = await database
       .prepare(
-        "SELECT currency,date,rate,source FROM fx_rates WHERE currency=? AND date<=? ORDER BY date DESC LIMIT 1",
+        "SELECT currency,date,rate,source FROM fx_rates WHERE currency=$1 AND date<=$2 ORDER BY date DESC LIMIT 1",
       )
       .get(currency, date);
     if (cached) return { ...cached, isCached: true, needsConfirmation: true };

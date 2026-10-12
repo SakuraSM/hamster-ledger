@@ -1,12 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
 import { scrypt, createHash } from "node:crypto";
 import { promisify } from "node:util";
 import { setup, register, login, EMPTY, TEST_PASSWORD } from "./helpers.mjs";
 import { AUTH_POLICY } from "../src/auth-policy.mjs";
 import { resetAccountPassword } from "../src/reset-password.mjs";
-
 test("requires both a session CSRF token and the expected account for writes", async (context) => {
   const client = await setup(context);
   const cookie = await register(client);
@@ -124,12 +122,12 @@ test("returns the same login error for missing accounts and wrong passwords and 
   });
   assert.equal(blocked.status, 429);
   assert.ok(Number(blocked.headers.get("retry-after")) > 0);
-  const database = new DatabaseSync(client.databasePath);
+  const database = await client.openDatabase();
   assert.ok(
-    database.prepare("SELECT count(*) AS count FROM auth_limits").get().count >
-      0,
+    (await database.prepare("SELECT count(*) AS count FROM auth_limits").get())
+      .count > 0,
   );
-  database.close();
+  await database.close();
 });
 test("rotates the browser session on login and caps concurrent sessions", async (context) => {
   const client = await setup(context);

@@ -1,12 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
+import { testDatabase } from "./postgres-fixture.mjs";
 import { fetchExchangeRate } from "../src/exchange-api.mjs";
-test("exchange quotes preserve the actual publication date, cache explicitly and never invent parity", async () => {
-  const database = new DatabaseSync(":memory:");
-  database.exec(
-    "CREATE TABLE fx_rates(currency TEXT,date TEXT,rate TEXT,source TEXT,PRIMARY KEY(currency,date))",
-  );
+test("exchange quotes preserve the actual publication date, cache explicitly and never invent parity", async (context) => {
+  const { database } = await testDatabase(context);
   try {
     let calls = 0;
     const fetcher = async () => {
@@ -70,6 +67,6 @@ test("exchange quotes preserve the actual publication date, cache explicitly and
       /手动填写/,
     );
   } finally {
-    database.close();
+    await database.close();
   }
 });
