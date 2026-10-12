@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+group = 'expo.modules.paymentinbox'
+version = '0.1.0'
+android {
+  namespace 'expo.modules.paymentinbox'
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+    testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+  }
+}
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  testImplementation 'junit:junit:4.13.2'
+  androidTestImplementation 'junit:junit:4.13.2'
+  androidTestImplementation 'androidx.test:runner:1.7.0'
+  androidTestImplementation 'androidx.test:core:1.7.0'
+}

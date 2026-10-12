@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-12",
+  "scope": "server PostgreSQL migration; mobile SQLCipher unchanged",
+  "postgresImage": "postgres:18.6-bookworm",
+  "check": {
+    "result": "passed",
+    "vitest": 187,
+    "server": 55,
+    "sites": 4,
+    "dependency": 9,
+    "total": 255
+  },
+  "databaseTests": {
+    "realPostgres": true,
+    "isolatedSchemas": true,
+    "legacyTables": 17,
+    "readOnlySource": true,
+    "nonemptyTargetRejected": true,
+    "failedImportRolledBack": true,
+    "sourceBytesPreserved": true,
+    "crossConnectionCas": true,
+    "durableReplay": true,
+    "multipleSchedulers": true
+  },
+  "container": {
+    "architecture": "arm64",
+    "imageSha256": "9766b24603d44504f61022a3b43dda1861d523d2ab8e8ee6397486d0145027e3",
+    "health": "passed",
+    "restart": "passed",
+    "postgresDumpRestore": "passed",
+    "isolatedVolumeRestore": "passed",
+    "records": 1,
+    "attachments": 1,
+    "tokenAndIdempotency": "preserved",
+    "modelMasterKey": "preserved",
+    "runtimeDatabaseRole": "hamster NOSUPERUSER"
+  },
+  "existingDataMigrationExecuted": false,
+  "productionCutoverExecuted": false,
+  "formalImagePublished": false
+}

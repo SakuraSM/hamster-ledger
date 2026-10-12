@@ -8,27 +8,34 @@ import {
 } from "./network-service.mjs";
 import { json, HttpError } from "./http.mjs";
 const INVITE_LIFETIME = 7 * 24 * 60 * 60 * 1000;
-export function acceptInvite({ database, userId, body, now }) {
-  return transaction(database, () => {
-    const invitation = database
+export async function acceptInvite({ database, userId, body, now }) {
+  return await transaction(database, async () => {
+    let invitation = await database
       .prepare(
-        "SELECT * FROM book_invites WHERE code_hash=? AND revoked_at IS NULL AND used_by IS NULL AND expires_at>?",
+        "SELECT * FROM book_invites WHERE code_hash=$1 AND revoked_at IS NULL AND used_by IS NULL AND expires_at>$2",
       )
       .get(digest(String(body.code ?? "")), now());
     if (!invitation) throw new HttpError(400, "邀请码无效、已使用或已过期。");
+    await database.lockBook(invitation.book_id);
+    invitation = await database
+      .prepare(
+        "SELECT * FROM book_invites WHERE id=$1 AND revoked_at IS NULL AND used_by IS NULL AND expires_at>$2 FOR UPDATE",
+      )
+      .get(invitation.id, now());
+    if (!invitation) throw new HttpError(400, "邀请码无效、已使用或已过期。");
     if (
-      database
-        .prepare("SELECT 1 FROM book_members WHERE book_id=? AND user_id=?")
+      await database
+        .prepare("SELECT 1 FROM book_members WHERE book_id=$1 AND user_id=$2")
         .get(invitation.book_id, userId)
     )
       throw new HttpError(409, "你已加入此账本。");
-    database
-      .prepare("INSERT INTO book_members VALUES(?,?,?)")
+    await database
+      .prepare("INSERT INTO book_members VALUES($1,$2,$3)")
       .run(invitation.book_id, userId, invitation.role);
-    database
-      .prepare("UPDATE book_invites SET used_by=? WHERE id=?")
+    await database
+      .prepare("UPDATE book_invites SET used_by=$1 WHERE id=$2")
       .run(userId, invitation.id);
-    auditMembership(
+    await auditMembership(
       database,
       invitation.book_id,
       userId,
@@ -38,7 +45,7 @@ export function acceptInvite({ database, userId, body, now }) {
     return { id: invitation.book_id };
   });
 }
-export function memberRoute({
+export async function memberRoute({
   database,
   response,
   access,
@@ -50,9 +57,9 @@ export function memberRoute({
   const bookId = access.book.id;
   if (rest === "/members" && method === "GET") {
     json(response, 200, {
-      members: database
+      members: await database
         .prepare(
-          "SELECT m.user_id AS id,u.username,m.role FROM book_members m JOIN users u ON u.id=m.user_id WHERE m.book_id=? ORDER BY u.username",
+          "SELECT m.user_id AS id,u.username,m.role FROM book_members m JOIN users u ON u.id=m.user_id WHERE m.book_id=$1 ORDER BY u.username",
         )
         .all(bookId),
     });
@@ -61,9 +68,9 @@ export function memberRoute({
   if (rest === "/invites" && method === "GET") {
     requireManager(access);
     json(response, 200, {
-      invites: database
+      invites: await database
         .prepare(
-          "SELECT id,role,expires_at AS expiresAt,used_by AS usedBy,revoked_at AS revokedAt FROM book_invites WHERE book_id=?",
+          'SELECT id,role,expires_at AS "expiresAt",used_by AS "usedBy",revoked_at AS "revokedAt" FROM book_invites WHERE book_id=$1',
         )
         .all(bookId),
     });
@@ -82,11 +89,21 @@ export function memberRoute({
     const code = randomBytes(24).toString("base64url"),
       id = randomUUID(),
       expiresAt = now() + INVITE_LIFETIME;
-    transaction(database, () => {
-      database
-        .prepare("INSERT INTO book_invites VALUES(?,?,?,?,?,NULL,NULL,?)")
+    await transaction(database, async () => {
+      const current = await membership(database, bookId, access.userId);
+      requireManager(current);
+      if (body.role === "admin" && current.role !== "owner")
+        throw new HttpError(403, "只有所有者能邀请管理员。");
+      await database
+        .prepare("INSERT INTO book_invites VALUES($1,$2,$3,$4,$5,NULL,NULL,$6)")
         .run(id, bookId, digest(code), body.role, expiresAt, access.userId);
-      auditMembership(database, bookId, access.userId, "创建成员邀请", now);
+      await auditMembership(
+        database,
+        bookId,
+        access.userId,
+        "创建成员邀请",
+        now,
+      );
     });
     json(response, 201, { id, code, expiresAt });
     return true;
@@ -94,22 +111,32 @@ export function memberRoute({
   const revoke = rest.match(/^\/invites\/([a-z0-9-]+)$/);
   if (revoke && method === "DELETE") {
     requireManager(access);
-    transaction(database, () => {
-      database
+    await transaction(database, async () => {
+      const current = await membership(database, bookId, access.userId);
+      requireManager(current);
+      if (body.role === "admin" && current.role !== "owner")
+        throw new HttpError(403, "只有所有者能邀请管理员。");
+      await database
         .prepare(
-          "UPDATE book_invites SET revoked_at=? WHERE id=? AND book_id=?",
+          "UPDATE book_invites SET revoked_at=$1 WHERE id=$2 AND book_id=$3",
         )
         .run(now(), revoke[1], bookId);
-      auditMembership(database, bookId, access.userId, "撤销成员邀请", now);
+      await auditMembership(
+        database,
+        bookId,
+        access.userId,
+        "撤销成员邀请",
+        now,
+      );
     });
     json(response, 200, { ok: true });
     return true;
   }
   const member = rest.match(/^\/members\/([a-z0-9-]+)$/);
   if (member && ["PUT", "DELETE"].includes(method)) {
-    transaction(database, () => {
-      const current = membership(database, bookId, access.userId);
-      const target = membership(database, bookId, member[1]);
+    await transaction(database, async () => {
+      const current = await membership(database, bookId, access.userId);
+      const target = await membership(database, bookId, member[1]);
       const leaving = method === "DELETE" && member[1] === access.userId;
       if (!leaving) requireManager(current);
       if (target.role === "owner")
@@ -125,26 +152,26 @@ export function memberRoute({
           ].includes(body.role)
         )
           throw new HttpError(400, "角色无效。");
-        database
+        await database
           .prepare(
-            "UPDATE book_members SET role=? WHERE book_id=? AND user_id=?",
+            "UPDATE book_members SET role=$1 WHERE book_id=$2 AND user_id=$3",
           )
           .run(body.role, bookId, member[1]);
       } else
-        database
-          .prepare("DELETE FROM book_members WHERE book_id=? AND user_id=?")
+        await database
+          .prepare("DELETE FROM book_members WHERE book_id=$1 AND user_id=$2")
           .run(bookId, member[1]);
-      database
+      await database
         .prepare(
-          "UPDATE open_tokens SET revoked_at=? WHERE book_id=? AND user_id=?",
+          "UPDATE open_tokens SET revoked_at=$1 WHERE book_id=$2 AND user_id=$3",
         )
         .run(now(), bookId, member[1]);
-      database
+      await database
         .prepare(
-          "UPDATE book_invites SET revoked_at=? WHERE book_id=? AND created_by=? AND used_by IS NULL",
+          "UPDATE book_invites SET revoked_at=$1 WHERE book_id=$2 AND created_by=$3 AND used_by IS NULL",
         )
         .run(now(), bookId, member[1]);
-      auditMembership(
+      await auditMembership(
         database,
         bookId,
         access.userId,
@@ -160,30 +187,36 @@ export function memberRoute({
     return true;
   }
   if (rest === "/owner" && method === "PUT") {
-    transaction(database, () => {
-      requireManager(membership(database, bookId, access.userId), true);
-      const target = membership(database, bookId, String(body.userId));
+    await transaction(database, async () => {
+      requireManager(await membership(database, bookId, access.userId), true);
+      const target = await membership(database, bookId, String(body.userId));
       if (target.userId === access.userId)
         throw new HttpError(400, "请选择另一位成员。");
-      database
+      await database
         .prepare(
-          "UPDATE book_members SET role='admin' WHERE book_id=? AND user_id=?",
+          "UPDATE book_members SET role='admin' WHERE book_id=$1 AND user_id=$2",
         )
         .run(bookId, access.userId);
-      database
+      await database
         .prepare(
-          "UPDATE book_members SET role='owner' WHERE book_id=? AND user_id=?",
+          "UPDATE book_members SET role='owner' WHERE book_id=$1 AND user_id=$2",
         )
         .run(bookId, target.userId);
-      database
-        .prepare("UPDATE books SET user_id=? WHERE id=?")
+      await database
+        .prepare("UPDATE books SET user_id=$1 WHERE id=$2")
         .run(target.userId, bookId);
-      database
+      await database
         .prepare(
-          "UPDATE open_tokens SET revoked_at=? WHERE book_id=? AND user_id IN (?,?)",
+          "UPDATE open_tokens SET revoked_at=$1 WHERE book_id=$2 AND user_id IN ($3,$4)",
         )
         .run(now(), bookId, access.userId, target.userId);
-      auditMembership(database, bookId, access.userId, "转移账本所有权", now);
+      await auditMembership(
+        database,
+        bookId,
+        access.userId,
+        "转移账本所有权",
+        now,
+      );
     });
     json(response, 200, { ok: true });
     return true;

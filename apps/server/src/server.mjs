@@ -1,6 +1,6 @@
 import { modelSecrets } from "./model-secrets.mjs";
 import { requestModel } from "./model-transport.mjs";
-import { startScheduler } from "./scheduler.mjs";
+import { startScheduler, schedulerDate } from "./scheduler.mjs";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
@@ -17,8 +17,10 @@ const MIME = {
   ".webmanifest": "application/manifest+json",
   ".csv": "text/csv; charset=utf-8",
 };
-export function createLedgerServer({
-  databasePath = "data/ledger.sqlite",
+export async function createLedgerServer({
+  databaseUrl = process.env.DATABASE_URL,
+  databaseSchema = "public",
+  dataDirectory = process.env.LEDGER_DATA_DIR ?? "data",
   webRoot = "apps/web/dist/client",
   publicOrigin,
   allowRegistration = true,
@@ -28,15 +30,25 @@ export function createLedgerServer({
   modelTransport = requestModel,
 } = {}) {
   validateOrigin(publicOrigin);
-  const database = openDatabase(databasePath);
-  const api = createApi({
-    database,
-    publicOrigin,
-    allowRegistration,
-    now,
-    modelTransport,
-    secrets: modelSecrets(databasePath),
+  if (enableScheduler) schedulerDate(now(), timeZone);
+  const database = await openDatabase({
+    connectionString: databaseUrl,
+    schema: databaseSchema,
   });
+  let api;
+  try {
+    api = createApi({
+      database,
+      publicOrigin,
+      allowRegistration,
+      now,
+      modelTransport,
+      secrets: modelSecrets(dataDirectory),
+    });
+  } catch (error) {
+    await database.close();
+    throw error;
+  }
   const root = resolve(webRoot);
   const server = createServer(async (request, response) => {
     try {
@@ -89,6 +101,8 @@ export function createLedgerServer({
       });
       response.end(request.method === "HEAD" ? undefined : content);
     } catch (error) {
+      if (error.code === "23505")
+        error = new HttpError(409, "记录已存在，请刷新后重试。", "conflict");
       if (!response.headersSent)
         json(
           response,
@@ -110,15 +124,23 @@ export function createLedgerServer({
   server.keepAliveTimeout = 5000;
   server.maxHeadersCount = 100;
   const stopScheduler = enableScheduler
-    ? startScheduler({ database, now, timeZone })
+    ? await startScheduler({ database, now, timeZone })
     : () => {};
-  server.on("close", () => {
-    stopScheduler();
-    database.close();
-  });
+  const close = server.close.bind(server);
+  server.close = (callback) => {
+    close(async (error) => {
+      try {
+        await stopScheduler();
+        await database.close();
+        callback?.(error);
+      } catch (failure) {
+        callback?.(failure);
+      }
+    });
+    return server;
+  };
   return server;
 }
-
 function isLoopbackHost(host) {
   try {
     return ["127.0.0.1", "localhost", "[::1]"].includes(

@@ -1,61 +1,74 @@
 # 自托管仓鼠记账
 
-一个 Node.js 进程同时提供 Web 页面和同步 API。SQLite 保存在本机磁盘，不需要外部数据库。
+Node.js 提供 Web 与 HTTP API，PostgreSQL 保存账号、联网账本、附件、会话及任务状态。Web 本机账本和 Android SQLCipher 离线账本不依赖 PG；未确认支付通知只留在手机。
 
-## 直接运行
+## 源码与 Compose 启动
 
-使用 Node.js 22 或 24、npm 10 以上版本，在仓库根目录执行：
+使用当前源码构建 PG 版本。已有的 SQLite 版本镜像不能直接连接 PG。
+
+1. 在未跟踪的 `.env` 中分别设置 `POSTGRES_PASSWORD`（应用账号）和 `POSTGRES_ADMIN_PASSWORD`（数据库管理员），使用两个不同的随机十六进制字符串。可用 `openssl rand -hex 32` 分别生成；不要提交或公开这些值。
+2. 执行 `docker compose up -d --build`。
+3. 查看 `docker compose ps`，确认 PG 健康、迁移任务成功、应用健康，再打开 `http://127.0.0.1:4180`。
+
+Compose 默认构建 `hamster-ledger:postgres-local`，使用 `postgres:18.6-bookworm`。应用使用非超级用户 `hamster`，PG 不映射宿主端口。数据库卷挂载 `/var/lib/postgresql`；原 `ledger-data` 卷保留用于模型主密钥与旧库迁移。
+
+已有外部 PG 可通过 `DATABASE_URL` 接入。直接运行时使用 Node.js 22 或 24、npm 10 以上版本：
 
 ```sh
 npm ci
 npm run build
+# 通过部署环境设置 DATABASE_URL，不把凭据写入命令历史或仓库。
+npm run db:migrate
 npm start
 ```
 
-打开 `http://127.0.0.1:4180`。通过登录页注册或登录，再在“更多功能”中选择“上传当前账本并同步”。账号至少 3 位，新密码至少 15 个字符。默认没有账号；注册不会自动上传本机账本。
+| 环境变量                  | 默认值                    | 作用                                             |
+| ------------------------- | ------------------------- | ------------------------------------------------ |
+| `DATABASE_URL`            | 必填                      | PostgreSQL 连接地址；手机与浏览器不持有此凭据    |
+| `LEDGER_DATA_DIR`         | 仓库 `data`；容器 `/data` | 模型主密钥目录                                   |
+| `LEDGER_MODEL_MASTER_KEY` | 未设置                    | 可选，原有 32 字节 Base64 主密钥；需另行安全备份 |
+| `HOST` / `PORT`           | `127.0.0.1` / `4180`      | 监听地址与端口                                   |
+| `PUBLIC_ORIGIN`           | 本机请求 Origin           | 对外部署设置实际 HTTPS Origin                    |
+| `ALLOW_REGISTRATION`      | `true`                    | 设置 `false` 关闭注册                            |
+| `LEDGER_TIMEZONE`         | `Asia/Shanghai`           | 服务端周期记账时区                               |
+| `WEB_ROOT`                | `apps/web/dist/client`    | 网页构建目录                                     |
 
-| 环境变量             | 默认值                      | 作用                            |
-| -------------------- | --------------------------- | ------------------------------- |
-| `HOST`               | `127.0.0.1`                 | 监听地址                        |
-| `PORT`               | `4180`                      | HTTP 端口                       |
-| `DATABASE_PATH`      | 仓库 `data/ledger.sqlite`   | SQLite 文件路径                 |
-| `WEB_ROOT`           | 仓库 `apps/web/dist/client` | 编译后的网页目录                |
-| `PUBLIC_ORIGIN`      | 请求的 HTTP Origin          | 公网部署时设置完整 HTTPS Origin |
-| `ALLOW_REGISTRATION` | `true`                      | 设置 `false` 关闭新账号注册     |
+应用启动校验 schema，不自行回退到 SQLite。迁移命令是独立步骤；Compose 会在应用启动前运行迁移任务。`/api/health` 检查数据库连通性，返回 `storage: postgresql`；健康不等同于模型服务或业务验收。
 
-数据库目录不应进入 Git。只监听回环地址时用于本机验证；对外提供服务时，通过 HTTPS 反向代理转发，并把 `PUBLIC_ORIGIN` 设置为用户实际访问的 Origin，例如 `https://ledger.example.com`。Origin 不匹配的写入会被拒绝。Vite 开发/预览服务器不提供同步 API。
+外部 PG 应使用校验服务端证书的 TLS 连接。反向代理部署时保持应用端口只监听回环地址，配置真实 HTTPS `PUBLIC_ORIGIN`；写入 Origin 不匹配会被拒绝。
 
-## Docker
+## 旧 SQLite 迁移
+
+1. 停止旧服务写入，保留一致性 SQLite 备份，包含尚未 checkpoint 的 WAL 内容；保留原 `.model-key` 或 `LEDGER_MODEL_MASTER_KEY`。
+2. 准备空的 PG 业务库并执行 `npm run db:migrate`。
+3. 设置 `LEDGER_DATA_DIR` 指向原模型主密钥目录，预检查：
 
 ```sh
-docker compose pull
-docker compose up -d
+npm run db:import-sqlite -- --source data/ledger.sqlite --dry-run
 ```
 
-默认同样使用 `http://127.0.0.1:4180`，数据库写入 `ledger-data` 卷。`compose.yaml` 中的 `PUBLIC_ORIGIN` 必须与访问地址完全一致，`localhost` 和 `127.0.0.1` 也不同。容器以非 root 用户运行。
+4. 核对各表数量、账本汇总与跳过的无效旧会话，再执行：
 
-注册需要的账号后，可以将 `ALLOW_REGISTRATION` 改为 `false` 并重建容器。更改容器不会删除命名数据卷。
+```sh
+npm run db:import-sqlite -- --source data/ledger.sqlite --apply
+```
 
-镜像支持 AMD64 和 ARM64。源码构建可使用 `docker compose up -d --build`。版本发布、健康检查、模型主密钥以及停机备份恢复步骤见 [Docker 运维说明](container-operations.md)。
+5. 导入只读旧库，目标非空时拒绝覆盖；插入或内容校验失败整体回滚。核对登录、账本版本、附件、模型配置、Token 和调度状态后再恢复流量。
 
-## 同步和冲突
+`DATABASE_PATH` 不再是运行配置，旧文件仅作为导入源。原主密钥缺失时停止导入含密钥的模型配置，不生成新密钥替代。迁移保留用户及账本 ID、会话摘要、版本号、请求幂等回执与原排序。缺少现代会话 ID 或 CSRF 字段的旧会话不导入，报告列出跳过数量，用户需重新登录。
 
-连接后，保存本机账本会触发同步；页面可见时每 15 秒检查远端更新。没有本机修改时，自动接收云端版本。两边同时修改时暂停同步并显示冲突，用户可把云端版本恢复为新账本，再整理需要保留的记录。不会自动覆盖其中一边。
+PG 接受新写入后，旧 SQLite 不再包含最新数据，不能直接切回旧镜像和旧文件。先停写并保全 PG 数据，再安排兼容版本恢复及数据核对。
 
-个人账本原同步方式以完整账本为单位，单次上限 20 MB。家庭共享、后台自动记账及开放 API 使用服务端主导的联网账本，须先确认转换；转换后通过带版本与幂等键的业务操作写入，离线缓存只读。见 [开放 API 与机器人接入](open-api.md)。
+## 同步与备份
 
-原始上传文件在本机解析，规范化记录及保留的原始字段属于同步内容。断开同步和退出账号均保留已有本机与云端数据。
+同步 API、版本冲突和权限行为保持原协议。个人同步以完整账本为单位；联网账本使用版本与幂等键提交业务操作。服务端无法访问手机未确认的通知收件箱。
 
-本机解锁密码加密浏览器存储，需要浏览器支持 Web Crypto 和 Web Locks。启用加密期间发现其他页面写入会中止迁移；其他已打开页面需要刷新并解锁后继续记账。云端账户密码用于登录。这两个密码独立。服务器数据库保存明文账本，不提供端到端加密或邮箱验证。忘记密码时，可由管理员重置并要求下次登录改密，见 [登录与认证策略](authentication.md)。
+应用内完整归档适合单账本转移，不包含账号、Token 或模型主密钥。服务端恢复必须同时保存 PG 逻辑备份和模型主密钥，步骤见 [容器备份与恢复](container-operations.md)。
 
-## 备份与恢复
+服务端账本并非端到端加密；模型凭据单独加密。忘记账号密码可由管理员执行 `npm run auth:reset`，详见 [认证策略](authentication.md)。
 
-用户可在“更多功能”导出含图片的 `.hamster` 完整归档（仍支持旧 JSON 导入），恢复前先预览记录数，再创建新账本。CSV 与 Excel 用于账单导出，不包含完整配置。
+## 测试
 
-服务端采用 SQLite WAL。做文件备份时先停止服务，再复制整个数据库目录，避免只复制主文件而遗漏 WAL。Docker 使用命名卷时，同样应在停止容器后备份该卷。恢复时替换停机状态下的数据库目录，保持文件权限，再启动服务。
+`npm run test:server` 使用真实 PG。设置 `TEST_DATABASE_URL` 时在指定测试数据库创建隔离 schema；未设置时自动启动并清理独立 Docker PG 测试实例。不要提供生产数据库地址作为测试连接。
 
-升级认证版本时，需要同步更新前端构建和后端进程；数据库迁移保留用户与账本，旧会话需要重新登录。
-
-## 已验证范围
-
-在本机验证过 Node 启动、账号隔离、登录退出、并发 revision 检查、Docker 构建与容器重启后的账本保留。尚未部署公网，也未做多实例、长时间并发负载、跨设备实机或灾难恢复演练。Node 22 的 `node:sqlite` 会输出实验性 API 提示；此提示与测试通过是两个独立事实。
+`npm run check` 同时执行共享规则、Web、原生组件适配器和服务端回归。容器测试、原生 APK 与真实设备结果单独记录，不相互代替。

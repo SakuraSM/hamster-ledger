@@ -51,44 +51,55 @@ test("scheduler batches catchup, persists replay identities and resumes without 
   const book = await response.json();
   assert.equal(response.status, 201);
   const now = () => Date.UTC(2004, 1, 29, 16); // Shanghai has crossed into March; February's month-end charge is due.
-  let database = openDatabase(client.databasePath);
+  let database = await client.openDatabase();
   try {
     const first = await runScheduledBook({ database, bookId: book.id, now });
     assert.equal(first.changed, true);
     const stored = JSON.parse(
-      database.prepare("SELECT ledger FROM books WHERE id=?").get(book.id)
-        .ledger,
+      (
+        await database
+          .prepare("SELECT ledger FROM books WHERE id=$1")
+          .get(book.id)
+      ).ledger,
     );
     assert.equal(stored.records.length, 50);
     assert.equal(
-      database.prepare("SELECT count(*) AS count FROM scheduler_runs").get()
-        .count,
+      (
+        await database
+          .prepare("SELECT count(*) AS count FROM scheduler_runs")
+          .get()
+      ).count,
       50,
     );
   } finally {
-    database.close();
+    await database.close();
   }
-  database = openDatabase(client.databasePath);
+  database = await client.openDatabase();
   try {
     const repeated = await runScheduledBook({ database, bookId: book.id, now });
     assert.equal(repeated.changed, false);
     assert.equal(
       JSON.parse(
-        database.prepare("SELECT ledger FROM books WHERE id=?").get(book.id)
-          .ledger,
+        (
+          await database
+            .prepare("SELECT ledger FROM books WHERE id=$1")
+            .get(book.id)
+        ).ledger,
       ).records.length,
       50,
     );
     assert.equal(
-      database
-        .prepare(
-          "SELECT count(*) AS count FROM book_operations WHERE source='scheduler'",
-        )
-        .get().count,
+      (
+        await database
+          .prepare(
+            "SELECT count(*) AS count FROM book_operations WHERE source='scheduler'",
+          )
+          .get()
+      ).count,
       1,
     );
   } finally {
-    database.close();
+    await database.close();
   }
   assert.equal(schedulerDate(Date.UTC(2024, 1, 29, 16)), "2024-03-01");
   assert.equal(schedulerDate(Date.UTC(2024, 1, 29, 15, 59)), "2024-02-29");
@@ -110,7 +121,7 @@ test("missing foreign rates produce an actionable notice and never an assumed ex
     },
   });
   const book = await response.json(),
-    database = openDatabase(client.databasePath);
+    database = await client.openDatabase();
   try {
     await runScheduledBook({
       database,
@@ -121,14 +132,54 @@ test("missing foreign rates produce an actionable notice and never an assumed ex
       },
     });
     const ledger = JSON.parse(
-      database.prepare("SELECT ledger FROM books WHERE id=?").get(book.id)
-        .ledger,
+      (
+        await database
+          .prepare("SELECT ledger FROM books WHERE id=$1")
+          .get(book.id)
+      ).ledger,
     );
     assert.equal(ledger.records.length, 0);
     assert.ok(
       ledger.notifications.some((notice) => notice.title === "自动记账待处理"),
     );
   } finally {
-    database.close();
+    await database.close();
   }
+});
+
+test("two scheduler instances cannot post the same due occurrence twice", async (context) => {
+  const client = await setup(context),
+    cookie = await register(client);
+  const response = await client.request("/api/network/books", {
+    method: "POST",
+    cookie,
+    body: {
+      confirm: true,
+      name: "Concurrent scheduler QA",
+      ledger: {
+        ...EMPTY,
+        accounts: [account],
+        subscriptions: [{ ...subscription, nextDate: "2024-01-31" }],
+      },
+    },
+  });
+  const book = await response.json();
+  assert.equal(response.status, 201);
+  const first = await client.openDatabase(),
+    second = await client.openDatabase(),
+    now = () => Date.UTC(2024, 0, 31, 8);
+  await Promise.all([
+    runScheduledBook({ database: first, bookId: book.id, now }),
+    runScheduledBook({ database: second, bookId: book.id, now }),
+  ]);
+  const saved = JSON.parse(
+    (await first.prepare("SELECT ledger FROM books WHERE id=$1").get(book.id))
+      .ledger,
+  );
+  assert.equal(saved.records.length, 1);
+  assert.equal(
+    (await first.prepare("SELECT count(*) AS count FROM scheduler_runs").get())
+      .count,
+    1,
+  );
 });

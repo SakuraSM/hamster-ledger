@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
-import { readFile, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
 import { setup, register } from "./helpers.mjs";
 import { profile } from "./ai-fixtures.mjs";
 import { modelSecrets } from "../src/model-secrets.mjs";
@@ -13,22 +12,20 @@ test("keys are encrypted, stay opaque, survive reopening and cannot move silentl
   const result = await profile(client, cookie);
   assert.equal(result.hasKey, true);
   assert.equal(JSON.stringify(result).includes("synthetic-secret"), false);
-  const db = new DatabaseSync(client.databasePath, { readOnly: true });
-  const row = db.prepare("SELECT * FROM model_profiles").get();
-  db.close();
+  const db = await client.openDatabase();
+  const row = await db.prepare("SELECT * FROM model_profiles").get();
+  await db.close();
   assert.equal(row.secret.includes("synthetic-secret"), false);
   assert.equal(
-    modelSecrets(client.databasePath).open(row.user_id, row.secret),
+    modelSecrets(client.dataDirectory).open(row.user_id, row.secret),
     "synthetic-secret-not-real",
   );
   assert.equal(
-    (await stat(join(dirname(client.databasePath), ".model-key"))).mode & 0o777,
+    (await stat(join(client.dataDirectory, ".model-key"))).mode & 0o777,
     0o600,
   );
   assert.equal(
-    (await readFile(client.databasePath)).includes(
-      Buffer.from("synthetic-secret-not-real"),
-    ),
+    JSON.stringify(row).includes("synthetic-secret-not-real"),
     false,
   );
   const changed = await client.request("/api/models/profile", {
@@ -74,7 +71,6 @@ test("SSRF policy requires explicit LAN access and always blocks metadata endpoi
     /HTTPS/,
   );
 });
-
 test("capability tests validate the returned answer and list model IDs", async (context) => {
   let canSee = true;
   const client = await setup(context, {

@@ -36,10 +36,12 @@ git clone https://github.com/SakuraSM/hamster-ledger.git
 cd hamster-ledger
 npm ci
 npm run build
+# 通过部署环境设置 DATABASE_URL
+npm run db:migrate
 npm start
 ```
 
-打开 http://127.0.0.1:4180 。首次进入登录页，可登录或选择“仅在本机使用”；在示例账本导入时写入“我的账本”，其他账本导入时写入当前账本。需要同步时，通过登录页注册或登录，再在“更多功能”中连接账本。服务器数据默认保存在 `data/ledger.sqlite`。开发页面可单独运行 `npm run dev -- --host 127.0.0.1 --port 4187 --strictPort`，该 Vite 服务不提供同步 API。
+打开 http://127.0.0.1:4180 。首次进入登录页，可登录或选择“仅在本机使用”；在示例账本导入时写入“我的账本”，其他账本导入时写入当前账本。需要同步时，通过登录页注册或登录，再在“更多功能”中连接账本。服务器数据保存在 PostgreSQL；数据库和旧 SQLite 迁移步骤见 [自托管说明](docs/self-hosting.md)。开发页面可单独运行 `npm run dev -- --host 127.0.0.1 --port 4187 --strictPort`，该 Vite 服务不提供同步 API。
 
 ```sh
 npm run check       # 类型、边界、测试、构建与静态托管打包
@@ -106,3 +108,5 @@ npm run android:apk     # 可独立安装的 arm64 APK，默认开发签名
 两端提供完整交易、多币种汇率快照、家庭联网账本、AI 草稿、凭证归档、订阅、借贷、目标与通知。功能入口及验证边界见 [功能对照与证据](docs/homeledger-parity.md)。
 
 机器人接入见 [开放 API](docs/open-api.md)，镜像、Compose、升级和恢复见 [Docker 运维](docs/container-operations.md)。
+
+Android 新增默认关闭的[支付消息记账](docs/android-payment-notifications.md)，支付通知仅在本机形成待核对候选。服务端 PostgreSQL 切换与旧库导入见[迁移记录](docs/postgresql-migration.md)。
