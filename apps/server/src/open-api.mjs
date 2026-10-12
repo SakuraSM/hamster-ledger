@@ -79,6 +79,19 @@ async function listRecords(context, token, url) {
     nextOffset: offset + limit < records.length ? offset + limit : null,
   };
 }
+async function createdRecordResult(database, saved) {
+  const operation = await database
+    .prepare("SELECT before_json FROM book_operations WHERE id=$1")
+    .get(saved.operationId);
+  const beforeIds = new Set(
+    JSON.parse(operation.before_json).records.map((record) => record.id),
+  );
+  return {
+    revision: saved.revision,
+    operationId: saved.operationId,
+    record: saved.ledger.records.find((record) => !beforeIds.has(record.id)),
+  };
+}
 async function createRecord(context, token, body) {
   const current = snapshot(
     await membership(context.database, token.book_id, token.user_id),
@@ -106,11 +119,7 @@ async function createRecord(context, token, body) {
     },
     command: { type: "open-create", tokenId: token.id, entry: body.entry },
   });
-  return {
-    revision: result.revision,
-    operationId: result.operationId,
-    record: result.ledger.records.find((item) => item.id === id),
-  };
+  return createdRecordResult(context.database, result);
 }
 export async function openApi(context) {
   const { database, request, response, now } = context;
@@ -202,19 +211,7 @@ export async function openApi(context) {
       )
         throw new HttpError(409, "幂等键已用于另一项操作。");
       const saved = JSON.parse(persisted.result);
-      const operation = await database
-        .prepare("SELECT before_json FROM book_operations WHERE id=$1")
-        .get(saved.operationId);
-      const beforeIds = new Set(
-        JSON.parse(operation.before_json).records.map((record) => record.id),
-      );
-      result = {
-        revision: saved.revision,
-        operationId: saved.operationId,
-        record: saved.ledger.records.find(
-          (record) => !beforeIds.has(record.id),
-        ),
-      };
+      result = await createdRecordResult(database, saved);
     } else result = await createRecord(scoped, token, body);
     status = 201;
   } else if (path === "/ai/recognize") {
@@ -239,6 +236,19 @@ export async function openApi(context) {
   } else if (path === "/attachments") {
     status = 201;
     await transaction(database, async () => {
+      await database.lockBook(token.book_id);
+      await revalidate();
+      const receipt = await database
+        .prepare(
+          "SELECT * FROM open_requests WHERE token_id=$1 AND request_key=$2",
+        )
+        .get(token.id, key);
+      if (receipt) {
+        if (receipt.digest !== requestDigest)
+          throw new HttpError(409, "幂等键已用于另一项请求。");
+        result = JSON.parse(receipt.result);
+        return;
+      }
       const stored = await storeAttachment({
         ...scoped,
         bookId: token.book_id,
