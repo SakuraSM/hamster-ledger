@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "reviewedPullRequests": [18, 19],
+  "initialFeatureHead": "8b0f444eb930c80d327a82d898aa3a51f26ce0ed",
+  "fixCommit": "92069f393f26a71fbb852543f348e1d9d115d679",
+  "regressions": {
+    "realPostgres": true,
+    "syntheticOnly": true,
+    "count": 7,
+    "originalImplementationFailed": 7,
+    "fixedImplementationPassed": 7,
+    "cases": [
+      "concurrent record replay returns a complete stable receipt",
+      "attachment replay audits once",
+      "same-key different attachment payload rolls back",
+      "snapshot write cannot overwrite a converted book",
+      "write-token mint rejects a downgraded viewer",
+      "conversions cannot claim the same staged attachment",
+      "staged deletion cannot remove a claimed attachment"
+    ]
+  },
+  "fullCheck": {
+    "result": "passed",
+    "vitest": 221,
+    "server": 62,
+    "sites": 4,
+    "dependencies": 9,
+    "total": 296
+  },
+  "container": {
+    "imageSha256": "41ba941e483277d35d9f2f32bc3444c95ba2188c718ad075fe09fe280ffcdd23",
+    "image": "hamster-ledger:postgres-cr-qa",
+    "architecture": "arm64",
+    "health": "passed",
+    "restart": "passed",
+    "isolatedVolumeRestore": "passed",
+    "postgresDumpRestore": "passed",
+    "records": 1,
+    "attachments": 1,
+    "tokenAndIdempotency": "preserved",
+    "modelMasterKey": "preserved"
+  },
+  "mobileSourceChanged": false,
+  "productionDeploymentExecuted": false,
+  "actualLegacyDataImported": false
+}
