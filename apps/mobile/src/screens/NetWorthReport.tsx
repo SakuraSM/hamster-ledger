@@ -5,7 +5,6 @@ import { money, type Ledger } from "@hamster-ledger/core";
 import { useReportData } from "@hamster-ledger/ledger-react";
 import { useNativeAccount } from "../auth/NativeAccount";
 import { AmountText } from "../ui/AmountText";
-import { balanceAmountTone } from "../ui/amount-tones";
 import { NetWorthChart } from "../ui/NetWorthChart";
 import {
   netWorthChange,
@@ -168,7 +167,7 @@ function ChangeSummary({ rows }: ChangeSummaryProps): React.JSX.Element {
   return (
     <Text variant="bodyMedium">
       {change === 0 ? "期间持平 " : change > 0 ? "期间净增 " : "期间净减 "}
-      <AmountText amount={change} tone={balanceAmountTone(change)}>
+      <AmountText amount={change} tone="neutral">
         ¥{money(Math.abs(change))}
       </AmountText>
     </Text>

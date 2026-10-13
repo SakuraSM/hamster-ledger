@@ -1,5 +1,4 @@
 import { AmountText, useAmountColors } from "../ui/AmountText";
-import { balanceAmountTone } from "../ui/amount-tones";
 import { ExtendedReports } from "./ExtendedReports";
 import { NetWorthReport } from "./NetWorthReport";
 import { ReportRangePresets } from "../ui/ReportRangePresets";
@@ -82,11 +81,7 @@ export function ReportsScreen({
               ¥{money(totals.income)}
             </AmountText>{" "}
             · 结余{" "}
-            <AmountText
-              variant="titleLarge"
-              amount={totals.net}
-              tone={balanceAmountTone(totals.net)}
-            >
+            <AmountText variant="titleLarge" amount={totals.net} tone="neutral">
               ¥{money(totals.net)}
             </AmountText>
           </Text>

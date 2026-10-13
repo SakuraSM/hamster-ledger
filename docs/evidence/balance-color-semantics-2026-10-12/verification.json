@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-12",
+  "baseCommit": "88c6c215916a50572ffc618b4780e0c4555305f2",
+  "scope": "Android balance and net-worth presentation colors only; no financial model or storage changes",
+  "colors": {
+    "income": "#25664d",
+    "expense": "#a3432f",
+    "neutralLight": "#75685d",
+    "neutralDark": "#cbb7a7",
+    "assetCurve": "current theme primary"
+  },
+  "checks": {
+    "fullCheck": "passed",
+    "vitest": 221,
+    "serverRealPostgres": 62,
+    "sites": 4,
+    "dependencies": 9,
+    "total": 296,
+    "skillStaticGate": "passed"
+  },
+  "testStability": {
+    "initialFullChecks": "existing Web dialog focus test failed twice while standalone passed",
+    "fix": "await asynchronous focus restoration with waitFor; product dialog unchanged"
+  },
+  "emulator": {
+    "api": 36,
+    "architecture": "arm64-v8a",
+    "upgradeInstall": "passed",
+    "syntheticOnly": true,
+    "lightAndDark": "verified",
+    "positiveAndNegativeChanges": "verified",
+    "incomeExpenseAndNetMinor": [1850000, 864230, 985770]
+  },
+  "pixelVerification": {
+    "overview_before_green_balance": 2402,
+    "overview_after_neutral_balance": 2402,
+    "overview_after_green_balance": 0,
+    "income_green": 2941,
+    "expense_red": 12530,
+    "report_change_neutral": 955,
+    "report_change_green": 0
+  },
+  "apk": {
+    "name": "hamster-ledger-balance-colors-0.2.0-arm64.apk",
+    "sha256": "1c3797c39bfec5b6e0d8ea3e885187209943411b28cc3735a573a0aad4b7d4fa",
+    "signing": "development",
+    "build": "passed"
+  },
+  "physicalDeviceVerified": false,
+  "productionDataChanged": false
+}

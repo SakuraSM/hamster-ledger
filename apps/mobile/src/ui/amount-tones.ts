@@ -25,7 +25,3 @@ export function recordAmountTone(record: BillRecord): AmountTone {
     return AMOUNT_TONES.NEUTRAL;
   return KIND_TONES[record.kind];
 }
-export function balanceAmountTone(amount: number): AmountTone {
-  if (amount === 0) return AMOUNT_TONES.NEUTRAL;
-  return amount > 0 ? AMOUNT_TONES.INCOME : AMOUNT_TONES.EXPENSE;
-}
