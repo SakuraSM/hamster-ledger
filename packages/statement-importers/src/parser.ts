@@ -182,5 +182,9 @@ export function parseStatement(
       );
     }
   });
+  if (!records.length && !errors.length)
+    errors.push(
+      "表头之后没有可识别的交易明细，请核对表头所在行或重新导出账单。",
+    );
   return { records, errors };
 }

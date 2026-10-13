@@ -109,7 +109,7 @@ export function ImportScreen({
       setError(cause instanceof Error ? cause.message : "导入失败");
     }
   }
-  const mappingFile = files.find((file) => file.hash === mapping);
+  const mappingPreview = parsed.find((item) => item.file.hash === mapping);
   if (controller.mode === "demo")
     return (
       <Screen>
@@ -217,9 +217,10 @@ export function ImportScreen({
           </>
         ) : null}
       </Screen>
-      {mappingFile ? (
+      {mappingPreview ? (
         <StatementMapping
-          file={mappingFile}
+          file={mappingPreview.file}
+          preview={mappingPreview}
           onClose={() => setMapping(null)}
           onChange={(next) => {
             setFiles(
