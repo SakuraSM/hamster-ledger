@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-13",
+  "baseCommit": "be4cc25850b36488ec04afd514ce6cb30499cae9",
+  "reportedInput": "CSV; original file not supplied",
+  "reproduction": {
+    "syntheticOnly": true,
+    "cause": "Leading descriptive rows can make first-ten-row delimiter detection choose tab instead of the actual comma table; manual field changes cannot repair already-split cells",
+    "originalCsvTests": {
+      "failed": 5,
+      "passed": 2
+    },
+    "fixedCsvAndNativeMappingTests": 10,
+    "explicitZeroResultReason": true
+  },
+  "fullCheck": {
+    "result": "passed",
+    "vitest": 238,
+    "server": 62,
+    "sites": 4,
+    "dependencies": 9,
+    "total": 313
+  },
+  "runtime": {
+    "device": "API 36 ARM64 Android Emulator",
+    "systemDocumentPickerUsed": true,
+    "beforeRecords": 0,
+    "afterRecords": 2,
+    "detectedHeaderRow": 11,
+    "unsetMappingRecords": 0,
+    "restoredMappingRecords": 2,
+    "confirmedRecords": 2,
+    "expenseAfterRefundMinor": 1000,
+    "netMinor": -1000,
+    "originalBooksModified": false
+  },
+  "apk": {
+    "name": "hamster-ledger-alipay-csv-fix-0.2.0-arm64.apk",
+    "sha256": "eff388ba305112c216d7a3b1493da38ee569c302853a7fb994b964c4eec64a25",
+    "signing": "development",
+    "build": "passed",
+    "upgradeInstall": "passed"
+  },
+  "physicalDeviceVerified": false,
+  "originalUserCsvVerified": false,
+  "fixCommit": "295ecff35bc5a8c03e93571441de408c8713eeee"
+}

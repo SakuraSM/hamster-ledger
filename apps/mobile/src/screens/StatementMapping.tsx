@@ -9,17 +9,21 @@ import {
   mappingNeedsReview,
   validateMapping,
   type StatementFile,
+  type ParseResult,
 } from "@hamster-ledger/importers";
 import { SOURCES, type Source } from "@hamster-ledger/core";
 import { FormSheet } from "../ui/FormSheet";
 import { ChoiceField } from "../ui/ChoiceField";
+const ERROR_PREVIEW_LIMIT = 3;
 interface StatementMappingProps {
   file: StatementFile;
+  preview: ParseResult;
   onChange: (file: StatementFile) => void;
   onClose: () => void;
 }
 export function StatementMapping({
   file,
+  preview,
   onChange,
   onClose,
 }: StatementMappingProps): React.JSX.Element {
@@ -41,6 +45,14 @@ export function StatementMapping({
       <Text>
         当前使用第 {file.headerIndex + 1} 行表头。每个选项都附有原始数据样例。
       </Text>
+      <Text accessibilityLiveRegion="polite">
+        当前映射可解析 {preview.records.length} 条流水
+      </Text>
+      {preview.errors.length ? (
+        <HelperText type="error" visible accessibilityLiveRegion="polite">
+          {preview.errors.slice(0, ERROR_PREVIEW_LIMIT).join("\n")}
+        </HelperText>
+      ) : null}
       <Button
         mode="outlined"
         onPress={() => {
@@ -98,9 +110,9 @@ export function StatementMapping({
         value={file.account}
         onChangeText={(value) => onChange({ ...file, account: value })}
       />
-      {error || mappingError ? (
+      {error ? (
         <HelperText type="error" visible accessibilityLiveRegion="assertive">
-          {error || mappingError}
+          {error}
         </HelperText>
       ) : null}
       {FIELDS.map((field) => (
