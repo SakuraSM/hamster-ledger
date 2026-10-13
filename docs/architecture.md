@@ -35,7 +35,7 @@ docs/                       架构、设计、能力边界和 App 准备说明
 
 ## 导入链路
 
-1. 浏览器适配器通过 `File` 读取 CSV 或 Excel，解码并计算 SHA-256。
+1. 浏览器适配器通过 `File` 读取 CSV 或 Excel，解码并计算 SHA-256。CSV 将 Papa Parse 回调注入 `parseCsvRows`，根据实际表格选择分隔符，避免开头说明行干扰；共享包不依赖平台解析库。
 2. `createStatement({ name, hash, rows })` 接收普通字符串二维数组。
 3. `parseStatement` 按字段映射识别账单，保留原始字段与错误行。
 4. `planImport` 对账本与新记录去重，生成待确认项。
