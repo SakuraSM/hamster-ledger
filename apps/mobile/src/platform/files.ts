@@ -10,6 +10,7 @@ import * as XLSX from "xlsx";
 import * as codepages from "xlsx/dist/cpexcel.full.mjs";
 import {
   createStatement,
+  parseCsvRows,
   MAX_FILE_ROWS,
   type StatementFile,
 } from "@hamster-ledger/importers";
@@ -57,10 +58,11 @@ export async function readStatement(
     let rows: string[][];
     if (/\.csv$/i.test(asset.name)) {
       const text = decodeStatementText(bytes);
-      const result = Papa.parse<string[]>(text, { skipEmptyLines: false });
-      if (result.errors.some((error) => error.type === "Quotes"))
-        throw new Error("CSV 引号格式有误，请重新导出。");
-      rows = result.data.map((row) => row.map((value) => value.trim()));
+      rows = parseCsvRows({
+        text,
+        parse: (options) =>
+          Papa.parse<string[]>(text, { ...options, skipEmptyLines: false }),
+      });
     } else if (/\.xlsx?$/i.test(asset.name)) {
       const workbook = XLSX.read(bytes, {
         type: "array",
