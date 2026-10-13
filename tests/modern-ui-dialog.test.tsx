@@ -47,5 +47,5 @@ it("Escape closes a nested picker before its parent and restores focus to the op
   fireEvent.keyDown(document.body, { key: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   await waitFor(() => expect(closed).toHaveBeenCalledTimes(1));
-  expect(document.activeElement).toBe(opener);
+  await waitFor(() => expect(document.activeElement).toBe(opener));
 });

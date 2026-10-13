@@ -15,7 +15,6 @@ import {
 import { Screen, Section, styles } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
 import { AmountText, useAmountColors } from "../ui/AmountText";
-import { balanceAmountTone } from "../ui/amount-tones";
 import { RecordRow } from "./RecordRow";
 import { localNow } from "../platform/runtime";
 interface OverviewScreenProps {
@@ -100,7 +99,7 @@ export function OverviewScreen({
               <AmountText
                 variant="titleLarge"
                 amount={summary.net}
-                tone={balanceAmountTone(summary.net)}
+                tone="neutral"
                 isMuted={isAmountHidden}
               >
                 {amount(summary.net)}
