@@ -2,10 +2,10 @@ import { deliverPlanningNotifications } from "./platform/planning-notifications"
 import { MONTH_KEY_LENGTH } from "./constants";
 const FLOATING_GAP = 16;
 const MIN_NOTICE_HEIGHT = 48;
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { BackHandler, View } from "react-native";
 import { useSystemFontScale } from "./hooks/useSystemFontScale";
-import { FAB, PaperProvider, Snackbar, Banner } from "react-native-paper";
+import { FAB, Snackbar, Banner } from "react-native-paper";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -24,8 +24,8 @@ import { useKeyboardVisibility } from "./hooks/useKeyboardVisibility";
 import { saveEntry, type BillRecord } from "@hamster-ledger/core";
 import { useLedger } from "./hooks/useLedger";
 import { useNetworkController } from "./hooks/useNetworkController";
-import { ledgerTheme } from "./ui/theme";
-import { iconSettings } from "./ui/Icons";
+import { useAppTheme } from "./hooks/useAppTheme";
+import { LedgerProvider } from "./ui/LedgerProvider";
 import { OverviewScreen } from "./screens/OverviewScreen";
 import { TransactionsScreen } from "./screens/TransactionsScreen";
 import { AssetsScreen } from "./screens/AssetsScreen";
@@ -73,11 +73,10 @@ export function AppShell(): React.JSX.Element {
     controller.ledger.notifications,
     controller.ledger.preferences?.reminderEnabled,
   ]);
-  const isDark = controller.ledger.preferences?.theme === "night";
-  const theme = ledgerTheme(isDark);
-  if (controller.ledger.preferences?.theme === "sage")
-    theme.colors.primary = "#456445";
-  theme.animation.scale = hasReducedMotion ? 0 : 1;
+  const themeName = controller.ledger.preferences?.theme;
+  const isDark = themeName === "night";
+  const theme = useAppTheme({ themeName, hasReducedMotion });
+  const openReview = useCallback(() => setTool("review"), []);
   useEffect(() => {
     setMonth(
       controller.mode === "demo"
@@ -121,7 +120,7 @@ export function AppShell(): React.JSX.Element {
           onMonth={setMonth}
           isDemo={controller.mode === "demo"}
           onRecord={setDetail}
-          onReview={() => setTool("review")}
+          onReview={openReview}
         />
       ),
       records: (
@@ -157,7 +156,7 @@ export function AppShell(): React.JSX.Element {
     ? (TOOLS.find((item) => item.key === tool)?.title ?? "更多功能")
     : APP_ROUTES[index].header;
   return (
-    <PaperProvider theme={theme} settings={iconSettings}>
+    <LedgerProvider theme={theme}>
       <SystemBars isDark={isDark} />
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader
@@ -193,6 +192,8 @@ export function AppShell(): React.JSX.Element {
             <AccountScreen onLocal={() => undefined} />
           ) : (
             <NavigationLayer
+              hasReducedMotion={hasReducedMotion}
+              transitionKey={tool ? `${controller.mode}:${tool}` : undefined}
               tool={
                 tool ? (
                   <ToolPage
@@ -201,7 +202,7 @@ export function AppShell(): React.JSX.Element {
                     controller={controller}
                     onRecord={setDetail}
                     onAdd={(date) => setEditor({ date })}
-                    onReview={() => setTool("review")}
+                    onReview={openReview}
                   />
                 ) : null
               }
@@ -283,6 +284,6 @@ export function AppShell(): React.JSX.Element {
           />
         ) : null}
       </View>
-    </PaperProvider>
+    </LedgerProvider>
   );
 }
