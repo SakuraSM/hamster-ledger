@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import {
   createStatement,
+  parseCsvRows,
   MAX_FILE_ROWS,
   type StatementFile,
 } from "@hamster-ledger/importers";
@@ -33,10 +34,11 @@ export async function readStatement(file: File): Promise<StatementFile> {
     const text = utf8.includes("\uFFFD")
       ? new TextDecoder("gb18030").decode(buffer)
       : utf8;
-    const result = Papa.parse<string[]>(text, { skipEmptyLines: false });
-    if (result.errors.some((error) => error.type === "Quotes"))
-      throw new Error("CSV 引号格式有误，请重新导出账单。");
-    rows = result.data.map((row) => row.map((value) => value.trim()));
+    rows = parseCsvRows({
+      text,
+      parse: (options) =>
+        Papa.parse<string[]>(text, { ...options, skipEmptyLines: false }),
+    });
   } else if (/\.xlsx?$/i.test(file.name)) {
     const XLSX = await import("xlsx");
     const workbook = XLSX.read(buffer, {

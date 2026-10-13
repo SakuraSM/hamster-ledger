@@ -3,3 +3,5 @@ export * from "./parseValues.js";
 export * from "./fields.js";
 export * from "./detection.js";
 export * from "./mapping.js";
+
+export * from "./csv.js";
