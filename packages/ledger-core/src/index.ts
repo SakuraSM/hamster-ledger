@@ -28,6 +28,7 @@ export * from "./budgets.js";
 export * from "./financial-integrity.js";
 export * from "./extended-reports.js";
 export * from "./record-management.js";
+export * from "./pending-records.js";
 
 export * from "./ai-model.js";
 export * from "./ai-drafts.js";

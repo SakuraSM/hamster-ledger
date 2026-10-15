@@ -10,6 +10,7 @@ import {
   summarize,
   periodRecords,
   reportGroups,
+  pendingReviewCount,
   type Ledger,
   type BillRecord,
 } from "@hamster-ledger/core";
@@ -45,9 +46,7 @@ export const OverviewScreen = memo(function OverviewScreen({
   const records = periodRecords(ledger, month);
   const summary = summarize(records);
   const groups = reportGroups({ records, dimension: "category", kind: "支出" });
-  const pending = ledger.reviews.filter(
-    (review) => review.state === "pending",
-  ).length;
+  const pending = pendingReviewCount(ledger);
   const months = [
     ...new Set([
       month,
@@ -112,7 +111,7 @@ export const OverviewScreen = memo(function OverviewScreen({
       </Card>
       {pending ? (
         <Button icon="content-duplicate" mode="outlined" onPress={onReview}>
-          {pending} 组疑似重复待核对
+          {pending} 项流水待核对
         </Button>
       ) : null}
       <Section title="支出分类">

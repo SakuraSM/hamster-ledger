@@ -1,6 +1,7 @@
 import { categoryDefinitions } from "./categories.js";
 import { addMinor } from "./currency.js";
 import { validateFinancialIntegrity } from "./financial-integrity.js";
+import { deleteEntries } from "./entries.js";
 import type { BillRecord, Ledger } from "./model.js";
 export type ReimbursementState =
   "" | "pending" | "partial" | "settled" | "none";
@@ -137,16 +138,15 @@ export function batchRecords(
     )
       throw new Error("请选择与所有已选账单收支方向一致的有效分类。");
   }
-  const next: Ledger = {
-    ...ledger,
-    records: ledger.records.map((item) =>
-      !ids.has(item.id)
-        ? item
-        : input.action === "delete"
-          ? { ...item, isDeleted: true }
-          : { ...item, category: input.category! },
-    ),
-  };
+  const next: Ledger =
+    input.action === "delete"
+      ? deleteEntries(ledger, [...ids])
+      : {
+          ...ledger,
+          records: ledger.records.map((item) =>
+            !ids.has(item.id) ? item : { ...item, category: input.category! },
+          ),
+        };
   validateFinancialIntegrity(next);
   return next;
 }

@@ -35,7 +35,20 @@
 
 截图均为本次运行取得并检查。Web 使用隔离的 Playwright Chromium；Ego 可读取页面，但三次截图请求超时。当前会话没有 Browser 插件。Android 使用 API 36 模拟器，保留原有账本，仅使用合成验收数据。截图本身不能证明无障碍合规或低端真机性能。
 
-## 待完成验收
+## 核对与批量操作
+
+用[三条合成流水](evidence/ledger-optimization-2026-10-15/ambiguous.json)复现：两条支付宝消费各 36 元，一条同额银行流水待确认。旧版 Web 与 Android 的核对中心均显示没有待核对记录，虽然该银行流水仍处于 pending。[Web 改前](evidence/ledger-optimization-2026-10-15/05-ambiguous-review-before.png)，[Android 改前](evidence/ledger-optimization-2026-10-15/10-native-review-before.png)。
+
+现在核对中心及首页计数包含没有成对核对任务的待确认流水。用户可以查看原始流水，主动选择匹配对象，或确认为独立账单。没有默认候选；保存失败保留选择，重复点击只提交一次。已完成、已删除或不再满足匹配条件的核对不能再次关联。
+
+- Web 与 Android 均实测选择第二笔消费，关联结果指向所选流水，总支出保持 72 元。[选择候选](evidence/ledger-optimization-2026-10-15/06-ambiguous-choice-after.png)，[关联结果](evidence/ledger-optimization-2026-10-15/07-ambiguous-linked-after.png)。
+- 两端均实测确认为独立账单后支出为 108 元；撤销后回到 72 元，待核对入口恢复。[Android 撤销后](evidence/ledger-optimization-2026-10-15/13-native-undo-after.png)。
+- 批量删除复用单笔删除的交易分组规则，待核对交易不能绕过限制删除。Web 实测删除一笔关联交易，导出的归档中主记录及银行流水同时标记删除；从回收站恢复和撤销均恢复两条原始记录。[回收站](evidence/ledger-optimization-2026-10-15/08-batch-trash-after.png)。
+- Android 成对核对列表改为 FlatList；Web 核对队列每页最多 20 组，使用记录索引查找明细。该项尚未单独测量帧率。
+
+本阶段 `npm test` 的 43 个文件、257 项测试通过，类型检查及 ESLint 通过。Android release 包已构建并覆盖安装到同一模拟器，原有账本保留。完整检查、最终安装包和大账本运行验证仍在后续清单中。
+
+## 后续验收
 
 - 大账本读取、筛选、滚动、导入及重复导入的 Android 运行检查。
 - 新增、编辑、删除、恢复及批量整理，核对金额和关联流水。

@@ -61,7 +61,8 @@ export function BatchActions({
       </div>
       {confirmDelete && batch.selected.length ? (
         <p role="alert">
-          将删除已选 {batch.selected.length} 笔，可通过撤销恢复。
+          将把已选 {batch.selected.length}{" "}
+          笔及其关联原始流水移入回收站，可撤销或恢复。
           <Button
             color="red"
             disabled={batch.isBusy}

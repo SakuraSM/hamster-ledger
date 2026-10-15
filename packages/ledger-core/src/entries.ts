@@ -1,6 +1,6 @@
 import { normalizeLegacyRecord } from "./migration.js";
 import { assertRecordUnchanged } from "./record-conflicts.js";
-import { recordGroupIds } from "./record-groups.js";
+import { recordGroupIds, recordGroupSelectionIds } from "./record-groups.js";
 import {
   recordSchema,
   RECORD_STATUS,
@@ -97,7 +97,10 @@ export function saveEntry(ledger: Ledger, input: EntryInput): Ledger {
   };
 }
 export function deleteEntry(ledger: Ledger, id: string): Ledger {
-  const ids = recordGroupIds(ledger.records, id);
+  return deleteEntries(ledger, [id]);
+}
+export function deleteEntries(ledger: Ledger, recordIds: string[]): Ledger {
+  const ids = recordGroupSelectionIds(ledger.records, recordIds);
   if (
     ledger.reviews.some(
       (review) =>

@@ -55,7 +55,7 @@ export function BatchActions({
           onPress={() =>
             Alert.alert(
               "删除所选账单",
-              `将删除 ${batch.selected.length} 笔，可通过撤销恢复。`,
+              `将把已选 ${batch.selected.length} 笔及其关联原始流水移入回收站，可撤销或恢复。`,
               [
                 { text: "取消", style: "cancel" },
                 {
