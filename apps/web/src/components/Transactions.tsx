@@ -4,7 +4,7 @@ import {
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import {
-  matchesFinanceFilters,
+  createFinanceFilter,
   type ReimbursementState,
 } from "@hamster-ledger/core";
 import { useNetworkClient } from "../hooks/useNetworkController";
@@ -12,7 +12,7 @@ import { BatchActions } from "./finance/BatchActions";
 import { RecordFilters } from "./finance/RecordFilters";
 import { Button, TextInput } from "@mantine/core";
 import { Choice } from "../ui/Choice";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CATEGORIES,
   SOURCES,
@@ -53,45 +53,42 @@ export function Transactions({
     useNetworkClient(),
     controller.books.find((book) => book.id === controller.mode)?.cloud?.id,
   );
-  const memberIds = [
-    ...new Set(
-      records
-        .flatMap((record) => [
-          record.detail?.memberId,
-          ...(record.detail?.splits.map((item) => item.memberId) ?? []),
-        ])
-        .filter((id): id is string => !!id),
-    ),
-  ];
-  const members = memberIds.map((id) => ({
-    id,
-    username: remoteMembers.find((item) => item.id === id)?.username ?? id,
-  }));
+  const memberIds = useMemo(
+    () => [
+      ...new Set(
+        records
+          .flatMap((record) => [
+            record.detail?.memberId,
+            ...(record.detail?.splits.map((item) => item.memberId) ?? []),
+          ])
+          .filter((id): id is string => !!id),
+      ),
+    ],
+    [records],
+  );
+  const members = useMemo(
+    () =>
+      memberIds.map((id) => ({
+        id,
+        username: remoteMembers.find((item) => item.id === id)?.username ?? id,
+      })),
+    [memberIds, remoteMembers],
+  );
   const [memberId, setMember] = useState("");
   const [reimbursement, setReimbursement] = useState<ReimbursementState>("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
-  const filtered = records
-    .filter(
-      (record) =>
-        !record.isDeleted &&
-        matchesFinanceFilters(controller.ledger, record, {
-          memberId,
-          reimbursement,
-        }) &&
-        (!filter.source ||
-          record.source === filter.source ||
-          record.linkedSources.includes(filter.source)) &&
-        (!filter.category || record.category === filter.category) &&
-        (!filter.accountId ||
-          (filter.accountId === UNASSIGNED_ACCOUNT_FILTER
-            ? !resolveAssetAccount(record, accounts)
-            : resolveAssetAccount(record, accounts)?.id === filter.accountId ||
-              record.transferToAccountId === filter.accountId)) &&
-        (!status ? record.status !== "duplicate" : record.status === status) &&
-        (!query ||
-          [
+  const matchesFinance = useMemo(
+    () => createFinanceFilter(controller.ledger, { memberId, reimbursement }),
+    [controller.ledger, memberId, reimbursement],
+  );
+  const searchableRecords = useMemo(
+    () =>
+      records
+        .map((record) => ({
+          record,
+          text: [
             record.merchant,
             record.description,
             record.account,
@@ -99,10 +96,48 @@ export function Transactions({
             ...(record.tags ?? []),
           ]
             .join(" ")
-            .toLowerCase()
-            .includes(query.toLowerCase())),
-    )
-    .sort((left, right) => right.date.localeCompare(left.date));
+            .toLowerCase(),
+        }))
+        .sort((left, right) =>
+          right.record.date.localeCompare(left.record.date),
+        ),
+    [records],
+  );
+  const normalizedQuery = query.toLowerCase();
+  const filtered = useMemo(
+    () =>
+      searchableRecords
+        .filter(
+          ({ record, text }) =>
+            !record.isDeleted &&
+            matchesFinance(record) &&
+            (!filter.source ||
+              record.source === filter.source ||
+              record.linkedSources.includes(filter.source)) &&
+            (!filter.category || record.category === filter.category) &&
+            (!filter.accountId ||
+              (filter.accountId === UNASSIGNED_ACCOUNT_FILTER
+                ? !resolveAssetAccount(record, accounts)
+                : resolveAssetAccount(record, accounts)?.id ===
+                    filter.accountId ||
+                  record.transferToAccountId === filter.accountId)) &&
+            (!status
+              ? record.status !== "duplicate"
+              : record.status === status) &&
+            (!normalizedQuery || text.includes(normalizedQuery)),
+        )
+        .map(({ record }) => record),
+    [
+      searchableRecords,
+      matchesFinance,
+      filter.source,
+      filter.category,
+      filter.accountId,
+      accounts,
+      status,
+      normalizedQuery,
+    ],
+  );
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(pageIndex, totalPages - 1);
   return (

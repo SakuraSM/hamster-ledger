@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { batchRecords, type BillRecord } from "@hamster-ledger/core";
 import type { LedgerController } from "./ledger-controller.js";
 export interface BatchController {
@@ -15,13 +15,14 @@ export function useBatchRecords(controller: LedgerController): BatchController {
     [error, setError] = useState(""),
     [isBusy, setBusy] = useState(false);
   const lock = useRef(false);
-  function toggle(record: BillRecord): void {
+  const toggle = useCallback((record: BillRecord): void => {
     setRecords((previous) =>
       previous.some((item) => item.id === record.id)
         ? previous.filter((item) => item.id !== record.id)
         : [...previous, record],
     );
-  }
+  }, []);
+  const selected = useMemo(() => records.map((item) => item.id), [records]);
   async function apply(
     action: "category" | "delete",
     category?: string,
@@ -53,7 +54,7 @@ export function useBatchRecords(controller: LedgerController): BatchController {
     }
   }
   return {
-    selected: records.map((item) => item.id),
+    selected,
     error,
     isBusy,
     toggle,

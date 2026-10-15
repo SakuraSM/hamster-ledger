@@ -4,6 +4,21 @@ import { validateFinancialIntegrity } from "./financial-integrity.js";
 import type { BillRecord, Ledger } from "./model.js";
 export type ReimbursementState =
   "" | "pending" | "partial" | "settled" | "none";
+export interface FinanceFilter {
+  accountId?: string;
+  memberId?: string;
+  reimbursement?: ReimbursementState;
+}
+function receivedState(
+  record: BillRecord,
+  received: number,
+): Exclude<ReimbursementState, ""> {
+  return received >= record.amount
+    ? "settled"
+    : received
+      ? "partial"
+      : "pending";
+}
 export function reimbursementState(
   ledger: Ledger,
   record: BillRecord,
@@ -18,20 +33,11 @@ export function reimbursementState(
         ["reimburse", "refund"].includes(item.detail.type),
     )
     .reduce((total, item) => addMinor(total, item.amount), 0);
-  return received >= record.amount
-    ? "settled"
-    : received
-      ? "partial"
-      : "pending";
+  return receivedState(record, received);
 }
-export function matchesFinanceFilters(
-  ledger: Ledger,
+function matchesAccountAndMember(
   record: BillRecord,
-  filter: {
-    accountId?: string;
-    memberId?: string;
-    reimbursement?: ReimbursementState;
-  },
+  filter: FinanceFilter,
 ): boolean {
   if (
     filter.accountId &&
@@ -48,10 +54,57 @@ export function matchesFinanceFilters(
     !record.detail?.splits.some((item) => item.memberId === filter.memberId)
   )
     return false;
+  return true;
+}
+export function matchesFinanceFilters(
+  ledger: Ledger,
+  record: BillRecord,
+  filter: FinanceFilter,
+): boolean {
   return (
-    !filter.reimbursement ||
-    reimbursementState(ledger, record) === filter.reimbursement
+    matchesAccountAndMember(record, filter) &&
+    (!filter.reimbursement ||
+      reimbursementState(ledger, record) === filter.reimbursement)
   );
+}
+
+/** Build once for a list query, so each expense only visits its own returns. */
+export function createFinanceFilter(
+  ledger: Ledger,
+  filter: FinanceFilter,
+): (record: BillRecord) => boolean {
+  if (!filter.reimbursement)
+    return (record) => matchesAccountAndMember(record, filter);
+  const returns = new Map<string, number[]>();
+  for (const record of ledger.records) {
+    const detail = record.detail;
+    const relatedId = detail?.relatedId;
+    if (
+      !relatedId ||
+      record.isDeleted ||
+      record.status !== "confirmed" ||
+      !detail ||
+      !["reimburse", "refund"].includes(detail.type)
+    )
+      continue;
+    const amounts = returns.get(relatedId) ?? [];
+    amounts.push(record.amount);
+    returns.set(relatedId, amounts);
+  }
+  return (record) => {
+    if (!matchesAccountAndMember(record, filter)) return false;
+    const state =
+      !record.detail?.isReimbursable || record.kind !== "支出"
+        ? "none"
+        : receivedState(
+            record,
+            (returns.get(record.id) ?? []).reduce(
+              (total, amount) => addMinor(total, amount),
+              0,
+            ),
+          );
+    return state === filter.reimbursement;
+  };
 }
 export function batchRecords(
   ledger: Ledger,
@@ -63,8 +116,10 @@ export function batchRecords(
 ): Ledger {
   if (!input.records.length) throw new Error("请先选择账单。");
   const ids = new Set(input.records.map((item) => item.id));
+  const byId = new Map(ledger.records.map((item) => [item.id, item]));
+  const categories = categoryDefinitions(ledger);
   for (const expected of input.records) {
-    const actual = ledger.records.find((item) => item.id === expected.id);
+    const actual = byId.get(expected.id);
     if (
       !actual ||
       actual.isDeleted ||
@@ -73,7 +128,7 @@ export function batchRecords(
       throw new Error("所选账单已发生变化，请重新选择后操作。");
     if (
       input.action === "category" &&
-      !categoryDefinitions(ledger).some(
+      !categories.some(
         (item) =>
           !item.isArchived &&
           item.name === input.category &&

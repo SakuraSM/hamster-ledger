@@ -6,8 +6,8 @@ import {
 import { useNativeAccount } from "../auth/NativeAccount";
 import { BatchActions } from "./BatchActions";
 import { RecordFilters, type FinanceFilter } from "./RecordFilters";
-import { useState } from "react";
-import { FlatList, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { FlatList, View, type ListRenderItemInfo } from "react-native";
 import { useSystemFontScale } from "../hooks/useSystemFontScale";
 import {
   Searchbar,
@@ -16,7 +16,7 @@ import {
   Checkbox,
   Button,
 } from "react-native-paper";
-import { matchesFinanceFilters, type BillRecord } from "@hamster-ledger/core";
+import { createFinanceFilter, type BillRecord } from "@hamster-ledger/core";
 import { RecordRow } from "./RecordRow";
 import { ChoiceField } from "../ui/ChoiceField";
 interface TransactionsScreenProps {
@@ -34,20 +34,27 @@ export function TransactionsScreen({
     useNativeAccount().client,
     controller.books.find((book) => book.id === controller.mode)?.cloud?.id,
   );
-  const ids = [
-    ...new Set(
-      ledger.records
-        .flatMap((record) => [
-          record.detail?.memberId,
-          ...(record.detail?.splits.map((item) => item.memberId) ?? []),
-        ])
-        .filter((id): id is string => !!id),
-    ),
-  ];
-  const members = ids.map((id) => ({
-    id,
-    username: remoteMembers.find((item) => item.id === id)?.username ?? id,
-  }));
+  const ids = useMemo(
+    () => [
+      ...new Set(
+        ledger.records
+          .flatMap((record) => [
+            record.detail?.memberId,
+            ...(record.detail?.splits.map((item) => item.memberId) ?? []),
+          ])
+          .filter((id): id is string => !!id),
+      ),
+    ],
+    [ledger.records],
+  );
+  const members = useMemo(
+    () =>
+      ids.map((id) => ({
+        id,
+        username: remoteMembers.find((item) => item.id === id)?.username ?? id,
+      })),
+    [ids, remoteMembers],
+  );
   const [filtersOpen, setFiltersOpen] = useState(false),
     [batchOpen, setBatchOpen] = useState(false);
   const [filter, setFilter] = useState<FinanceFilter>({
@@ -59,29 +66,77 @@ export function TransactionsScreen({
   const [query, setQuery] = useState("");
   const [view, setView] = useState("active");
   const [source, setSource] = useState("");
-  const records = ledger.records
-    .filter((record) => {
-      if (view === "deleted" ? !record.isDeleted : record.isDeleted)
-        return false;
-      if (view === "pending" && record.status !== "pending") return false;
-      if (
-        !matchesFinanceFilters(ledger, record, filter) ||
-        (filter.category && record.category !== filter.category)
-      )
-        return false;
-      if (source && source !== record.source) return false;
-      return [
-        record.merchant,
-        record.description,
-        record.category,
-        record.orderId,
-        ...(record.tags ?? []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query.toLowerCase());
-    })
-    .sort((left, right) => right.date.localeCompare(left.date));
+  const matchesFinance = useMemo(
+    () => createFinanceFilter(ledger, filter),
+    [ledger, filter],
+  );
+  const searchableRecords = useMemo(
+    () =>
+      ledger.records
+        .map((record) => ({
+          record,
+          text: [
+            record.merchant,
+            record.description,
+            record.category,
+            record.orderId,
+            ...(record.tags ?? []),
+          ]
+            .join(" ")
+            .toLowerCase(),
+        }))
+        .sort((left, right) =>
+          right.record.date.localeCompare(left.record.date),
+        ),
+    [ledger.records],
+  );
+  const sources = useMemo(
+    () => Array.from(new Set(ledger.records.map((record) => record.source))),
+    [ledger.records],
+  );
+  const normalizedQuery = query.toLowerCase();
+  const records = useMemo(
+    () =>
+      searchableRecords
+        .filter(({ record, text }) => {
+          if (view === "deleted" ? !record.isDeleted : record.isDeleted)
+            return false;
+          if (view === "pending" && record.status !== "pending") return false;
+          if (
+            !matchesFinance(record) ||
+            (filter.category && record.category !== filter.category)
+          )
+            return false;
+          if (source && source !== record.source) return false;
+          return text.includes(normalizedQuery);
+        })
+        .map(({ record }) => record),
+    [
+      searchableRecords,
+      view,
+      filter.category,
+      matchesFinance,
+      source,
+      normalizedQuery,
+    ],
+  );
+  const selectedIds = useMemo(() => new Set(batch.selected), [batch.selected]);
+  const toggleRecord = batch.toggle;
+  const renderRecord = useCallback(
+    ({ item }: ListRenderItemInfo<BillRecord>) => (
+      <View>
+        {batchOpen && !item.isDeleted ? (
+          <Checkbox.Item
+            label={`选择 ${item.merchant}`}
+            status={selectedIds.has(item.id) ? "checked" : "unchecked"}
+            onPress={() => toggleRecord(item)}
+          />
+        ) : null}
+        <RecordRow record={item} onPress={onRecord} />
+      </View>
+    ),
+    [batchOpen, selectedIds, toggleRecord, onRecord],
+  );
   return (
     <View style={{ flex: 1, paddingHorizontal: 16 }}>
       <FlatList
@@ -115,9 +170,7 @@ export function TransactionsScreen({
               onChange={setSource}
               options={[
                 { value: "", label: "全部来源" },
-                ...Array.from(
-                  new Set(ledger.records.map((record) => record.source)),
-                ).map((value) => ({ value, label: value })),
+                ...sources.map((value) => ({ value, label: value })),
               ]}
             />
             <Text variant="labelLarge">共 {records.length} 笔</Text>
@@ -148,20 +201,7 @@ export function TransactionsScreen({
         }
         data={records}
         keyExtractor={(record) => record.id}
-        renderItem={({ item }) => (
-          <View>
-            {batchOpen && !item.isDeleted ? (
-              <Checkbox.Item
-                label={`选择 ${item.merchant}`}
-                status={
-                  batch.selected.includes(item.id) ? "checked" : "unchecked"
-                }
-                onPress={() => batch.toggle(item)}
-              />
-            ) : null}
-            <RecordRow record={item} onPress={onRecord} />
-          </View>
-        )}
+        renderItem={renderRecord}
         contentContainerStyle={{ paddingBottom: 100 }}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={

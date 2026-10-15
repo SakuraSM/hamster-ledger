@@ -1,6 +1,12 @@
 import type { BillRecord } from "./model.js";
 export function primaryRecord(records: BillRecord[], id: string): BillRecord {
   const byId = new Map(records.map((record) => [record.id, record]));
+  return primaryRecordFromIndex(byId, id);
+}
+export function primaryRecordFromIndex(
+  byId: ReadonlyMap<string, BillRecord>,
+  id: string,
+): BillRecord {
   let current = byId.get(id);
   if (!current) throw new Error("记录不存在。");
   const seen = new Set<string>();
