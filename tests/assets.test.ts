@@ -204,19 +204,22 @@ describe("asset balance and account linkage", () => {
     const book = ledger({
       records: [
         record({ accountId: "bank" }),
-        record({ id: "other", accountId: "other" }),
+        record({ id: "other", source: "招商银行", accountId: "other" }),
       ],
-    });
-    expect(() =>
-      resolveReview({
-        ledger: book,
-        review: {
+      reviews: [
+        {
           id: "review",
           leftId: "expense",
           rightId: "other",
           state: "pending",
           reasons: [],
         },
+      ],
+    });
+    expect(() =>
+      resolveReview({
+        ledger: book,
+        review: book.reviews[0],
         decision: "linked",
       }),
     ).toThrow("不同资产账户");

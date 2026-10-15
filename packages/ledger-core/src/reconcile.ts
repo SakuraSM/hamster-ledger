@@ -160,9 +160,29 @@ export function resolveReview(input: {
   decision: "linked" | "separate";
 }): Ledger {
   const { ledger, review, decision } = input;
+  const active = ledger.reviews.find((item) => item.id === review.id);
+  if (
+    !active ||
+    active.state !== REVIEW_STATUS.PENDING ||
+    active.leftId !== review.leftId ||
+    active.rightId !== review.rightId
+  )
+    throw new Error("核对状态已变化，请重新打开核对。");
   const left = ledger.records.find((record) => record.id === review.leftId);
   const right = ledger.records.find((record) => record.id === review.rightId);
   if (!left || !right) throw new Error("找不到原始账单，请重新打开核对。");
+  if (
+    left.isDeleted ||
+    right.isDeleted ||
+    left.status === RECORD_STATUS.DUPLICATE ||
+    right.status === RECORD_STATUS.DUPLICATE
+  )
+    throw new Error("原始流水已变化，请重新打开核对。");
+  if (
+    decision === REVIEW_STATUS.LINKED &&
+    !findMatchReasons(left, right).length
+  )
+    throw new Error("账单信息已变化，不再符合关联条件，请重新核对或保留两笔。");
   const isBankLeft = left.source === "招商银行" || left.source === "其他银行";
   const kept = isBankLeft ? right : left;
   const linked = isBankLeft ? left : right;

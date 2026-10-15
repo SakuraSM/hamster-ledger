@@ -5,6 +5,7 @@ import { localNow, newEntityId } from "../platform/browser/runtime";
 import { createDemoAccounts } from "../data/demo-accounts";
 import {
   periodRecords,
+  pendingReviewCount,
   saveAssetAccount,
   archiveAssetAccount,
   type BillRecord,
@@ -57,9 +58,7 @@ export function AppPages(props: Props): React.JSX.Element {
     onAdd,
   } = props;
   const { ledger, mode } = controller;
-  const pending = ledger.reviews.filter(
-    (review) => review.state === "pending",
-  ).length;
+  const pending = pendingReviewCount(ledger);
   const pages: Record<PageId, () => React.JSX.Element> = {
     overview: () => (
       <Overview
@@ -133,13 +132,7 @@ export function AppPages(props: Props): React.JSX.Element {
       />
     ),
     review: () => (
-      <ReviewPage
-        ledger={ledger}
-        onDecide={controller.decide}
-        onSelect={onSelect}
-        canUndo={controller.canUndo}
-        onUndo={controller.undo}
-      />
+      <ReviewPage key={mode} controller={controller} onSelect={onSelect} />
     ),
     calendar: () => (
       <CalendarPage

@@ -6,6 +6,8 @@ import {
   matchesFinanceFilters,
   type FinanceFilter,
   type TransactionDetail,
+  batchRecords,
+  restoreEntry,
   type BillRecord,
 } from "@hamster-ledger/core";
 
@@ -195,5 +197,45 @@ describe("indexed reimbursement filtering", () => {
         .filter(createFinanceFilter(ledger, { reimbursement: "pending" }))
         .map((item) => item.id),
     ).toEqual(["pending"]);
+  });
+});
+
+describe("batch deletion of linked transactions", () => {
+  it("moves the complete transaction group to trash and restores it together", () => {
+    const original = record("original");
+    const ledger = {
+      ...EMPTY_LEDGER,
+      records: [
+        original,
+        record("bank", {
+          source: "招商银行",
+          status: "duplicate",
+          duplicateOf: "original",
+        }),
+        record("repeat", { status: "duplicate", duplicateOf: "bank" }),
+        record("other"),
+      ],
+    };
+    const deleted = batchRecords(ledger, {
+      records: [original],
+      action: "delete",
+    });
+    expect(
+      deleted.records.filter((item) => item.isDeleted).map((item) => item.id),
+    ).toEqual(["original", "bank", "repeat"]);
+    expect(
+      restoreEntry(deleted, "bank").records.every((item) => !item.isDeleted),
+    ).toBe(true);
+    expect(ledger.records.every((item) => !item.isDeleted)).toBe(true);
+  });
+  it("blocks batch deletion while a selected transaction has a pending review", () => {
+    const ledger = planImport(EMPTY_LEDGER, [
+      record("payment"),
+      record("bank", { source: "招商银行" }),
+    ]).ledger;
+    expect(() =>
+      batchRecords(ledger, { records: [ledger.records[0]], action: "delete" }),
+    ).toThrow("核对");
+    expect(ledger.records.every((item) => !item.isDeleted)).toBe(true);
   });
 });
