@@ -1,11 +1,16 @@
 import {
   useBatchRecords,
   useBookMembers,
+  useTransactionQuery,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import { useNativeAccount } from "../auth/NativeAccount";
 import { BatchActions } from "./BatchActions";
-import { RecordFilters, type FinanceFilter } from "./RecordFilters";
+import {
+  RecordFilters,
+  EMPTY_FILTER,
+  type FinanceFilter,
+} from "./RecordFilters";
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, View, type ListRenderItemInfo } from "react-native";
 import { useSystemFontScale } from "../hooks/useSystemFontScale";
@@ -16,7 +21,7 @@ import {
   Checkbox,
   Button,
 } from "react-native-paper";
-import { createFinanceFilter, type BillRecord } from "@hamster-ledger/core";
+import { money, type Source, type BillRecord } from "@hamster-ledger/core";
 import { RecordRow } from "./RecordRow";
 import { ChoiceField } from "../ui/ChoiceField";
 interface TransactionsScreenProps {
@@ -28,8 +33,7 @@ export function TransactionsScreen({
   onRecord,
 }: TransactionsScreenProps): React.JSX.Element {
   const fontScale = useSystemFontScale();
-  const ledger = controller.ledger,
-    batch = useBatchRecords(controller);
+  const ledger = controller.ledger;
   const remoteMembers = useBookMembers(
     useNativeAccount().client,
     controller.books.find((book) => book.id === controller.mode)?.cloud?.id,
@@ -57,68 +61,42 @@ export function TransactionsScreen({
   );
   const [filtersOpen, setFiltersOpen] = useState(false),
     [batchOpen, setBatchOpen] = useState(false);
-  const [filter, setFilter] = useState<FinanceFilter>({
-    accountId: "",
-    memberId: "",
-    reimbursement: "",
-    category: "",
-  });
+  const [filter, setFilter] = useState<FinanceFilter>(EMPTY_FILTER);
   const [query, setQuery] = useState("");
   const [view, setView] = useState("active");
-  const [source, setSource] = useState("");
-  const matchesFinance = useMemo(
-    () => createFinanceFilter(ledger, filter),
-    [ledger, filter],
-  );
-  const searchableRecords = useMemo(
-    () =>
-      ledger.records
-        .map((record) => ({
-          record,
-          text: [
-            record.merchant,
-            record.description,
-            record.category,
-            record.orderId,
-            ...(record.tags ?? []),
-          ]
-            .join(" ")
-            .toLowerCase(),
-        }))
-        .sort((left, right) =>
-          right.record.date.localeCompare(left.record.date),
-        ),
-    [ledger.records],
-  );
-  const sources = useMemo(
-    () => Array.from(new Set(ledger.records.map((record) => record.source))),
-    [ledger.records],
-  );
-  const normalizedQuery = query.toLowerCase();
-  const records = useMemo(
-    () =>
-      searchableRecords
-        .filter(({ record, text }) => {
-          if (view === "deleted" ? !record.isDeleted : record.isDeleted)
-            return false;
-          if (view === "pending" && record.status !== "pending") return false;
-          if (
-            !matchesFinance(record) ||
-            (filter.category && record.category !== filter.category)
-          )
-            return false;
-          if (source && source !== record.source) return false;
-          return text.includes(normalizedQuery);
-        })
-        .map(({ record }) => record),
-    [
-      searchableRecords,
-      view,
-      filter.category,
-      matchesFinance,
+  const [source, setSource] = useState<Source | "">("");
+  const queryFilter = useMemo(
+    () => ({
+      ...filter,
+      query,
       source,
-      normalizedQuery,
-    ],
+      isDeleted: view === "deleted",
+      status: view === "pending" ? ("pending" as const) : filter.status,
+    }),
+    [filter, query, source, view],
+  );
+  const result = useTransactionQuery(ledger, queryFilter);
+  const records = result.records;
+  const batch = useBatchRecords(controller, records);
+  const amount = (value: number): string =>
+    ledger.preferences?.hideAmounts ? "••••" : `¥${money(value)}`;
+  function clearFilters(): void {
+    setFilter(EMPTY_FILTER);
+    setQuery("");
+    setSource("");
+    setView("active");
+  }
+  const sources = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          ledger.records.flatMap((record) => [
+            record.source,
+            ...record.linkedSources,
+          ]),
+        ),
+      ),
+    [ledger.records],
   );
   const selectedIds = useMemo(() => new Set(batch.selected), [batch.selected]);
   const toggleRecord = batch.toggle;
@@ -156,7 +134,10 @@ export function TransactionsScreen({
             />
             <SegmentedButtons
               value={view}
-              onValueChange={setView}
+              onValueChange={(value) => {
+                setView(value);
+                setFilter((previous) => ({ ...previous, status: "" }));
+              }}
               buttons={[
                 { value: "active", label: "全部" },
                 { value: "pending", label: "待确认" },
@@ -167,7 +148,7 @@ export function TransactionsScreen({
             <ChoiceField
               label="账单来源"
               value={source}
-              onChange={setSource}
+              onChange={(value) => setSource(value as Source | "")}
               options={[
                 { value: "", label: "全部来源" },
                 ...sources.map((value) => ({ value, label: value })),
@@ -175,16 +156,36 @@ export function TransactionsScreen({
             />
             <Text variant="labelLarge">共 {records.length} 笔</Text>
             <Button onPress={() => setFiltersOpen(!filtersOpen)}>
-              {filtersOpen ? "收起筛选" : "账户、成员与报销筛选"}
+              {filtersOpen ? "收起筛选" : "更多筛选"}
             </Button>
             {filtersOpen ? (
               <RecordFilters
                 ledger={ledger}
-                filter={filter}
+                filter={{ ...filter, status: queryFilter.status }}
+                isTrash={view === "deleted"}
                 members={members}
-                onChange={setFilter}
+                onChange={(value) => {
+                  setFilter(value);
+                  if (view === "pending" && value.status !== "pending")
+                    setView("active");
+                }}
               />
             ) : null}
+            <Button onPress={clearFilters}>清除全部筛选</Button>
+            {result.error ? (
+              <Text accessibilityRole="alert">{result.error}</Text>
+            ) : (
+              <View style={{ gap: 4, marginVertical: 8 }}>
+                <Text>筛选内已入账：收入 {amount(result.summary.income)}</Text>
+                <Text>
+                  净支出 {amount(result.summary.expense)} · 结余{" "}
+                  {amount(result.summary.net)}
+                </Text>
+                <Text variant="bodySmall">
+                  净支出已扣退款；待确认、重复、转账及不计收支的记录不计入合计。
+                </Text>
+              </View>
+            )}
             <Button onPress={() => setBatchOpen(!batchOpen)}>
               {batchOpen ? "收起批量整理" : "批量整理"}
             </Button>

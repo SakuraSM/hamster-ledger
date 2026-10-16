@@ -170,6 +170,7 @@ export function App(): React.JSX.Element {
           page={page}
           month={month}
           recordMonth={recordMonth}
+          onRecordMonth={setRecordMonth}
           filter={filter}
           onFilter={setFilter}
           onMonth={setMonth}

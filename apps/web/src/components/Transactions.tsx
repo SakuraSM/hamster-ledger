@@ -1,15 +1,14 @@
 import {
   useBatchRecords,
   useBookMembers,
+  useTransactionQuery,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
-import {
-  createFinanceFilter,
-  type ReimbursementState,
-} from "@hamster-ledger/core";
+import { money, type ReimbursementState } from "@hamster-ledger/core";
 import { useNetworkClient } from "../hooks/useNetworkController";
 import { BatchActions } from "./finance/BatchActions";
 import { RecordFilters } from "./finance/RecordFilters";
+import { TransactionRange, EMPTY_RANGE } from "./finance/TransactionRange";
 import { Button, TextInput } from "@mantine/core";
 import { Choice } from "../ui/Choice";
 import { useMemo, useState } from "react";
@@ -20,7 +19,6 @@ import {
   type Category,
   type Source,
   type AssetAccount,
-  resolveAssetAccount,
   UNASSIGNED_ACCOUNT_FILTER,
 } from "@hamster-ledger/core";
 import { Icons } from "./Icons";
@@ -39,6 +37,7 @@ interface TransactionsProps {
   filter: BillFilter;
   onFilter: (filter: BillFilter) => void;
   onSelect: (record: BillRecord) => void;
+  onClearPeriod: () => void;
 }
 export function Transactions({
   records,
@@ -47,8 +46,8 @@ export function Transactions({
   filter,
   onFilter,
   onSelect,
+  onClearPeriod,
 }: TransactionsProps): React.JSX.Element {
-  const batch = useBatchRecords(controller);
   const remoteMembers = useBookMembers(
     useNetworkClient(),
     controller.books.find((book) => book.id === controller.mode)?.cloud?.id,
@@ -77,67 +76,28 @@ export function Transactions({
   const [memberId, setMember] = useState("");
   const [reimbursement, setReimbursement] = useState<ReimbursementState>("");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<BillRecord["status"] | "">("");
+  const [range, setRange] = useState(EMPTY_RANGE);
   const [pageIndex, setPageIndex] = useState(0);
-  const matchesFinance = useMemo(
-    () => createFinanceFilter(controller.ledger, { memberId, reimbursement }),
-    [controller.ledger, memberId, reimbursement],
+  const queryFilter = useMemo(
+    () => ({ ...filter, ...range, query, status, memberId, reimbursement }),
+    [filter, range, query, status, memberId, reimbursement],
   );
-  const searchableRecords = useMemo(
-    () =>
-      records
-        .map((record) => ({
-          record,
-          text: [
-            record.merchant,
-            record.description,
-            record.account,
-            record.orderId,
-            ...(record.tags ?? []),
-          ]
-            .join(" ")
-            .toLowerCase(),
-        }))
-        .sort((left, right) =>
-          right.record.date.localeCompare(left.record.date),
-        ),
-    [records],
-  );
-  const normalizedQuery = query.toLowerCase();
-  const filtered = useMemo(
-    () =>
-      searchableRecords
-        .filter(
-          ({ record, text }) =>
-            !record.isDeleted &&
-            matchesFinance(record) &&
-            (!filter.source ||
-              record.source === filter.source ||
-              record.linkedSources.includes(filter.source)) &&
-            (!filter.category || record.category === filter.category) &&
-            (!filter.accountId ||
-              (filter.accountId === UNASSIGNED_ACCOUNT_FILTER
-                ? !resolveAssetAccount(record, accounts)
-                : resolveAssetAccount(record, accounts)?.id ===
-                    filter.accountId ||
-                  record.transferToAccountId === filter.accountId)) &&
-            (!status
-              ? record.status !== "duplicate"
-              : record.status === status) &&
-            (!normalizedQuery || text.includes(normalizedQuery)),
-        )
-        .map(({ record }) => record),
-    [
-      searchableRecords,
-      matchesFinance,
-      filter.source,
-      filter.category,
-      filter.accountId,
-      accounts,
-      status,
-      normalizedQuery,
-    ],
-  );
+  const result = useTransactionQuery(controller.ledger, queryFilter, records);
+  const filtered = result.records;
+  const batch = useBatchRecords(controller, filtered);
+  function clearFilters(): void {
+    onFilter({ source: "", category: "" });
+    onClearPeriod();
+    setRange(EMPTY_RANGE);
+    setQuery("");
+    setStatus("");
+    setMember("");
+    setReimbursement("");
+    setPageIndex(0);
+  }
+  const amount = (value: number): string =>
+    controller.ledger.preferences?.hideAmounts ? "••••" : `¥${money(value)}`;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(pageIndex, totalPages - 1);
   return (
@@ -226,7 +186,7 @@ export function Transactions({
           aria-label="处理状态"
           value={status}
           onChange={(value) => {
-            setStatus(value);
+            setStatus(value as BillRecord["status"] | "");
             setPageIndex(0);
           }}
         >
@@ -249,6 +209,33 @@ export function Transactions({
           }}
         />
       </div>
+      <TransactionRange
+        value={range}
+        onChange={(value) => {
+          setRange(value);
+          setPageIndex(0);
+          if (
+            value.startDate !== range.startDate ||
+            value.endDate !== range.endDate
+          )
+            onClearPeriod();
+        }}
+        onClear={clearFilters}
+      />
+      {result.error ? (
+        <p role="alert" className="error-message">
+          {result.error}
+        </p>
+      ) : (
+        <p className="filter-summary">
+          筛选内已入账：收入 {amount(result.summary.income)} · 净支出{" "}
+          {amount(result.summary.expense)} · 结余 {amount(result.summary.net)}
+          <br />
+          <small>
+            净支出已扣退款；待确认、重复、转账及不计收支的记录不计入合计。
+          </small>
+        </p>
+      )}
       <BatchActions
         ledger={controller.ledger}
         batch={batch}
