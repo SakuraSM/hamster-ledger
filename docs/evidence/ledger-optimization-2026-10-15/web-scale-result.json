@@ -1,0 +1,15 @@
+{
+  "restored": 15000,
+  "imported": 5000,
+  "duplicateFile": "blocked",
+  "repeatedRows": 5000,
+  "rawRecords": 25000,
+  "activeRecords": 20000,
+  "summary": {
+    "expense": 3010456,
+    "income": 223320,
+    "net": -2787136
+  },
+  "roundtrip": "passed",
+  "errors": []
+}

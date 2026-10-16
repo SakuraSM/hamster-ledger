@@ -243,6 +243,15 @@
 .list-caption span {
   font-size: 12px;
 }
+.transaction-range {
+  margin-top: 16px;
+}
+.filter-summary {
+  line-height: 1.8;
+}
+.filter-summary small {
+  color: var(--muted);
+}
 .pagination {
   display: flex;
   gap: 10px;

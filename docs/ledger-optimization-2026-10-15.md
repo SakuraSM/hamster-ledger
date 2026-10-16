@@ -48,6 +48,26 @@
 
 本阶段 `npm test` 的 43 个文件、257 项测试通过，类型检查及 ESLint 通过。Android release 包已构建并覆盖安装到同一模拟器，原有账本保留。完整检查、最终安装包和大账本运行验证仍在后续清单中。
 
+## 组合筛选与选择范围
+
+Web 与 Android 共用查询规则：可组合日期、收支类型、来源、分类、资产账户、成员与报销条件。搜索覆盖商户、备注、账户、分类、标签和流水号，来源包含人工关联后的来源。默认列表隐藏重复原始记录，可通过状态筛选查看。
+
+筛选合计复用原有金额规则，只统计已确认且未删除的流水；退款冲减支出，转账不计收支。开始日期晚于结束日期时显示错误，不展示零金额冒充合计。Web 同时禁止导出无效结果。清除全部筛选会清除日期、状态和查询条件。
+
+两端实测选择三笔后搜索单笔，显示另外两笔被筛选隐藏；“仅保留当前结果中的选择”将选择减为一笔。保留原选择快照，不能借筛选刷新绕过过期写入检查。[Web 提示](evidence/ledger-optimization-2026-10-15/15-web-hidden-selection.png)。两端均验证日期错误、待确认金额为零、空结果及清除条件。
+
+Web 在 390 px 宽度检查发现顶栏溢出，调整换行及月份控件宽度后文档宽度恢复为 390 px；表格保留内部横向滚动。[窄屏页面](evidence/ledger-optimization-2026-10-15/16-web-query-narrow.png)。Android 子页面原先在顶部露出底层菜单，给导航容器限制绘制范围后消失。[改前](evidence/ledger-optimization-2026-10-15/17-native-layer-before.png)，[改后](evidence/ledger-optimization-2026-10-15/21-native-layer-after.png)。
+
+## 大账本与浏览器存储
+
+15,000 笔合成账本包含 1,500 笔收入和 13,500 笔支出，收入 2,233.20 元、净支出 20,104.56 元。Android 恢复后完成单笔搜索及连续滚动。[列表](evidence/ledger-optimization-2026-10-15/23-native-scale-15000.png)，[滚动后](evidence/ledger-optimization-2026-10-15/24-native-scale-scrolled.png)。这是 release 模拟器功能检查，没有采集帧率，不能证明低端真机性能。
+
+Web 首次恢复同一备份时，localStorage 的写入配额不足，原账本保留。修复后大值写入 IndexedDB，沿用旧账本格式、密码保护和冲突检查，详细写入次序及回退要求见[存储说明](browser-storage.md)。修复后实测 15,000 笔恢复、重开、分页、单笔搜索及整日日期筛选；每页渲染 20 条，10 月 15 日筛出 536 条。[页面](evidence/ledger-optimization-2026-10-15/20-web-scale-15000.png)。
+
+在该 Web 账本上继续导入 5,000 笔各 2 元的支付宝合成流水。交易时间存在多个字段候选，先人工确认映射，再执行导入。同文件再次选择被拦截；仅改变换行的文件再次导入时，5,000 条全部识别为重复。最终保存 25,000 条原始记录、20,000 笔有效账单，净支出 30,104.56 元。完整归档导出后恢复到另一个新账本，记录与金额一致。[页面](evidence/ledger-optimization-2026-10-15/22-web-scale-imported.png)，[断言结果](evidence/ledger-optimization-2026-10-15/web-scale-result.json)。
+
+对该隔离浏览器内的合成账本启用密码后，localStorage 不再有账本明文键，IndexedDB 中旧明文记录为零。锁定并重新解锁后，有效记录仍为 20,000 笔、净支出仍为 30,104.56 元。[断言结果](evidence/ledger-optimization-2026-10-15/web-vault-result.json)。不将本机密码保护解释为服务端端到端加密。
+
 ## 后续验收
 
 - 大账本读取、筛选、滚动、导入及重复导入的 Android 运行检查。
