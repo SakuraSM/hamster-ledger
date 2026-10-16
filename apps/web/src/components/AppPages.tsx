@@ -1,10 +1,12 @@
 import type { CloudController } from "../hooks/useCloudSync";
+import { useMemo } from "react";
 import type { PageId } from "../app-config";
 import type { LedgerController } from "../hooks/useLedger";
 import { localNow, newEntityId } from "../platform/browser/runtime";
 import { createDemoAccounts } from "../data/demo-accounts";
 import {
   periodRecords,
+  pendingReviewCount,
   saveAssetAccount,
   archiveAssetAccount,
   type BillRecord,
@@ -27,6 +29,7 @@ interface Props {
   page: PageId;
   month: string;
   recordMonth: string;
+  onRecordMonth: (month: string) => void;
   filter: BillFilter;
   onFilter: (filter: BillFilter) => void;
   onMonth: (month: string) => void;
@@ -45,6 +48,7 @@ export function AppPages(props: Props): React.JSX.Element {
     page,
     month,
     recordMonth,
+    onRecordMonth,
     filter,
     onFilter,
     onMonth,
@@ -57,9 +61,11 @@ export function AppPages(props: Props): React.JSX.Element {
     onAdd,
   } = props;
   const { ledger, mode } = controller;
-  const pending = ledger.reviews.filter(
-    (review) => review.state === "pending",
-  ).length;
+  const transactionRecords = useMemo(
+    () => (recordMonth ? periodRecords(ledger, recordMonth) : ledger.records),
+    [ledger, recordMonth],
+  );
+  const pending = pendingReviewCount(ledger);
   const pages: Record<PageId, () => React.JSX.Element> = {
     overview: () => (
       <Overview
@@ -83,9 +89,8 @@ export function AppPages(props: Props): React.JSX.Element {
       <Transactions
         key={mode}
         controller={controller}
-        records={
-          recordMonth ? periodRecords(ledger, recordMonth) : ledger.records
-        }
+        records={transactionRecords}
+        onClearPeriod={() => onRecordMonth("")}
         filter={filter}
         accounts={ledger.accounts}
         onFilter={onFilter}
@@ -133,13 +138,7 @@ export function AppPages(props: Props): React.JSX.Element {
       />
     ),
     review: () => (
-      <ReviewPage
-        ledger={ledger}
-        onDecide={controller.decide}
-        onSelect={onSelect}
-        canUndo={controller.canUndo}
-        onUndo={controller.undo}
-      />
+      <ReviewPage key={mode} controller={controller} onSelect={onSelect} />
     ),
     calendar: () => (
       <CalendarPage

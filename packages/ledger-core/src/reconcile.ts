@@ -1,6 +1,9 @@
-import { primaryRecord } from "./record-groups.js";
+import { primaryRecordFromIndex } from "./record-groups.js";
 import { linkRecognizedAccounts } from "./account-links.js";
-const MATCH_WINDOW_DAYS = 2;
+import {
+  createImportMatchIndex,
+  MATCH_WINDOW_DAYS,
+} from "./import-match-index.js";
 const HOURS_PER_DAY = 24;
 const SECONDS_PER_MINUTE = 60;
 const MILLISECONDS_PER_SECOND = 1000;
@@ -82,6 +85,13 @@ export function planImport(
       .map((record) => [exactKey(record), record])
       .filter(([key]) => key !== null) as [string, BillRecord][],
   );
+  const byId = new Map(records.map((record) => [record.id, record]));
+  const matches = createImportMatchIndex({
+    records,
+    isCandidate: (candidate, incoming) =>
+      !used.has(candidate.id) &&
+      findMatchReasons(candidate, incoming).length > 0,
+  });
   let duplicate = 0;
   for (const rawRecord of incoming) {
     const record = {
@@ -91,22 +101,18 @@ export function planImport(
     const key = exactKey(record);
     const prior = key ? keys.get(key) : undefined;
     if (prior) {
-      records.push({
+      const duplicateRecord = {
         ...record,
         status: RECORD_STATUS.DUPLICATE,
-        duplicateOf: primaryRecord(records, prior.id).id,
+        duplicateOf: primaryRecordFromIndex(byId, prior.id).id,
         reason: "同来源、账户、流水号与金额一致",
-      });
+      };
+      records.push(duplicateRecord);
+      byId.set(record.id, duplicateRecord);
       duplicate++;
       continue;
     }
-    const candidates = records.filter(
-      (candidate) =>
-        !candidate.isDeleted &&
-        candidate.status !== RECORD_STATUS.DUPLICATE &&
-        !used.has(candidate.id) &&
-        findMatchReasons(candidate, record).length > 0,
-    );
+    const candidates = matches.candidates(record);
     if (candidates.length === 1) {
       const candidate = candidates[0];
       reviews.push({
@@ -127,6 +133,8 @@ export function planImport(
       record.reason = "存在多笔相同金额候选，请逐笔核对";
     }
     records.push(record);
+    byId.set(record.id, record);
+    matches.add(record);
     if (key) keys.set(key, record);
   }
   const incomingIds = new Set(incoming.map((record) => record.id));
@@ -152,9 +160,29 @@ export function resolveReview(input: {
   decision: "linked" | "separate";
 }): Ledger {
   const { ledger, review, decision } = input;
+  const active = ledger.reviews.find((item) => item.id === review.id);
+  if (
+    !active ||
+    active.state !== REVIEW_STATUS.PENDING ||
+    active.leftId !== review.leftId ||
+    active.rightId !== review.rightId
+  )
+    throw new Error("核对状态已变化，请重新打开核对。");
   const left = ledger.records.find((record) => record.id === review.leftId);
   const right = ledger.records.find((record) => record.id === review.rightId);
   if (!left || !right) throw new Error("找不到原始账单，请重新打开核对。");
+  if (
+    left.isDeleted ||
+    right.isDeleted ||
+    left.status === RECORD_STATUS.DUPLICATE ||
+    right.status === RECORD_STATUS.DUPLICATE
+  )
+    throw new Error("原始流水已变化，请重新打开核对。");
+  if (
+    decision === REVIEW_STATUS.LINKED &&
+    !findMatchReasons(left, right).length
+  )
+    throw new Error("账单信息已变化，不再符合关联条件，请重新核对或保留两笔。");
   const isBankLeft = left.source === "招商银行" || left.source === "其他银行";
   const kept = isBankLeft ? right : left;
   const linked = isBankLeft ? left : right;

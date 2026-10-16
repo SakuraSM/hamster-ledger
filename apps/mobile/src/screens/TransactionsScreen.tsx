@@ -1,13 +1,18 @@
 import {
   useBatchRecords,
   useBookMembers,
+  useTransactionQuery,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import { useNativeAccount } from "../auth/NativeAccount";
 import { BatchActions } from "./BatchActions";
-import { RecordFilters, type FinanceFilter } from "./RecordFilters";
-import { useState } from "react";
-import { FlatList, View } from "react-native";
+import {
+  RecordFilters,
+  EMPTY_FILTER,
+  type FinanceFilter,
+} from "./RecordFilters";
+import { useCallback, useMemo, useState } from "react";
+import { FlatList, View, type ListRenderItemInfo } from "react-native";
 import { useSystemFontScale } from "../hooks/useSystemFontScale";
 import {
   Searchbar,
@@ -16,7 +21,7 @@ import {
   Checkbox,
   Button,
 } from "react-native-paper";
-import { matchesFinanceFilters, type BillRecord } from "@hamster-ledger/core";
+import { money, type Source, type BillRecord } from "@hamster-ledger/core";
 import { RecordRow } from "./RecordRow";
 import { ChoiceField } from "../ui/ChoiceField";
 interface TransactionsScreenProps {
@@ -28,60 +33,88 @@ export function TransactionsScreen({
   onRecord,
 }: TransactionsScreenProps): React.JSX.Element {
   const fontScale = useSystemFontScale();
-  const ledger = controller.ledger,
-    batch = useBatchRecords(controller);
+  const ledger = controller.ledger;
   const remoteMembers = useBookMembers(
     useNativeAccount().client,
     controller.books.find((book) => book.id === controller.mode)?.cloud?.id,
   );
-  const ids = [
-    ...new Set(
-      ledger.records
-        .flatMap((record) => [
-          record.detail?.memberId,
-          ...(record.detail?.splits.map((item) => item.memberId) ?? []),
-        ])
-        .filter((id): id is string => !!id),
-    ),
-  ];
-  const members = ids.map((id) => ({
-    id,
-    username: remoteMembers.find((item) => item.id === id)?.username ?? id,
-  }));
+  const ids = useMemo(
+    () => [
+      ...new Set(
+        ledger.records
+          .flatMap((record) => [
+            record.detail?.memberId,
+            ...(record.detail?.splits.map((item) => item.memberId) ?? []),
+          ])
+          .filter((id): id is string => !!id),
+      ),
+    ],
+    [ledger.records],
+  );
+  const members = useMemo(
+    () =>
+      ids.map((id) => ({
+        id,
+        username: remoteMembers.find((item) => item.id === id)?.username ?? id,
+      })),
+    [ids, remoteMembers],
+  );
   const [filtersOpen, setFiltersOpen] = useState(false),
     [batchOpen, setBatchOpen] = useState(false);
-  const [filter, setFilter] = useState<FinanceFilter>({
-    accountId: "",
-    memberId: "",
-    reimbursement: "",
-    category: "",
-  });
+  const [filter, setFilter] = useState<FinanceFilter>(EMPTY_FILTER);
   const [query, setQuery] = useState("");
   const [view, setView] = useState("active");
-  const [source, setSource] = useState("");
-  const records = ledger.records
-    .filter((record) => {
-      if (view === "deleted" ? !record.isDeleted : record.isDeleted)
-        return false;
-      if (view === "pending" && record.status !== "pending") return false;
-      if (
-        !matchesFinanceFilters(ledger, record, filter) ||
-        (filter.category && record.category !== filter.category)
-      )
-        return false;
-      if (source && source !== record.source) return false;
-      return [
-        record.merchant,
-        record.description,
-        record.category,
-        record.orderId,
-        ...(record.tags ?? []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query.toLowerCase());
-    })
-    .sort((left, right) => right.date.localeCompare(left.date));
+  const [source, setSource] = useState<Source | "">("");
+  const queryFilter = useMemo(
+    () => ({
+      ...filter,
+      query,
+      source,
+      isDeleted: view === "deleted",
+      status: view === "pending" ? ("pending" as const) : filter.status,
+    }),
+    [filter, query, source, view],
+  );
+  const result = useTransactionQuery(ledger, queryFilter);
+  const records = result.records;
+  const batch = useBatchRecords(controller, records);
+  const amount = (value: number): string =>
+    ledger.preferences?.hideAmounts ? "••••" : `¥${money(value)}`;
+  function clearFilters(): void {
+    setFilter(EMPTY_FILTER);
+    setQuery("");
+    setSource("");
+    setView("active");
+  }
+  const sources = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          ledger.records.flatMap((record) => [
+            record.source,
+            ...record.linkedSources,
+          ]),
+        ),
+      ),
+    [ledger.records],
+  );
+  const selectedIds = useMemo(() => new Set(batch.selected), [batch.selected]);
+  const toggleRecord = batch.toggle;
+  const renderRecord = useCallback(
+    ({ item }: ListRenderItemInfo<BillRecord>) => (
+      <View>
+        {batchOpen && !item.isDeleted ? (
+          <Checkbox.Item
+            label={`选择 ${item.merchant}`}
+            status={selectedIds.has(item.id) ? "checked" : "unchecked"}
+            onPress={() => toggleRecord(item)}
+          />
+        ) : null}
+        <RecordRow record={item} onPress={onRecord} />
+      </View>
+    ),
+    [batchOpen, selectedIds, toggleRecord, onRecord],
+  );
   return (
     <View style={{ flex: 1, paddingHorizontal: 16 }}>
       <FlatList
@@ -101,7 +134,10 @@ export function TransactionsScreen({
             />
             <SegmentedButtons
               value={view}
-              onValueChange={setView}
+              onValueChange={(value) => {
+                setView(value);
+                setFilter((previous) => ({ ...previous, status: "" }));
+              }}
               buttons={[
                 { value: "active", label: "全部" },
                 { value: "pending", label: "待确认" },
@@ -112,26 +148,44 @@ export function TransactionsScreen({
             <ChoiceField
               label="账单来源"
               value={source}
-              onChange={setSource}
+              onChange={(value) => setSource(value as Source | "")}
               options={[
                 { value: "", label: "全部来源" },
-                ...Array.from(
-                  new Set(ledger.records.map((record) => record.source)),
-                ).map((value) => ({ value, label: value })),
+                ...sources.map((value) => ({ value, label: value })),
               ]}
             />
             <Text variant="labelLarge">共 {records.length} 笔</Text>
             <Button onPress={() => setFiltersOpen(!filtersOpen)}>
-              {filtersOpen ? "收起筛选" : "账户、成员与报销筛选"}
+              {filtersOpen ? "收起筛选" : "更多筛选"}
             </Button>
             {filtersOpen ? (
               <RecordFilters
                 ledger={ledger}
-                filter={filter}
+                filter={{ ...filter, status: queryFilter.status }}
+                isTrash={view === "deleted"}
                 members={members}
-                onChange={setFilter}
+                onChange={(value) => {
+                  setFilter(value);
+                  if (view === "pending" && value.status !== "pending")
+                    setView("active");
+                }}
               />
             ) : null}
+            <Button onPress={clearFilters}>清除全部筛选</Button>
+            {result.error ? (
+              <Text accessibilityRole="alert">{result.error}</Text>
+            ) : (
+              <View style={{ gap: 4, marginVertical: 8 }}>
+                <Text>筛选内已入账：收入 {amount(result.summary.income)}</Text>
+                <Text>
+                  净支出 {amount(result.summary.expense)} · 结余{" "}
+                  {amount(result.summary.net)}
+                </Text>
+                <Text variant="bodySmall">
+                  净支出已扣退款；待确认、重复、转账及不计收支的记录不计入合计。
+                </Text>
+              </View>
+            )}
             <Button onPress={() => setBatchOpen(!batchOpen)}>
               {batchOpen ? "收起批量整理" : "批量整理"}
             </Button>
@@ -148,20 +202,7 @@ export function TransactionsScreen({
         }
         data={records}
         keyExtractor={(record) => record.id}
-        renderItem={({ item }) => (
-          <View>
-            {batchOpen && !item.isDeleted ? (
-              <Checkbox.Item
-                label={`选择 ${item.merchant}`}
-                status={
-                  batch.selected.includes(item.id) ? "checked" : "unchecked"
-                }
-                onPress={() => batch.toggle(item)}
-              />
-            ) : null}
-            <RecordRow record={item} onPress={onRecord} />
-          </View>
-        )}
+        renderItem={renderRecord}
         contentContainerStyle={{ paddingBottom: 100 }}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={

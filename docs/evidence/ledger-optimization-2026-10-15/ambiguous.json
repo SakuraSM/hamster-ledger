@@ -1,0 +1,107 @@
+{
+  "version": 2,
+  "baseCurrency": "CNY",
+  "records": [
+    {
+      "id": "qa-a",
+      "date": "2026-10-15 12:00:00",
+      "merchant": "QA Cafe A",
+      "description": "合成核对验收数据",
+      "amount": 3600,
+      "currency": "CNY",
+      "kind": "支出",
+      "category": "餐饮",
+      "source": "支付宝",
+      "account": "虚拟银行卡",
+      "orderId": "QA-A",
+      "status": "confirmed",
+      "sourceStatus": "成功",
+      "fileName": "synthetic.csv",
+      "raw": {},
+      "linkedSources": [],
+      "detail": {
+        "type": "expense",
+        "original": {
+          "currency": "CNY",
+          "rate": "1",
+          "date": "2026-10-15",
+          "source": "legacy",
+          "minor": 3600
+        },
+        "attachmentIds": [],
+        "splits": [],
+        "movements": [],
+        "origin": "legacy"
+      }
+    },
+    {
+      "id": "qa-b",
+      "date": "2026-10-15 12:00:00",
+      "merchant": "QA Cafe B",
+      "description": "合成核对验收数据",
+      "amount": 3600,
+      "currency": "CNY",
+      "kind": "支出",
+      "category": "餐饮",
+      "source": "支付宝",
+      "account": "虚拟银行卡",
+      "orderId": "QA-B",
+      "status": "confirmed",
+      "sourceStatus": "成功",
+      "fileName": "synthetic.csv",
+      "raw": {},
+      "linkedSources": [],
+      "detail": {
+        "type": "expense",
+        "original": {
+          "currency": "CNY",
+          "rate": "1",
+          "date": "2026-10-15",
+          "source": "legacy",
+          "minor": 3600
+        },
+        "attachmentIds": [],
+        "splits": [],
+        "movements": [],
+        "origin": "legacy"
+      }
+    },
+    {
+      "id": "qa-bank",
+      "date": "2026-10-15 12:00:00",
+      "merchant": "QA Bank Payment",
+      "description": "合成核对验收数据",
+      "amount": 3600,
+      "currency": "CNY",
+      "kind": "支出",
+      "category": "餐饮",
+      "source": "招商银行",
+      "account": "虚拟银行卡",
+      "orderId": "QA-BANK",
+      "status": "pending",
+      "sourceStatus": "成功",
+      "fileName": "synthetic.csv",
+      "raw": {},
+      "linkedSources": [],
+      "reason": "存在多笔相同金额候选，请逐笔核对",
+      "detail": {
+        "type": "expense",
+        "original": {
+          "currency": "CNY",
+          "rate": "1",
+          "date": "2026-10-15",
+          "source": "legacy",
+          "minor": 3600
+        },
+        "attachmentIds": [],
+        "splits": [],
+        "movements": [],
+        "origin": "legacy"
+      }
+    }
+  ],
+  "reviews": [],
+  "rules": {},
+  "files": [],
+  "accounts": []
+}

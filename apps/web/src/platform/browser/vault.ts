@@ -1,4 +1,9 @@
 import { requireStorageLock, withStorageLock } from "./storage-coordination";
+import {
+  readStoredValue,
+  writeStoredValue,
+  removeStoredPrefix,
+} from "./large-values";
 const IV_BYTES = 12;
 const MIN_PASSWORD_LENGTH = 8;
 const SALT_BYTES = 16;
@@ -20,7 +25,10 @@ const CONCURRENT_CHANGE =
   "另一个页面已修改账本，请刷新后重试；当前修改尚未保存。";
 let queue: Promise<void> = Promise.resolve();
 function encode(bytes: Uint8Array): string {
-  return btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
+  let text = "";
+  for (let index = 0; index < bytes.length; index += 8192)
+    text += String.fromCharCode(...bytes.subarray(index, index + 8192));
+  return btoa(text);
 }
 function decode(value: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
@@ -72,7 +80,7 @@ export function hasVault(): boolean {
   return localStorage.getItem(VAULT_KEY) !== null;
 }
 export async function unlockVault(password: string): Promise<void> {
-  const raw = localStorage.getItem(VAULT_KEY);
+  const raw = await readStoredValue(VAULT_KEY);
   if (!raw) throw new Error("加密账本不存在。");
   try {
     const envelope: Envelope = JSON.parse(raw);
@@ -104,12 +112,12 @@ async function exclusive(write: () => Promise<void>): Promise<void> {
   queue = operation.catch(() => undefined);
   return operation;
 }
-function readPlainEntries(): Record<string, string> {
+async function readPlainEntries(): Promise<Record<string, string>> {
   const entries: Record<string, string> = {};
   for (let index = 0; index < localStorage.length; index++) {
     const key = localStorage.key(index);
     if (key?.startsWith(STORAGE_PREFIX))
-      entries[key] = localStorage.getItem(key) ?? "";
+      entries[key] = (await readStoredValue(key)) ?? "";
   }
   return entries;
 }
@@ -120,27 +128,29 @@ export async function enableVault(password: string): Promise<void> {
       throw new Error("解锁密码至少 8 个字符。");
     if (hasVault()) throw new Error("已经启用密码保护。");
     for (const [key, value] of plainSnapshots) {
-      if (key.startsWith(STORAGE_PREFIX) && localStorage.getItem(key) !== value)
+      if (
+        key.startsWith(STORAGE_PREFIX) &&
+        (await readStoredValue(key)) !== value
+      )
         throw new Error(CONCURRENT_CHANGE);
     }
-    const entries = readPlainEntries();
+    const entries = await readPlainEntries();
     const newSalt = encode(crypto.getRandomValues(new Uint8Array(SALT_BYTES)));
     const key = await derive(password, newSalt);
     const encrypted = await encrypt({ entries, key, saltValue: newSalt });
-    const latest = readPlainEntries();
+    const latest = await readPlainEntries();
     if (
       hasVault() ||
       Object.keys(entries).length !== Object.keys(latest).length ||
       Object.entries(entries).some(([key, value]) => latest[key] !== value)
     )
       throw new Error(CONCURRENT_CHANGE);
-    localStorage.setItem(VAULT_KEY, encrypted);
+    await writeStoredValue(VAULT_KEY, encrypted);
     envelopeSnapshot = encrypted;
     unlockedKey = key;
     unlockedEntries = entries;
     salt = newSalt;
-    for (const entryKey of Object.keys(entries))
-      localStorage.removeItem(entryKey);
+    await removeStoredPrefix(STORAGE_PREFIX);
   });
 }
 export async function clearVaultSession(): Promise<void> {
@@ -156,7 +166,7 @@ export async function lockVault(): Promise<void> {
 export const protectedStore: KeyValueStore = {
   async getItem(key): Promise<string | null> {
     if (!hasVault()) {
-      const value = localStorage.getItem(key);
+      const value = await readStoredValue(key);
       plainSnapshots.set(key, value);
       return value;
     }
@@ -166,19 +176,21 @@ export const protectedStore: KeyValueStore = {
   async setItem(key, value): Promise<void> {
     return exclusive(async () => {
       if (!hasVault()) {
+        const previous = localStorage.getItem(key);
+        const current = await readStoredValue(key);
         if (
-          plainSnapshots.has(key) &&
-          localStorage.getItem(key) !== plainSnapshots.get(key)
+          localStorage.getItem(key) !== previous ||
+          (plainSnapshots.has(key) && current !== plainSnapshots.get(key))
         )
           throw new Error(CONCURRENT_CHANGE);
-        localStorage.setItem(key, value);
+        await writeStoredValue(key, value, previous);
         plainSnapshots.set(key, value);
         return;
       }
       if (!unlockedEntries || !unlockedKey) throw new Error("账本已锁定。");
       requireStorageLock();
       if (unlockedEntries[key] === value) return;
-      const previous = localStorage.getItem(VAULT_KEY);
+      const previous = await readStoredValue(VAULT_KEY);
       if (previous !== envelopeSnapshot) throw new Error(CONCURRENT_CHANGE);
       const next = { ...unlockedEntries, [key]: value };
       const encrypted = await encrypt({
@@ -186,9 +198,9 @@ export const protectedStore: KeyValueStore = {
         key: unlockedKey,
         saltValue: salt,
       });
-      if (localStorage.getItem(VAULT_KEY) !== previous)
+      if ((await readStoredValue(VAULT_KEY)) !== previous)
         throw new Error(CONCURRENT_CHANGE);
-      localStorage.setItem(VAULT_KEY, encrypted);
+      await writeStoredValue(VAULT_KEY, encrypted);
       envelopeSnapshot = encrypted;
       unlockedEntries = next;
     });

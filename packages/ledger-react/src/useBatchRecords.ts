@@ -1,27 +1,41 @@
-import { useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { batchRecords, type BillRecord } from "@hamster-ledger/core";
 import type { LedgerController } from "./ledger-controller.js";
 export interface BatchController {
   selected: string[];
   error: string;
   isBusy: boolean;
+  hiddenCount: number;
+  retainVisible: () => void;
   toggle: (record: BillRecord) => void;
   select: (records: BillRecord[]) => void;
   clear: () => void;
   apply: (action: "category" | "delete", category?: string) => Promise<void>;
 }
-export function useBatchRecords(controller: LedgerController): BatchController {
+export function useBatchRecords(
+  controller: LedgerController,
+  visibleRecords: BillRecord[] = controller.ledger.records,
+): BatchController {
   const [records, setRecords] = useState<BillRecord[]>([]),
     [error, setError] = useState(""),
     [isBusy, setBusy] = useState(false);
   const lock = useRef(false);
-  function toggle(record: BillRecord): void {
+  const toggle = useCallback((record: BillRecord): void => {
     setRecords((previous) =>
       previous.some((item) => item.id === record.id)
         ? previous.filter((item) => item.id !== record.id)
         : [...previous, record],
     );
-  }
+  }, []);
+  const selected = useMemo(() => records.map((item) => item.id), [records]);
+  const visibleIds = useMemo(
+    () =>
+      new Set(
+        visibleRecords.filter((item) => !item.isDeleted).map((item) => item.id),
+      ),
+    [visibleRecords],
+  );
+  const hiddenCount = selected.filter((id) => !visibleIds.has(id)).length;
   async function apply(
     action: "category" | "delete",
     category?: string,
@@ -53,9 +67,14 @@ export function useBatchRecords(controller: LedgerController): BatchController {
     }
   }
   return {
-    selected: records.map((item) => item.id),
+    selected,
     error,
     isBusy,
+    hiddenCount,
+    retainVisible: () =>
+      setRecords((previous) =>
+        previous.filter((record) => visibleIds.has(record.id)),
+      ),
     toggle,
     select: setRecords,
     clear: () => setRecords([]),

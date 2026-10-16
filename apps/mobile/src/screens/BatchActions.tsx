@@ -17,6 +17,17 @@ export function BatchActions({
   return (
     <View style={{ gap: 8 }}>
       <Text>已选 {batch.selected.length} 笔</Text>
+      {batch.hiddenCount ? (
+        <>
+          <Text accessibilityLiveRegion="polite">
+            有 {batch.hiddenCount}{" "}
+            笔已选账单不在当前筛选结果中，批量操作仍会包含它们。
+          </Text>
+          <Button disabled={batch.isBusy} onPress={batch.retainVisible}>
+            仅保留当前结果中的选择
+          </Button>
+        </>
+      ) : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         <Button disabled={batch.isBusy} onPress={onSelectAll}>
           选择当前筛选结果
@@ -55,7 +66,7 @@ export function BatchActions({
           onPress={() =>
             Alert.alert(
               "删除所选账单",
-              `将删除 ${batch.selected.length} 笔，可通过撤销恢复。`,
+              `将把已选 ${batch.selected.length} 笔及其关联原始流水移入回收站，可撤销或恢复。`,
               [
                 { text: "取消", style: "cancel" },
                 {

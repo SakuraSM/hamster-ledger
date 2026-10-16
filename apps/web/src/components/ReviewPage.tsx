@@ -1,35 +1,45 @@
 import { Button, UnstyledButton } from "@mantine/core";
 const MONTH_START = 5;
 const MINUTE_END = 16;
-import { useState } from "react";
+const REVIEW_PAGE_SIZE = 20;
+import { useMemo, useState } from "react";
+import type { LedgerController } from "@hamster-ledger/ledger-react";
+import { PendingReviewPanel } from "./PendingReviewPanel";
 import {
-  type Ledger,
-  type Review,
   type BillRecord,
   money,
+  unpairedPendingRecords,
 } from "@hamster-ledger/core";
 import { Icons, SourceIcon } from "./Icons";
 interface ReviewPageProps {
-  ledger: Ledger;
-  onDecide: (review: Review, decision: "linked" | "separate") => void;
+  controller: LedgerController;
   onSelect: (record: BillRecord) => void;
-  canUndo: boolean;
-  onUndo: () => void;
 }
 export function ReviewPage({
-  ledger,
-  onDecide,
+  controller,
   onSelect,
-  canUndo,
-  onUndo,
 }: ReviewPageProps): React.JSX.Element {
+  const { ledger, decide: onDecide, canUndo, undo: onUndo } = controller;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const pending = ledger.reviews.filter((review) => review.state === "pending");
+  const pending = useMemo(
+    () => ledger.reviews.filter((review) => review.state === "pending"),
+    [ledger.reviews],
+  );
+  const byId = useMemo(
+    () => new Map(ledger.records.map((record) => [record.id, record])),
+    [ledger.records],
+  );
   const selected =
     pending.find((review) => review.id === selectedId) ?? pending[0];
-  const left = ledger.records.find((record) => record.id === selected?.leftId);
-  const right = ledger.records.find(
-    (record) => record.id === selected?.rightId,
+  const left = selected ? byId.get(selected.leftId) : undefined;
+  const right = selected ? byId.get(selected.rightId) : undefined;
+  const page = Math.floor(
+    Math.max(0, pending.indexOf(selected)) / REVIEW_PAGE_SIZE,
+  );
+  const pages = Math.ceil(pending.length / REVIEW_PAGE_SIZE);
+  const visible = pending.slice(
+    page * REVIEW_PAGE_SIZE,
+    (page + 1) * REVIEW_PAGE_SIZE,
   );
   return (
     <section>
@@ -50,16 +60,15 @@ export function ReviewPage({
           </Button>
         ) : null}
       </div>
+      <PendingReviewPanel controller={controller} onSelect={onSelect} />
       {selected && left && right ? (
         <div className="review-workspace">
           <aside className="review-queue">
             <h2>
               待核对 <span>{pending.length}</span>
             </h2>
-            {pending.map((review) => {
-              const record = ledger.records.find(
-                (item) => item.id === review.leftId,
-              );
+            {visible.map((review) => {
+              const record = byId.get(review.leftId);
               return record ? (
                 <UnstyledButton
                   type="submit"
@@ -76,6 +85,31 @@ export function ReviewPage({
                 </UnstyledButton>
               ) : null;
             })}
+            {pages > 1 ? (
+              <div className="button-row">
+                <Button
+                  variant="subtle"
+                  disabled={page === 0}
+                  onClick={() =>
+                    setSelectedId(pending[(page - 1) * REVIEW_PAGE_SIZE].id)
+                  }
+                >
+                  上一组
+                </Button>
+                <span>
+                  {page + 1} / {pages}
+                </span>
+                <Button
+                  variant="subtle"
+                  disabled={page + 1 === pages}
+                  onClick={() =>
+                    setSelectedId(pending[(page + 1) * REVIEW_PAGE_SIZE].id)
+                  }
+                >
+                  下一组
+                </Button>
+              </div>
+            ) : null}
           </aside>
           <div className="review-detail">
             <span className="record-status pending">疑似同一笔消费</span>
@@ -153,6 +187,7 @@ export function ReviewPage({
                 variant="outline"
                 type="submit"
                 className="secondary-button"
+                disabled={controller.isSaving}
                 onClick={() => onDecide(selected, "separate")}
               >
                 保留为两笔
@@ -161,6 +196,7 @@ export function ReviewPage({
                 variant="filled"
                 type="submit"
                 className="primary-button"
+                disabled={controller.isSaving}
                 onClick={() => onDecide(selected, "linked")}
               >
                 <Icons.Link size={19} />
@@ -172,13 +208,13 @@ export function ReviewPage({
             </p>
           </div>
         </div>
-      ) : (
+      ) : !unpairedPendingRecords(ledger).length ? (
         <div className="empty-state success-state">
           <Icons.Check size={50} weight="duotone" />
           <h2>重复账单已核对完</h2>
           <p>所有关联均保留原始流水，你可以在全部账单中查看。</p>
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

@@ -1,0 +1,9 @@
+{
+  "createExpense": 1234,
+  "editedExpense": 1334,
+  "undoExpense": 1234,
+  "sharedViewerExpense": 1234,
+  "viewerRole": "read-only",
+  "offlineCachedRead": true,
+  "errors": []
+}

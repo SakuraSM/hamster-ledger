@@ -1,0 +1,59 @@
+{
+  "node": "v24.19.0",
+  "results": [
+    {
+      "size": 1000,
+      "operation": "import-new",
+      "count": 1000,
+      "ms": [26.81, 17.06, 22.29]
+    },
+    {
+      "size": 1000,
+      "operation": "import-duplicate",
+      "count": 1000,
+      "ms": [50.13, 68.96, 64.01]
+    },
+    {
+      "size": 1000,
+      "operation": "reimbursement-filter",
+      "count": 1000,
+      "ms": [7.71, 4.56, 5.56]
+    },
+    {
+      "size": 5000,
+      "operation": "import-new",
+      "count": 5000,
+      "ms": [409.17, 323.96, 325.03]
+    },
+    {
+      "size": 5000,
+      "operation": "import-duplicate",
+      "count": 5000,
+      "ms": [1371.62, 1172.63, 1262.44]
+    },
+    {
+      "size": 5000,
+      "operation": "reimbursement-filter",
+      "count": 5000,
+      "ms": [121.86, 82.68, 43.68]
+    },
+    {
+      "size": 15000,
+      "operation": "import-new",
+      "count": 15000,
+      "ms": [3122.51, 1963.25, 1774.57]
+    },
+    {
+      "size": 15000,
+      "operation": "import-duplicate",
+      "count": 15000,
+      "ms": [16655.98, 16708.17, 15028.36]
+    },
+    {
+      "size": 15000,
+      "operation": "reimbursement-filter",
+      "count": 15000,
+      "ms": [310.83, 311.92, 309.93]
+    }
+  ]
+}

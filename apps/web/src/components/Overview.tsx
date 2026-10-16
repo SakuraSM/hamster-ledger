@@ -124,7 +124,7 @@ export function Overview({
           onClick={onReview}
         >
           <Icons.Warning weight="fill" size={21} />
-          <span>{pending} 组疑似重复待核对</span>
+          <span>{pending} 项流水待核对</span>
           <span className="underlined">
             去核对 <Icons.Arrow size={18} />
           </span>
