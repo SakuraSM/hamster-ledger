@@ -77,7 +77,7 @@ export function NavigationLayer({
     return () => animation.stop();
   }, [isToolOpen, transitionKey, hasReducedMotion, progress]);
   return (
-    <View style={styles.fill}>
+    <View style={styles.container}>
       <Animated.View
         style={[styles.fill, motion.base]}
         pointerEvents={isToolOpen ? "none" : "auto"}
@@ -100,4 +100,7 @@ export function NavigationLayer({
     </View>
   );
 }
-const styles = StyleSheet.create({ fill: { flex: 1 } });
+const styles = StyleSheet.create({
+  container: { flex: 1, overflow: "hidden" },
+  fill: { flex: 1 },
+});

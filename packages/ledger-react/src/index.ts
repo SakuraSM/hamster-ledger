@@ -17,6 +17,8 @@ export * from "./usePlanningPanel.js";
 export * from "./loadDueRates.js";
 export * from "./useReportData.js";
 export * from "./useBatchRecords.js";
+export * from "./usePendingReview.js";
+export * from "./useTransactionQuery.js";
 
 export * from "./attachment-store.js";
 

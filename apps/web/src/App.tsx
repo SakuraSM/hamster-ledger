@@ -26,6 +26,7 @@ import {
   saveEntry,
   cycleMonthForDate,
   deleteEntry,
+  pendingReviewCount,
 } from "@hamster-ledger/core";
 
 export function App(): React.JSX.Element {
@@ -65,9 +66,7 @@ export function App(): React.JSX.Element {
   );
   usePreferences({ ledger, mode, notify: controller.notify });
   const [previewRecord, setPreviewRecord] = useState<BillRecord | null>(null);
-  const pending = ledger.reviews.filter(
-    (review) => review.state === "pending",
-  ).length;
+  const pending = pendingReviewCount(ledger);
   const months = [
     ...new Set([
       DEFAULT_MONTH,
@@ -171,6 +170,7 @@ export function App(): React.JSX.Element {
           page={page}
           month={month}
           recordMonth={recordMonth}
+          onRecordMonth={setRecordMonth}
           filter={filter}
           onFilter={setFilter}
           onMonth={setMonth}

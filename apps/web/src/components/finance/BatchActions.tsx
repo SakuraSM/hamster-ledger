@@ -59,9 +59,26 @@ export function BatchActions({
           批量删除
         </Button>
       </div>
+      {batch.hiddenCount ? (
+        <p role="status">
+          有 {batch.hiddenCount}{" "}
+          笔已选账单不在当前筛选结果中，批量操作仍会包含它们。
+          <Button
+            variant="subtle"
+            disabled={batch.isBusy}
+            onClick={() => {
+              batch.retainVisible();
+              setConfirmDelete(false);
+            }}
+          >
+            仅保留当前结果中的选择
+          </Button>
+        </p>
+      ) : null}
       {confirmDelete && batch.selected.length ? (
         <p role="alert">
-          将删除已选 {batch.selected.length} 笔，可通过撤销恢复。
+          将把已选 {batch.selected.length}{" "}
+          笔及其关联原始流水移入回收站，可撤销或恢复。
           <Button
             color="red"
             disabled={batch.isBusy}

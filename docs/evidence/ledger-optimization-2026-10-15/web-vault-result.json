@@ -1,0 +1,9 @@
+{
+  "storage": {
+    "ledgerKeys": [],
+    "vaultMarker": true,
+    "plaintextRows": 0
+  },
+  "unlockActiveRecords": 20000,
+  "errors": []
+}
