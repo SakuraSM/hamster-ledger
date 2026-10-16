@@ -27,7 +27,7 @@
 
 实现将候选按账户、金额、币种、来源及日期建立索引，仍由原匹配规则判断。找到两个合格候选即保留歧义，不擅自选中第一笔。同源重复复用记录 ID 索引；列表筛选一次建立回款索引，搜索文本及日期排序随记录变化重新计算。
 
-## 当前走查
+## 初始走查
 
 1. Web 总览能显示示例汇总、分类和流水。[截图](evidence/ledger-optimization-2026-10-15/01-web-overview-before.png)
 2. Web 全部账单能显示筛选、批量操作及分页。需要继续验证大账本和筛选切换时的选择范围。[截图](evidence/ledger-optimization-2026-10-15/02-web-transactions-before.png)
@@ -94,3 +94,5 @@ Web 首次恢复同一备份时，localStorage 的写入配额不足，原账本
 真实支付通知模板、厂商后台、公网部署和跨设备生产验收仍需相应环境，不以本地检查替代。浏览器存储格式发生变化，回退前先按[存储说明](browser-storage.md)导出完整备份。
 
 Android 的[周期规则](evidence/ledger-optimization-2026-10-15/28-native-recurring.png)和[提醒设置入口](evidence/ledger-optimization-2026-10-15/29-native-preferences.png)为本轮实际截图。测试规则已暂停，原有账本未修改。
+
+交付 PR：[SakuraSM/hamster-ledger #23](https://github.com/SakuraSM/hamster-ledger/pull/23)。仍为待审阅草稿，尚未合并。验收后已恢复模拟器原先选中的账本，确认原有两笔流水、净支出 27.50 元保持不变。
