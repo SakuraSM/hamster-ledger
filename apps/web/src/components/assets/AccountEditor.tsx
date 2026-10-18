@@ -1,3 +1,4 @@
+const DECIMAL_BASE = 10;
 import { TextInput, Textarea, Button } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
 import { DateField } from "../../ui/DateField";
@@ -20,16 +21,12 @@ export interface AccountSave {
 }
 interface AccountEditorProps {
   account?: AssetAccount;
-  currentBalance?: number;
-  isCalibration?: boolean;
   onSave: (input: AccountSave) => Promise<void>;
   onClose: () => void;
 }
 const MINUTE_PRECISION_LENGTH = 16;
 export function AccountEditor({
   account,
-  currentBalance,
-  isCalibration = false,
   onSave,
   onClose,
 }: AccountEditorProps): React.JSX.Element {
@@ -44,7 +41,7 @@ export function AccountEditor({
   const [creditLimit, setCreditLimit] = useState(
     account?.creditLimit === undefined
       ? ""
-      : String(account.creditLimit / 10 ** CURRENCY_DIGITS[currency]),
+      : String(account.creditLimit / DECIMAL_BASE ** CURRENCY_DIGITS[currency]),
   );
   const [statementDay, setStatementDay] = useState(
     String(account?.statementDay ?? ""),
@@ -54,15 +51,12 @@ export function AccountEditor({
   );
   const [balance, setBalance] = useState(
     String(
-      (isCalibration ? (currentBalance ?? 0) : (account?.openingBalance ?? 0)) /
-        10 ** CURRENCY_DIGITS[currency],
+      (account?.openingBalance ?? 0) /
+        DECIMAL_BASE ** CURRENCY_DIGITS[currency],
     ),
   );
   const [balanceAt, setBalanceAt] = useState(
-    (isCalibration ? localNow() : (account?.balanceAt ?? localNow())).replace(
-      " ",
-      "T",
-    ),
+    (account?.balanceAt ?? localNow()).replace(" ", "T"),
   );
   const [aliases, setAliases] = useState(account?.aliases.join("\n") ?? "");
   const [note, setNote] = useState("");
@@ -118,16 +112,7 @@ export function AccountEditor({
   }
   const types = kind === "asset" ? ASSET_TYPES : LIABILITY_TYPES;
   return (
-    <Dialog
-      title={
-        isCalibration
-          ? "校准账户余额"
-          : account
-            ? "编辑资产账户"
-            : "添加资产账户"
-      }
-      onClose={onClose}
-    >
+    <Dialog title={account ? "编辑资产账户" : "添加资产账户"} onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
           <TextInput

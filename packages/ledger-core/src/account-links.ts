@@ -35,7 +35,10 @@ export function linkedAccountRecords(input: {
   return input.records.filter(
     (record) =>
       resolveAssetAccount(record, input.accounts)?.id === input.accountId ||
-      record.transferToAccountId === input.accountId,
+      record.transferToAccountId === input.accountId ||
+      record.detail?.movements.some(
+        (movement) => movement.accountId === input.accountId,
+      ),
   );
 }
 export function linkRecognizedAccounts(

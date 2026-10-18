@@ -49,10 +49,61 @@ vi.mock("react-native", () => ({
     absoluteFill: {},
   },
 }));
-vi.mock("react-native-paper", () => ({
-  useTheme: () => ({ colors: { background: "#fffcf7" } }),
-  Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+vi.mock("react-native-paper", () => {
+  const container = ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  );
+  return {
+    useTheme: () => ({ colors: { background: "#fffcf7" } }),
+    Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    Card: Object.assign(container, { Content: container, Actions: container }),
+    Button: ({
+      children,
+      onPress,
+      disabled,
+      accessibilityLabel,
+    }: {
+      children: ReactNode;
+      onPress?: () => void;
+      disabled?: boolean;
+      accessibilityLabel?: string;
+    }) => (
+      <button
+        onClick={onPress}
+        disabled={disabled}
+        aria-label={accessibilityLabel}
+      >
+        {children}
+      </button>
+    ),
+  };
+});
+vi.mock("../../apps/mobile/src/ui/ChoiceField", () => ({
+  ChoiceField: ({
+    label,
+    value,
+    options,
+    onChange,
+  }: {
+    label: string;
+    value: string;
+    options: Array<{ value: string; label: string }>;
+    onChange: (value: string) => void;
+  }) => (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
 }));
+vi.mock("../../apps/mobile/src/ui/Screen", () => ({ styles: { row: {} } }));
 vi.mock("../../apps/mobile/src/screens/RecordRow", () => ({
   RecordRow: ({
     record,
@@ -81,11 +132,14 @@ describe("native account records", () => {
     render(
       <AccountRecordList
         ledger={example}
-        accountId={bank.id}
+        account={bank}
+        through="2026-10-18 23:59:59"
         onRecord={open}
       />,
     );
-    expect(screen.getAllByRole("button")).toHaveLength(123);
+    fireEvent.click(screen.getByRole("button", { name: "关联账单" }));
+    expect(screen.getByText(/共 123 条/)).toBeTruthy();
+    expect(screen.getAllByRole("button").length).toBeLessThanOrEqual(24);
     fireEvent.click(screen.getByRole("button", { name: "瑞幸咖啡" }));
     expect(open).toHaveBeenCalledWith(
       example.records.find((record) => record.id === "demo-coffee"),
@@ -105,10 +159,12 @@ describe("native account records", () => {
     render(
       <AccountRecordList
         ledger={book(records)}
-        accountId={bank.id}
+        account={bank}
+        through="2026-10-18 23:59:59"
         onRecord={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "关联账单" }));
     for (const record of records)
       expect(
         screen.getByRole("button", { name: record.merchant }),
@@ -128,11 +184,14 @@ describe("native account records", () => {
     render(
       <AccountRecordList
         ledger={book(records)}
-        accountId={bank.id}
+        account={bank}
+        through="2026-10-18 23:59:59"
         onRecord={vi.fn()}
       />,
     );
-    expect(screen.getAllByRole("button")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "关联账单" }));
+    expect(screen.queryByRole("button", { name: "已删除账单" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "主动解除关联" })).toBeNull();
     expect(screen.getByRole("button", { name: "保留的账单" })).toBeTruthy();
   });
   it("shows an empty state rather than guessing an ambiguous account label", () => {
@@ -140,12 +199,13 @@ describe("native account records", () => {
     render(
       <AccountRecordList
         ledger={book([bill({})], accounts)}
-        accountId={bank.id}
+        account={bank}
+        through="2026-10-18 23:59:59"
         onRecord={vi.fn()}
       />,
     );
-    expect(screen.getByText("此账户暂无关联流水。")).toBeTruthy();
-    expect(screen.queryByRole("button")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "关联账单" }));
+    expect(screen.getByText("所选账期暂无关联账单。")).toBeTruthy();
   });
   it("includes a transfer received by the selected account", () => {
     const transfer = bill({
@@ -159,10 +219,12 @@ describe("native account records", () => {
     render(
       <AccountRecordList
         ledger={book([transfer])}
-        accountId={bank.id}
+        account={bank}
+        through="2026-10-18 23:59:59"
         onRecord={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "关联账单" }));
     expect(screen.getByRole("button", { name: "转入流水" })).toBeTruthy();
   });
 });

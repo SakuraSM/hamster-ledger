@@ -4,12 +4,14 @@ import { Icons } from "../Icons";
 interface AccountGroupProps {
   title: string;
   accounts: AccountBalance[];
+  changes: Record<string, number | null>;
   onSelect: (id: string) => void;
 }
 export function AccountGroup({
   title,
   accounts,
   onSelect,
+  changes,
 }: AccountGroupProps): React.JSX.Element {
   if (!accounts.length)
     return (
@@ -28,7 +30,8 @@ export function AccountGroup({
         <span>当前余额</span>
       </div>
       <div className="asset-account-list">
-        {accounts.map(({ account, balance, movementCount }) => {
+        {accounts.map(({ account, balance, baseline }) => {
+          const change = changes[account.id];
           const Icon =
             account.kind === "liability"
               ? Icons.Credit
@@ -51,18 +54,24 @@ export function AccountGroup({
                   {account.type} ·{" "}
                   {account.isArchived
                     ? "已归档"
-                    : `${movementCount} 笔基准后变动`}
+                    : change == null
+                      ? "暂无月初基准"
+                      : `本月 ${change >= 0 ? "+" : ""}${formatCurrency({ minor: change, currency: account.currency ?? "CNY" })}`}
                 </small>
               </span>
               <span className="account-row-balance">
                 {account.kind === "liability" && balance < 0 ? (
                   <small>预存</small>
                 ) : null}
-                {formatCurrency({
-                  minor:
-                    account.kind === "liability" ? Math.abs(balance) : balance,
-                  currency: account.currency ?? "CNY",
-                })}
+                {baseline
+                  ? formatCurrency({
+                      minor:
+                        account.kind === "liability"
+                          ? Math.abs(balance)
+                          : balance,
+                      currency: account.currency ?? "CNY",
+                    })
+                  : "暂无基准"}
               </span>
               <Icons.Caret size={18} />
             </UnstyledButton>
