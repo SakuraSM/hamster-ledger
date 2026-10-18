@@ -1,6 +1,6 @@
 {
   "name": "@hamster-ledger/server",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "node ../../scripts/test-postgres.mjs"
   },
   "dependencies": {
-    "@hamster-ledger/core": "0.3.0",
+    "@hamster-ledger/core": "0.4.0",
     "pg": "^8.23.1"
   },
   "engines": {
