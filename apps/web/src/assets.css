@@ -380,3 +380,202 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.asset-snapshot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 22px 26px;
+  margin-bottom: 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #faf1e4;
+}
+.asset-snapshot > div {
+  display: grid;
+  gap: 7px;
+  min-width: 130px;
+}
+.asset-snapshot > div:first-child {
+  flex: 1;
+  min-width: 200px;
+}
+.asset-snapshot span,
+.asset-snapshot small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.asset-snapshot strong {
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.asset-snapshot > div:first-child strong {
+  font-size: 30px;
+  color: var(--primary);
+}
+.asset-month-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: #faf1e4;
+}
+.asset-month-change > span {
+  font-size: 13px;
+}
+.asset-month-change > strong {
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+}
+.asset-month-change > small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.asset-trend {
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+  margin: 18px 0;
+}
+.asset-trend > p {
+  margin: 10px 0;
+}
+.asset-trend-chart {
+  height: 220px;
+  margin-top: 16px;
+  font-size: 12px;
+}
+.asset-trend details {
+  font-size: 12px;
+  color: var(--muted);
+}
+.asset-trend summary {
+  cursor: pointer;
+}
+.account-history-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+.account-activity-list {
+  border-top: 1px solid var(--line);
+}
+.account-activity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 70px;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.account-activity-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.account-activity-row strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.account-activity-row small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.activity-kind {
+  font-size: 11px;
+  color: var(--primary);
+}
+.activity-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.activity-amount strong {
+  font-size: 18px;
+}
+.account-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.account-pagination span {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.calibration-account {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.calibration-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+  margin-top: 20px;
+  background: #faf1e4;
+  border-radius: 10px;
+}
+.calibration-preview > div {
+  display: grid;
+  gap: 8px;
+}
+.calibration-preview span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.calibration-preview strong {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .asset-snapshot {
+    gap: 18px;
+    padding: 18px;
+  }
+  .asset-snapshot > div:first-child {
+    flex-basis: 100%;
+  }
+  .asset-snapshot > div {
+    flex: 1;
+    min-width: 120px;
+  }
+  .asset-snapshot > button {
+    width: 100%;
+  }
+  .asset-month-change > small {
+    flex-basis: 100%;
+  }
+  .asset-trend-chart {
+    height: 190px;
+  }
+  .account-activity-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .account-activity-row > button,
+  .account-activity-row > span {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+  .activity-amount strong {
+    font-size: 16px;
+  }
+  .calibration-preview {
+    grid-template-columns: 1fr;
+  }
+  .calibration-preview > div {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+.asset-valuation-date {
+  max-width: 240px;
+  margin-top: 16px;
+}

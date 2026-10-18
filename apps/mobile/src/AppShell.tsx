@@ -42,6 +42,7 @@ import { RecordMetadataEditor } from "./screens/RecordMetadataEditor";
 import { localNow } from "./platform/runtime";
 import { useNativeAccount } from "./auth/NativeAccount";
 import { AccountScreen } from "./screens/AccountScreen";
+const ASSET_INDEX = APP_ROUTES.findIndex(({ key }) => key === "assets");
 export function AppShell(): React.JSX.Element {
   const fontScale = useSystemFontScale();
   const local = useLedger();
@@ -121,6 +122,7 @@ export function AppShell(): React.JSX.Element {
           isDemo={controller.mode === "demo"}
           onRecord={setDetail}
           onReview={openReview}
+          onAssets={() => setIndex(ASSET_INDEX)}
         />
       ),
       records: (
@@ -130,7 +132,13 @@ export function AppShell(): React.JSX.Element {
           onRecord={setDetail}
         />
       ),
-      assets: <AssetsScreen controller={controller} onRecord={setDetail} />,
+      assets: (
+        <AssetsScreen
+          key={controller.mode}
+          controller={controller}
+          onRecord={setDetail}
+        />
+      ),
       reports: (
         <ReportsScreen
           key={controller.mode}
@@ -217,7 +225,10 @@ export function AppShell(): React.JSX.Element {
             </NavigationLayer>
           )}
         </SafeAreaView>
-        {hasNavigation && !isReportPage && !isKeyboardVisible ? (
+        {hasNavigation &&
+        !isReportPage &&
+        index !== ASSET_INDEX &&
+        !isKeyboardVisible ? (
           <FAB
             icon="plus"
             label="记一笔"

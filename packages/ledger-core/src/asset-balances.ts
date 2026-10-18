@@ -6,12 +6,14 @@ import {
 } from "./currency.js";
 import { ACCOUNT_KINDS, type AssetAccount } from "./account-model.js";
 import { resolveAssetAccount } from "./account-links.js";
+import { accountBaselines, type AccountBaseline } from "./account-baselines.js";
 import { RECORD_STATUS, type BillRecord, type Ledger } from "./model.js";
 export interface AccountBalance {
   account: AssetAccount;
   balance: number;
   change: number;
   movementCount: number;
+  baseline: AccountBaseline | null;
 }
 export function accountMovement(input: {
   record: BillRecord;
@@ -23,7 +25,7 @@ export function accountMovement(input: {
   if (record.detail?.movements.length)
     return record.detail.movements
       .filter((movement) => movement.accountId === account.id)
-      .reduce((sum, movement) => sum + movement.amount, 0);
+      .reduce((sum, movement) => addMinor(sum, movement.amount), 0);
   const source = resolveAssetAccount(record, accounts);
   const isSource = source?.id === account.id;
   const isLiability = account.kind === ACCOUNT_KINDS.LIABILITY;
@@ -50,13 +52,12 @@ export function projectAccountBalance(input: {
   through: string;
 }): AccountBalance {
   const { account, ledger, through } = input;
-  const baseline = [
-    { balance: account.openingBalance, at: account.balanceAt },
-    ...account.checkpoints,
-  ]
-    .filter((item) => item.at <= through)
-    .sort((left, right) => right.at.localeCompare(left.at))[0];
-  if (!baseline) return { account, balance: 0, change: 0, movementCount: 0 };
+  const baseline =
+    accountBaselines(account)
+      .filter((item) => item.at <= through)
+      .at(-1) ?? null;
+  if (!baseline)
+    return { account, balance: 0, change: 0, movementCount: 0, baseline };
   let change = 0;
   let movementCount = 0;
   for (const record of ledger.records) {
@@ -74,6 +75,7 @@ export function projectAccountBalance(input: {
     balance: addMinor(baseline.balance, change),
     change,
     movementCount,
+    baseline,
   };
 }
 export function summarizeAssets(input: {
@@ -86,6 +88,7 @@ export function summarizeAssets(input: {
   netAssets: number;
   balances: AccountBalance[];
   missingCurrencies: Currency[];
+  missingBaselines: string[];
 } {
   const balances = input.ledger.accounts
     .filter((account) => !account.isArchived)
@@ -93,7 +96,12 @@ export function summarizeAssets(input: {
   let assets = 0;
   let liabilities = 0;
   const missingCurrencies = new Set<Currency>();
+  const missingBaselines: string[] = [];
   for (const projection of balances) {
+    if (!projection.baseline) {
+      missingBaselines.push(projection.account.name);
+      continue;
+    }
     const currency = projection.account.currency ?? "CNY";
     const rate =
       currency === "CNY"
@@ -124,5 +132,6 @@ export function summarizeAssets(input: {
     netAssets: assets - liabilities,
     balances,
     missingCurrencies: [...missingCurrencies],
+    missingBaselines,
   };
 }

@@ -239,7 +239,19 @@ describe("asset balance and account linkage", () => {
     expect(summarizeAssets({ ledger: next, through: THROUGH }).assets).toBe(
       95000,
     );
-    expect(next.accounts[0].checkpoints[0].note).toBe("对账校准");
+    expect(next.accounts[0].checkpoints.at(-1)?.note).toBe("对账校准");
+    expect(next.accounts[0].checkpoints[0]).toMatchObject({
+      at: "2026-09-01 00:00:00",
+      recordedAt: THROUGH,
+      note: "保留原余额基准",
+    });
+    expect(
+      projectAccountBalance({
+        account: next.accounts[0],
+        ledger: next,
+        through: "2026-09-20 00:00:00",
+      }).balance,
+    ).toBe(95000);
   });
   it("preserves historical record links after changing an account name and alias", () => {
     const next = saveAssetAccount({

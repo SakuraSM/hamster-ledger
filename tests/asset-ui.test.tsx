@@ -79,6 +79,7 @@ describe("single-record and asset account UI", () => {
         ledger={{ ...EMPTY_LEDGER, accounts: [bank], records: [bill] }}
         isDemo={false}
         onSave={vi.fn()}
+        onCommit={vi.fn()}
         onArchive={vi.fn()}
         onRecord={onRecord}
         onUnassigned={vi.fn()}
@@ -86,9 +87,7 @@ describe("single-record and asset account UI", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /招行工资卡/ }));
-    expect(
-      screen.getByRole("heading", { name: "关联收入与支出" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "账户明细" })).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: "查看测试咖啡账单详情" }),
     );

@@ -1,14 +1,13 @@
-import { useExchangeRates } from "@hamster-ledger/ledger-react";
+const DATE_KEY_LENGTH = 10;
+import { useAssetSummary } from "@hamster-ledger/ledger-react";
 import { useNetworkClient } from "../../hooks/useNetworkController";
 import { DateField } from "../../ui/DateField";
 import { ValuationRates } from "./ValuationRates";
-import { UnstyledButton, Button, Checkbox } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { UnstyledButton, Button, Checkbox, TextInput } from "@mantine/core";
+import { useState } from "react";
 import {
   projectAccountBalance,
-  summarizeAssets,
   resolveAssetAccount,
-  money,
   type AssetAccount,
   type Ledger,
   type BillRecord,
@@ -17,6 +16,11 @@ import { localNow } from "../../platform/browser/runtime";
 import { AccountEditor, type AccountSave } from "./AccountEditor";
 import { AccountGroup } from "./AccountGroup";
 import { AccountDetail } from "./AccountDetail";
+import { BalanceCalibration } from "./BalanceCalibration";
+import { AssetTotals } from "./AssetTotals";
+import { AssetTrend } from "./AssetTrend";
+import { AdvancedEntryEditor } from "../finance/AdvancedEntryEditor";
+import type { EntryDraft } from "@hamster-ledger/ledger-react";
 import { Icons } from "../Icons";
 interface AssetsPageProps {
   ledger: Ledger;
@@ -29,6 +33,9 @@ interface AssetsPageProps {
   onRecord: (record: BillRecord) => void;
   onUnassigned: () => void;
   onLoadExamples: () => Promise<void>;
+  onCommit: (ledger: Ledger) => Promise<void>;
+  canUndo?: boolean;
+  onUndo?: () => void;
 }
 export function AssetsPage({
   ledger,
@@ -38,12 +45,17 @@ export function AssetsPage({
   onRecord,
   onUnassigned,
   onLoadExamples,
+  onCommit,
+  canUndo = false,
+  onUndo,
 }: AssetsPageProps): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editor, setEditor] = useState<{
     account?: AssetAccount;
     isCalibration?: boolean;
   } | null>(null);
+  const [search, setSearch] = useState("");
+  const [transfer, setTransfer] = useState<Partial<EntryDraft> | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [actionError, setActionError] = useState("");
   async function loadExamples(): Promise<void> {
@@ -56,26 +68,30 @@ export function AssetsPage({
       );
     }
   }
-  const [valuationDate, setValuationDate] = useState(localNow().slice(0, 10));
+  const [valuationDate, setValuationDate] = useState(
+    localNow().slice(0, DATE_KEY_LENGTH),
+  );
   const through = valuationDate + " 23:59:59";
   const currencies = ledger.accounts
     .filter((account) => !account.isArchived)
     .map((account) => account.currency ?? "CNY");
-  const rates = useExchangeRates({
-    client: useNetworkClient(),
-    currencies,
+  const { rates, totals, comparison } = useAssetSummary({
+    ledger,
     date: valuationDate,
+    client: useNetworkClient(),
   });
-  const totals = useMemo(
-    () => summarizeAssets({ ledger, through, rates: rates.rates }),
-    [ledger, through, rates.rates],
-  );
   const selected = ledger.accounts.find((account) => account.id === selectedId);
-  const displayed = showArchived
-    ? ledger.accounts.map((account) =>
-        projectAccountBalance({ account, ledger, through }),
-      )
-    : totals.balances;
+  const displayed = (
+    showArchived
+      ? ledger.accounts.map((account) =>
+          projectAccountBalance({ account, ledger, through }),
+        )
+      : totals.balances
+  ).filter(({ account }) =>
+    [account.name, account.type, ...account.aliases].some((value) =>
+      value.toLowerCase().includes(search.trim().toLowerCase()),
+    ),
+  );
   const unassigned = ledger.records.filter(
     (record) =>
       !record.isDeleted &&
@@ -83,6 +99,7 @@ export function AssetsPage({
       (record.kind === "收入" ||
         record.kind === "支出" ||
         record.kind === "退款") &&
+      !record.detail?.movements.length &&
       !resolveAssetAccount(record, ledger.accounts),
   ).length;
   return (
@@ -91,6 +108,11 @@ export function AssetsPage({
         <p className="error-message" role="alert">
           {actionError}
         </p>
+      ) : null}
+      {canUndo && onUndo ? (
+        <Button variant="subtle" className="asset-undo" onClick={onUndo}>
+          撤销上一次修改
+        </Button>
       ) : null}
       <div className="assets-page">
         {selected ? (
@@ -102,6 +124,25 @@ export function AssetsPage({
             onEdit={() => setEditor({ account: selected })}
             onCalibrate={() =>
               setEditor({ account: selected, isCalibration: true })
+            }
+            onTransfer={() =>
+              setTransfer(
+                selected.kind === "liability"
+                  ? {
+                      type: "transfer",
+                      destinationId: selected.id,
+                      accountId:
+                        ledger.accounts.find(
+                          (item) => !item.isArchived && item.kind === "asset",
+                        )?.id ?? "",
+                      merchant: "信用卡还款",
+                    }
+                  : {
+                      type: "transfer",
+                      accountId: selected.id,
+                      merchant: "账户转账",
+                    },
+              )
             }
             onArchive={() =>
               onArchive({
@@ -115,8 +156,8 @@ export function AssetsPage({
           <>
             <div className="page-heading heading-with-action">
               <div>
-                <h1>资产，也有一本清楚的账</h1>
-                <p>维护账户余额，掌握资产、负债与净资产</p>
+                <h1>资产管理</h1>
+                <p>看清每个账户的余额，也看清钱的变化</p>
               </div>
               <Button
                 variant="filled"
@@ -129,49 +170,22 @@ export function AssetsPage({
               </Button>
             </div>
             <DateField
+              className="asset-valuation-date"
+              max={localNow().slice(0, DATE_KEY_LENGTH)}
               label="资产估值日"
               type="date"
               value={valuationDate}
-              onChange={setValuationDate}
+              onChange={(value) => {
+                if (value) setValuationDate(value);
+              }}
             />
             <ValuationRates controller={rates} currencies={currencies} />
-            {totals.missingCurrencies.length ? (
-              <p role="alert">
-                {totals.missingCurrencies.join("、")}{" "}
-                缺少汇率；下方合计仅含已估值账户。
-              </p>
-            ) : null}
-            <section
-              className="summary asset-summary"
-              aria-label="资产负债汇总"
-            >
-              <div className="summary-primary">
-                <div className="metric-label">
-                  净资产 <small>{isDemo ? "（示例账本）" : ""}</small>
-                </div>
-                <strong>
-                  <span>¥</span>
-                  {money(totals.netAssets)}
-                </strong>
-              </div>
-              <div>
-                <div className="metric-label">总资产</div>
-                <strong>
-                  <span>¥</span>
-                  {money(totals.assets)}
-                </strong>
-              </div>
-              <div>
-                <div className="metric-label">总负债</div>
-                <strong>
-                  <span>¥</span>
-                  {money(totals.liabilities)}
-                </strong>
-              </div>
-            </section>
-            <p className="asset-total-caption">
-              净资产 = 总资产 − 总负债 · 截至 {through} · 已归档账户不计入
-            </p>
+            <AssetTotals
+              totals={totals}
+              comparison={comparison}
+              isDemo={isDemo}
+              through={through}
+            />
             {!ledger.accounts.length ? (
               <div className="asset-onboarding">
                 <Icons.Wallet size={42} weight="duotone" />
@@ -210,12 +224,22 @@ export function AssetsPage({
                 <Icons.Arrow size={18} />
               </UnstyledButton>
             ) : null}
+            <TextInput
+              label="查找账户"
+              placeholder="账户名称、类型或别名"
+              value={search}
+              onChange={(event) => setSearch(event.currentTarget.value)}
+            />
+            {search && !displayed.length ? (
+              <p role="status">没有匹配的账户。</p>
+            ) : null}
             <div className="asset-groups">
               <AccountGroup
                 title="资产账户"
                 accounts={displayed.filter(
                   (item) => item.account.kind === "asset",
                 )}
+                changes={comparison.accountChanges}
                 onSelect={setSelectedId}
               />
               <AccountGroup
@@ -223,6 +247,7 @@ export function AssetsPage({
                 accounts={displayed.filter(
                   (item) => item.account.kind === "liability",
                 )}
+                changes={comparison.accountChanges}
                 onSelect={setSelectedId}
               />
             </div>
@@ -233,27 +258,37 @@ export function AssetsPage({
               checked={showArchived}
               onChange={(event) => setShowArchived(event.target.checked)}
             />
+            <AssetTrend ledger={ledger} end={valuationDate} />
             <p className="muted small asset-explanation">
               账户余额需要你维护基准。收入/退款增加资产余额，支出减少资产余额；信用卡支出增加负债，退款与还款减少负债。余额未接入银行实时查询。
             </p>
           </>
         )}
       </div>
-      {editor ? (
-        <AccountEditor
+      {editor?.isCalibration && editor.account ? (
+        <BalanceCalibration
           account={editor.account}
-          isCalibration={editor.isCalibration}
-          currentBalance={
-            editor.account
-              ? projectAccountBalance({
-                  account: editor.account,
-                  ledger,
-                  through,
-                }).balance
-              : undefined
-          }
+          ledger={ledger}
+          date={valuationDate}
           onSave={onSave}
           onClose={() => setEditor(null)}
+        />
+      ) : editor ? (
+        <AccountEditor
+          account={editor.account}
+          onSave={onSave}
+          onClose={() => setEditor(null)}
+        />
+      ) : null}
+      {transfer ? (
+        <AdvancedEntryEditor
+          ledger={ledger}
+          initialDraft={transfer}
+          onSave={async (next) => {
+            await onCommit(next);
+            setTransfer(null);
+          }}
+          onClose={() => setTransfer(null)}
         />
       ) : null}
     </>

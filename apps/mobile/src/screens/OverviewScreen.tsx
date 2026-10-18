@@ -18,6 +18,7 @@ import { Screen, Section, styles } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
 import { AmountText, useAmountColors } from "../ui/AmountText";
 import { RecordRow } from "./RecordRow";
+import { AssetSnapshot } from "./AssetSnapshot";
 import { localNow } from "../platform/runtime";
 interface OverviewScreenProps {
   ledger: Ledger;
@@ -26,6 +27,7 @@ interface OverviewScreenProps {
   isDemo: boolean;
   onRecord: (record: BillRecord) => void;
   onReview: () => void;
+  onAssets: () => void;
 }
 export const OverviewScreen = memo(function OverviewScreen({
   ledger,
@@ -34,6 +36,7 @@ export const OverviewScreen = memo(function OverviewScreen({
   isDemo,
   onRecord,
   onReview,
+  onAssets,
 }: OverviewScreenProps): React.JSX.Element {
   const colors = useAmountColors();
   const fontScale = useSystemFontScale();
@@ -64,6 +67,7 @@ export const OverviewScreen = memo(function OverviewScreen({
         把每一笔，存进小日子
       </Text>
       {isDemo ? <Text>示例账本 · 以下均为虚拟数据</Text> : null}
+      <AssetSnapshot ledger={ledger} onOpen={onAssets} />
       <ChoiceField
         label="账期"
         value={month}
