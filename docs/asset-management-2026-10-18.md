@@ -46,4 +46,4 @@
 
 实现入口为 `account-baselines.ts`、`account-activity.ts`、`asset-comparison.ts`，以及 `useAssetSummary`、`useAccountHistory`、`useBalanceCalibration`。使用规则见[资产账户与账单关联](assets.md)。
 
-本次交付为本地预览，版本号仍为 0.3.0，没有创建正式发行版。测试与安装包校验值见 [verification.json](evidence/asset-management-2026-10-18/verification.json)。
+本页记录的是 0.4.0 发布前的功能验收。验收时使用版本号 0.3.0 的本地预览包；正式发布包使用 0.4.0 和 versionCode 4，下载与校验值以 GitHub Release 为准。原预览包的测试与校验值见 [verification.json](evidence/asset-management-2026-10-18/verification.json)。
