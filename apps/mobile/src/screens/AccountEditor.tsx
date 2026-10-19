@@ -97,10 +97,7 @@ export function AccountEditor({
     }
   }
   return (
-    <FormSheet
-      title={account ? "编辑账户 / 校准余额" : "添加资产账户"}
-      onClose={onClose}
-    >
+    <FormSheet title={account ? "编辑账户" : "添加资产账户"} onClose={onClose}>
       <TextInput
         accessibilityLabel="账户名称"
         mode="outlined"

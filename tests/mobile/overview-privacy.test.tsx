@@ -23,7 +23,7 @@ vi.mock("react-native", () => ({
 vi.mock("react-native-paper", () => {
   const container = ({ children }: ContainerProps) => <div>{children}</div>;
   return {
-    Card: Object.assign(container, { Content: container }),
+    Card: Object.assign(container, { Content: container, Actions: container }),
     Text: ({ children }: ContainerProps) => <span>{children}</span>,
     Button: ({ children }: ContainerProps) => <button>{children}</button>,
     ProgressBar: () => null,
@@ -47,6 +47,10 @@ vi.mock("../../apps/mobile/src/ui/ChoiceField", () => ({
 vi.mock("../../apps/mobile/src/platform/runtime", () => ({
   localNow: () => "2026-10-12 12:00:00",
 }));
+vi.mock("../../apps/mobile/src/auth/NativeAccount", () => ({
+  useNativeAccount: () => ({ client: testClient }),
+}));
+const testClient = { request: vi.fn() };
 vi.mock("../../apps/mobile/src/screens/RecordRow", () => ({
   RecordRow: ({ record }: { record: BillRecord }) => (
     <button aria-label={`${record.merchant}，${signedMoney(record)}`}>
@@ -84,6 +88,7 @@ function overview(ledger: Ledger): React.JSX.Element {
       isDemo={false}
       onRecord={vi.fn()}
       onReview={vi.fn()}
+      onAssets={vi.fn()}
     />
   );
 }
