@@ -1,3 +1,4 @@
+import { LedgerViewBoundary } from "./ui/LedgerViewBoundary";
 import { RecordAttachments } from "./components/ai/RecordAttachments";
 import { Button } from "@mantine/core";
 import { LedgerNotice } from "./ui/LedgerNotice";
@@ -164,32 +165,37 @@ export function App(): React.JSX.Element {
             {controller.error}
           </p>
         ) : null}
-        <AppPages
-          sync={sync}
-          controller={controller}
-          page={page}
-          month={month}
-          recordMonth={recordMonth}
-          onRecordMonth={setRecordMonth}
-          filter={filter}
-          onFilter={setFilter}
-          onMonth={setMonth}
-          onNavigate={navigate}
-          onSelect={setSelected}
-          onPreview={setPreviewRecord}
-          onCategory={showCategory}
-          onUnassigned={() => {
-            setRecordMonth("");
-            setFilter({
-              source: "",
-              category: "",
-              accountId: UNASSIGNED_ACCOUNT_FILTER,
-            });
-            setPage("transactions");
-          }}
-          onImport={commitImported}
-          onAdd={(date) => setEditor({ date })}
-        />
+        <LedgerViewBoundary
+          key={`${mode}:${page}`}
+          onRecovery={() => navigate("tools")}
+        >
+          <AppPages
+            sync={sync}
+            controller={controller}
+            page={page}
+            month={month}
+            recordMonth={recordMonth}
+            onRecordMonth={setRecordMonth}
+            filter={filter}
+            onFilter={setFilter}
+            onMonth={setMonth}
+            onNavigate={navigate}
+            onSelect={setSelected}
+            onPreview={setPreviewRecord}
+            onCategory={showCategory}
+            onUnassigned={() => {
+              setRecordMonth("");
+              setFilter({
+                source: "",
+                category: "",
+                accountId: UNASSIGNED_ACCOUNT_FILTER,
+              });
+              setPage("transactions");
+            }}
+            onImport={commitImported}
+            onAdd={(date) => setEditor({ date })}
+          />
+        </LedgerViewBoundary>
       </main>
       {selected ? (
         <RecordDetail

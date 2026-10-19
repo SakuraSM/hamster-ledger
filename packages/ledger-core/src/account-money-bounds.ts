@@ -1,3 +1,4 @@
+import { accountActiveAt } from "./account-model.js";
 import { accountBaselines } from "./account-baselines.js";
 import { accountMovement } from "./asset-balances.js";
 import { normalizeAccountLabel } from "./account-links.js";
@@ -67,7 +68,7 @@ export function validateAccountMoney(ledger: Ledger): void {
         ),
       });
   }
-  const valuations: Array<{ date: string; id: string; balance: bigint }> = [];
+  const valuations: Array<{ date: string; id: string; balance?: bigint }> = [];
   for (const account of ledger.accounts) {
     const baselines = accountBaselines(account);
     const changes = (movements.get(account.id) ?? []).sort((left, right) =>
@@ -82,7 +83,8 @@ export function validateAccountMoney(ledger: Ledger): void {
       let negative = 0n;
       let balance = BigInt(baseline.balance);
       const isValued =
-        !account.isArchived && (account.currency ?? "CNY") === "CNY";
+        (!account.isArchived || !!account.archiveHistory?.length) &&
+        (account.currency ?? "CNY") === "CNY";
       const sign = account.kind === "asset" ? 1n : -1n;
       if (isValued)
         valuations.push({
@@ -118,10 +120,14 @@ export function validateAccountMoney(ledger: Ledger): void {
       maximum = upper > maximum ? upper : maximum;
       minimum = lower < minimum ? lower : minimum;
     }
+    if ((account.currency ?? "CNY") === "CNY")
+      for (const event of account.archiveHistory ?? [])
+        valuations.push({ date: event.at, id: account.id });
     // Account comparison can subtract any two supported historical balances.
     assertRange(maximum - minimum);
   }
   const current = new Map<string, bigint>();
+  const rawBalances = new Map<string, bigint>();
   let assets = 0n;
   let liabilities = 0n;
   let minimumNet = 0n;
@@ -130,13 +136,15 @@ export function validateAccountMoney(ledger: Ledger): void {
   for (let index = 0; index < valuations.length; index++) {
     const valuation = valuations[index];
     const previous = current.get(valuation.id) ?? 0n;
-    assets +=
-      (valuation.balance > 0n ? valuation.balance : 0n) -
-      (previous > 0n ? previous : 0n);
+    if (valuation.balance !== undefined)
+      rawBalances.set(valuation.id, valuation.balance);
+    const balance = accountActiveAt(accounts.get(valuation.id)!, valuation.date)
+      ? (rawBalances.get(valuation.id) ?? 0n)
+      : 0n;
+    assets += (balance > 0n ? balance : 0n) - (previous > 0n ? previous : 0n);
     liabilities +=
-      (valuation.balance < 0n ? -valuation.balance : 0n) -
-      (previous < 0n ? -previous : 0n);
-    current.set(valuation.id, valuation.balance);
+      (balance < 0n ? -balance : 0n) - (previous < 0n ? -previous : 0n);
+    current.set(valuation.id, balance);
     if (valuations[index + 1]?.date === valuation.date) continue;
     assertRange(assets);
     assertRange(liabilities);

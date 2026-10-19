@@ -1,3 +1,7 @@
+import type { NativeSyncController, SyncLink } from "./native-sync-controller";
+export type { NativeSyncController } from "./native-sync-controller";
+import { useForegroundSync } from "./useForegroundSync";
+import { snapshotSyncAction } from "@hamster-ledger/core";
 const CONFLICT_STATUS = 409;
 import { useEffect, useRef, useState } from "react";
 import { digestStringAsync, CryptoDigestAlgorithm } from "expo-crypto";
@@ -10,28 +14,8 @@ import {
   type CloudBook,
   type CloudSnapshot,
 } from "../platform/cloud-client";
-interface SyncLink {
-  id: string;
-  revision: number;
-  fingerprint: string;
-}
 const fingerprint = (value: unknown): Promise<string> =>
   digestStringAsync(CryptoDigestAlgorithm.SHA256, serializeSnapshot(value));
-export interface NativeSyncController {
-  link: SyncLink | null;
-  books: CloudBook[];
-  preview: CloudSnapshot | null;
-  isBusy: boolean;
-  error: string;
-  message: string;
-  upload: () => Promise<void>;
-  sync: () => Promise<void>;
-  refresh: () => Promise<void>;
-  inspect: (id: string) => Promise<void>;
-  restore: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  dismissPreview: () => void;
-}
 export function useNativeSync(
   controller: LedgerController,
 ): NativeSyncController {
@@ -44,9 +28,11 @@ export function useNativeSync(
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const current = useRef({ controller, identity });
-  current.current = { controller, identity };
+  const session = account.credentials?.session.id;
+  const current = useRef({ controller, identity, session });
+  current.current = { controller, identity, session };
   const lock = useRef(false);
+  const conflict = useRef(false);
   const active = useRef(true);
   useEffect(() => {
     active.current = true;
@@ -56,6 +42,7 @@ export function useNativeSync(
   }, []);
   useEffect(() => {
     let cancelled = false;
+    conflict.current = false;
     setLink(null);
     setBooks([]);
     setPreview(null);
@@ -83,11 +70,14 @@ export function useNativeSync(
     if (
       !active.current ||
       current.current.identity !== identity ||
+      current.current.session !== session ||
       current.current.controller.mode !== controller.mode
     )
       throw new Error("当前账本或登录状态已变化，请重新打开同步页面。");
   }
   async function run(action: () => Promise<void>): Promise<void> {
+    if (!account.credentials || account.credentials.user.mustChangePassword)
+      return;
     if (controller.network?.isConnected) {
       setError("联网账本使用在线编辑，无需整本同步。");
       return;
@@ -100,7 +90,11 @@ export function useNativeSync(
     try {
       await action();
     } catch (cause) {
-      if (active.current)
+      if (
+        active.current &&
+        current.current.identity === identity &&
+        current.current.session === session
+      )
         setError(
           cause instanceof Error ? cause.message : "同步失败，本机账本已保留。",
         );
@@ -112,7 +106,8 @@ export function useNativeSync(
   async function saveLink(value: SyncLink): Promise<void> {
     assertCurrent();
     await nativeStore.setItem(linkKey, JSON.stringify(value));
-    if (active.current) setLink(value);
+    assertCurrent();
+    setLink(value);
   }
   async function upload(): Promise<void> {
     await run(async () => {
@@ -129,8 +124,10 @@ export function useNativeSync(
           ledger: original.ledger,
         }),
       });
-      setBooks((await account.client.books()).books);
-      setMessage("已上传并建立连接。修改后可点「立即同步」。");
+      const refreshed = await account.client.books();
+      assertCurrent();
+      setBooks(refreshed.books);
+      setMessage("已上传并建立连接。应用在前台时自动同步。");
     });
   }
   async function sync(): Promise<void> {
@@ -143,16 +140,55 @@ export function useNativeSync(
       });
       const remote = await account.client.load(link.id);
       assertCurrent();
-      if (remote.revision !== link.revision) {
+      const latest = current.current.controller;
+      if (
+        latest.isLoading ||
+        latest.isSaving ||
+        latest.ledger !== original.ledger ||
+        name(latest) !== name(original)
+      )
+        return;
+      const action = snapshotSyncAction(hash, remote.revision, link);
+      if (action === "conflict") {
+        conflict.current = true;
         setPreview(remote);
         throw new CloudError(CONFLICT_STATUS, {
           message:
-            hash !== link.fingerprint
-              ? "本机和云端均已修改，两边数据已保留。请把云端版本恢复为新账本后核对。"
-              : "云端已有新版本。请预览并恢复为新账本，本机版本会保留。",
+            "本机和云端均已修改，两边数据已保留。请把云端版本恢复为新账本后核对。",
         });
       }
-      if (hash === link.fingerprint) {
+      if (action === "download") {
+        const remoteHash = await fingerprint({
+          name: remote.name,
+          ledger: remote.ledger,
+        });
+        assertCurrent();
+        const beforeCommit = current.current.controller;
+        if (
+          beforeCommit.isSaving ||
+          beforeCommit.ledger !== original.ledger ||
+          name(beforeCommit) !== name(original)
+        )
+          return;
+        await beforeCommit.commit(remote.ledger, original.mode);
+        assertCurrent();
+        if (name(original) !== remote.name)
+          await current.current.controller.updateBooks(
+            current.current.controller.books.map((book) =>
+              book.id === original.mode ? { ...book, name: remote.name } : book,
+            ),
+          );
+        await saveLink({
+          id: remote.id,
+          revision: remote.revision,
+          fingerprint: remoteHash,
+        });
+        conflict.current = false;
+        setMessage("已获取云端更新。");
+        return;
+      }
+      if (action === "idle") {
+        conflict.current = false;
         setMessage("当前账本已同步。");
         return;
       }
@@ -168,18 +204,30 @@ export function useNativeSync(
           revision: saved.revision,
           fingerprint: hash,
         });
-        setBooks((await account.client.books()).books);
+        const refreshed = await account.client.books();
+        assertCurrent();
+        setBooks(refreshed.books);
+        conflict.current = false;
         setMessage("本机修改已同步。");
       } catch (cause) {
         if (cause instanceof CloudError && cause.status === CONFLICT_STATUS) {
           const latest = await account.client.load(link.id);
           assertCurrent();
+          conflict.current = true;
           setPreview(latest);
         }
         throw cause;
       }
     });
   }
+  useForegroundSync({
+    sync,
+    controller,
+    enabled: Boolean(
+      link && account.credentials && !controller.network?.isConnected,
+    ),
+    conflict,
+  });
   const refresh = (): Promise<void> =>
     run(async () => {
       const result = await account.client.books();
@@ -214,6 +262,8 @@ export function useNativeSync(
   const disconnect = (): Promise<void> =>
     run(async () => {
       await nativeStore.setItem(linkKey, "");
+      assertCurrent();
+      conflict.current = false;
       setLink(null);
       setPreview(null);
       setMessage("已断开连接，本机和云端数据均保留。");

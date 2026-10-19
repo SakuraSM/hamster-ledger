@@ -1,15 +1,16 @@
 import { Button, Text, Card, List } from "react-native-paper";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { Screen, Section, ErrorMessage } from "../ui/Screen";
-import { useNativeSync } from "../hooks/useNativeSync";
+import type { NativeSyncController } from "../hooks/useNativeSync";
 import { useNativeAccount } from "../auth/NativeAccount";
 export function SyncScreen({
   controller,
+  sync,
 }: {
   controller: LedgerController;
+  sync: NativeSyncController;
 }): React.JSX.Element {
   const account = useNativeAccount();
-  const sync = useNativeSync(controller);
   const disabled = sync.isBusy || controller.isLoading || controller.isSaving;
   if (controller.network?.isConnected)
     return (
@@ -47,10 +48,12 @@ export function SyncScreen({
             </Text>
             <Text>
               {sync.link
-                ? "当前账本已连接。修改后点击立即同步。"
+                ? "当前账本已连接。应用在前台时自动同步。"
                 : "当前账本仅保存在本机。上传会在你的服务器创建副本。"}
             </Text>
-            <Text>云端有更新时，先预览再恢复为新账本，保留本机版本。</Text>
+            <Text>
+              仅云端有更新时自动获取；两端都有修改时保留双方版本，可预览并恢复为新账本。
+            </Text>
             <Button
               mode="contained"
               disabled={disabled}

@@ -32,7 +32,7 @@ export function useReportData(input: {
   const currencies = [
     ...new Set(
       input.ledger.accounts
-        .filter((item) => !item.isArchived)
+        .filter((item) => !item.isArchived || item.archiveHistory?.length)
         .map((item) => item.currency ?? "CNY"),
     ),
   ].filter((item) => item !== "CNY");

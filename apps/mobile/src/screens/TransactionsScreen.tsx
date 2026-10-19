@@ -1,3 +1,4 @@
+import { SavedFilters } from "./SavedFilters";
 import {
   useBatchRecords,
   useBookMembers,
@@ -11,7 +12,7 @@ import {
   EMPTY_FILTER,
   type FinanceFilter,
 } from "./RecordFilters";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, View, type ListRenderItemInfo } from "react-native";
 import { useSystemFontScale } from "../hooks/useSystemFontScale";
 import {
@@ -32,6 +33,9 @@ export function TransactionsScreen({
   controller,
   onRecord,
 }: TransactionsScreenProps): React.JSX.Element {
+  const restoreOffset = useRef<number | null>(null);
+  const list = useRef<FlatList<BillRecord>>(null);
+  const [position, setPosition] = useState(0);
   const fontScale = useSystemFontScale();
   const ledger = controller.ledger;
   const remoteMembers = useBookMembers(
@@ -118,9 +122,39 @@ export function TransactionsScreen({
   return (
     <View style={{ flex: 1, paddingHorizontal: 16 }}>
       <FlatList
+        ref={list}
+        onContentSizeChange={() => {
+          if (restoreOffset.current !== null) {
+            list.current?.scrollToOffset({
+              offset: restoreOffset.current,
+              animated: false,
+            });
+            restoreOffset.current = null;
+          }
+        }}
+        onScrollEndDrag={(event) =>
+          setPosition(Math.round(event.nativeEvent.contentOffset.y))
+        }
+        onMomentumScrollEnd={(event) =>
+          setPosition(Math.round(event.nativeEvent.contentOffset.y))
+        }
         key={fontScale}
         ListHeaderComponent={
           <>
+            <SavedFilters
+              bookId={`native:${controller.mode}`}
+              filter={queryFilter}
+              position={position}
+              onApply={({ filter: value, position: offset }) => {
+                setFilter(value);
+                setQuery(value.query);
+                setSource(value.source);
+                setView(value.isDeleted ? "deleted" : "active");
+                setPosition(offset);
+                restoreOffset.current = offset;
+                list.current?.scrollToOffset({ offset, animated: false });
+              }}
+            />
             <Searchbar
               icon="magnify"
               clearIcon="close"

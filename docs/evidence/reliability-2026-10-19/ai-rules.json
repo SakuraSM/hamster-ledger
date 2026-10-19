@@ -1,0 +1,32 @@
+{
+  "scope": "synthetic local rule and draft safety evaluation; no real model or OCR calls",
+  "sampleCount": 8,
+  "dimensions": {
+    "amount": {
+      "passed": 8,
+      "total": 8
+    },
+    "account": {
+      "passed": 8,
+      "total": 8
+    },
+    "date": {
+      "passed": 8,
+      "total": 8
+    },
+    "invalidAmount": {
+      "passed": 5,
+      "total": 5
+    },
+    "duplicate": {
+      "passed": 1,
+      "total": 1
+    },
+    "manualReviewDefault": {
+      "passed": 8,
+      "total": 8
+    }
+  },
+  "failures": [],
+  "passed": true
+}

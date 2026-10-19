@@ -1,3 +1,4 @@
+import type { NativeSyncController } from "../hooks/useNativeSync";
 import { PaymentInboxScreen } from "./PaymentInboxScreen";
 import { AiScreen } from "./AiScreen";
 import { PlanningScreen } from "./PlanningScreen";
@@ -18,6 +19,7 @@ import { SyncScreen } from "./SyncScreen";
 import { NetworkScreen } from "./NetworkScreen";
 interface ToolPageProps {
   page: ToolPageName;
+  sync: NativeSyncController;
   controller: LedgerController;
   onRecord: (record: BillRecord) => void;
   onAdd: (date: string) => void;
@@ -25,6 +27,7 @@ interface ToolPageProps {
 }
 export function ToolPage({
   page,
+  sync,
   controller,
   onRecord,
   onAdd,
@@ -45,7 +48,7 @@ export function ToolPage({
     ),
     network: <NetworkScreen controller={controller} />,
     account: <AccountScreen />,
-    sync: <SyncScreen controller={controller} />,
+    sync: <SyncScreen controller={controller} sync={sync} />,
     books: <BooksScreen controller={controller} />,
     import: <ImportScreen controller={controller} onReview={onReview} />,
     review: <ReviewScreen controller={controller} onRecord={onRecord} />,

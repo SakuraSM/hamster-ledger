@@ -1,0 +1,80 @@
+{
+  "node": "v24.19.0",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "scope": "synthetic in-process baseline; excludes UI, network, encryption and attachments; one warmup per size",
+  "results": [
+    {
+      "count": 1000,
+      "attachmentCount": 0,
+      "bytes": 425821,
+      "samples": 5,
+      "milliseconds": {
+        "parse": {
+          "median": 4.71,
+          "maximum": 8.14
+        },
+        "summary": {
+          "median": 0.12,
+          "maximum": 0.12
+        },
+        "archive": {
+          "median": 3.61,
+          "maximum": 4.07
+        },
+        "restore": {
+          "median": 12.5,
+          "maximum": 17.18
+        }
+      }
+    },
+    {
+      "count": 5000,
+      "attachmentCount": 0,
+      "bytes": 2141821,
+      "samples": 5,
+      "milliseconds": {
+        "parse": {
+          "median": 20.74,
+          "maximum": 24.17
+        },
+        "summary": {
+          "median": 0.43,
+          "maximum": 0.71
+        },
+        "archive": {
+          "median": 17.44,
+          "maximum": 17.83
+        },
+        "restore": {
+          "median": 60.75,
+          "maximum": 69.85
+        }
+      }
+    },
+    {
+      "count": 14999,
+      "attachmentCount": 0,
+      "bytes": 6461389,
+      "samples": 5,
+      "milliseconds": {
+        "parse": {
+          "median": 147.76,
+          "maximum": 290.45
+        },
+        "summary": {
+          "median": 0.87,
+          "maximum": 1.82
+        },
+        "archive": {
+          "median": 81.09,
+          "maximum": 130.71
+        },
+        "restore": {
+          "median": 405.08,
+          "maximum": 511.16
+        }
+      }
+    }
+  ]
+}

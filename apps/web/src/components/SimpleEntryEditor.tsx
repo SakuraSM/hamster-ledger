@@ -1,15 +1,18 @@
+import { useEntrySuggestions } from "../hooks/useEntrySuggestions";
+import { QuickEntryTemplates } from "./QuickEntryTemplates";
 import { EntryFormActions } from "./EntryFormActions";
-import type { EntryDraft } from "@hamster-ledger/ledger-react";
+import type { EntryEditorProps } from "./entry-editor-props";
+export type { EntryEditorProps } from "./entry-editor-props";
 import {
   SegmentedControl,
   Autocomplete,
   TextInput,
   Button,
+  Checkbox,
 } from "@mantine/core";
 import { Choice } from "../ui/Choice";
 import { DateField } from "../ui/DateField";
 const CENTS_PER_YUAN = 100;
-const NOTE_SUGGESTION_LIMIT = 12;
 const MINUTE_TIMESTAMP_LENGTH = 16;
 import { useState } from "react";
 import {
@@ -17,23 +20,11 @@ import {
   defaultCategory,
   RecordConflictError,
   resolveAssetAccount,
-  type Ledger,
-  type BillRecord,
   type Kind,
-  type EntryInput,
 } from "@hamster-ledger/core";
 import { parseAmount } from "@hamster-ledger/importers";
 import { localNow, newEntityId } from "../platform/browser/runtime";
 import { Dialog } from "./Dialog";
-export interface EntryEditorProps {
-  onAdvanced?: (draft: Partial<EntryDraft>) => void;
-  ledger: Ledger;
-  record?: BillRecord;
-  date?: string;
-  onSave: (input: EntryInput) => Promise<void>;
-  onClose: () => void;
-  onReload?: () => void;
-}
 export function SimpleEntryEditor({
   onAdvanced,
   ledger,
@@ -44,6 +35,8 @@ export function SimpleEntryEditor({
   onReload,
 }: EntryEditorProps): React.JSX.Element {
   const [baseline] = useState(record);
+  const [keepOpen, setKeepOpen] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
   const [hasConflict, setHasConflict] = useState(false);
   const [kind, setKind] = useState<Kind>(record?.kind ?? "支出");
   const [amount, setAmount] = useState(
@@ -70,14 +63,7 @@ export function SimpleEntryEditor({
   );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const suggestions = [
-    ...new Set(
-      ledger.records
-        .filter((item) => !item.isDeleted)
-        .map((item) => item.description)
-        .filter(Boolean),
-    ),
-  ].slice(-NOTE_SUGGESTION_LIMIT);
+  const suggestions = useEntrySuggestions(ledger);
   async function submit(
     event: React.SubmitEvent<HTMLFormElement>,
   ): Promise<void> {
@@ -118,7 +104,14 @@ export function SimpleEntryEditor({
         accountId: accountId || null,
         transferToAccountId: destination || null,
       });
-      onClose();
+      if (keepOpen && !record) {
+        setAmount("");
+        setMerchant("");
+        setDescription("");
+        setTags("");
+        setError("");
+        setSavedMessage("已保存，可继续记下一笔。");
+      } else onClose();
     } catch (cause) {
       setHasConflict(cause instanceof RecordConflictError);
       setError(cause instanceof Error ? cause.message : "保存失败");
@@ -156,6 +149,22 @@ export function SimpleEntryEditor({
         >
           更多交易类型 / 多币种 / AA 分摊
         </Button>
+        {!record && (
+          <QuickEntryTemplates
+            ledger={ledger}
+            onSelect={(item) => {
+              setAmount(String(item.amount / CENTS_PER_YUAN));
+              setMerchant(item.merchant);
+              setKind(item.kind);
+              setCategory(item.category);
+              setAccountId(
+                resolveAssetAccount(item, ledger.accounts)?.id ?? "",
+              );
+              setDescription(item.description);
+              setTags(item.tags?.join("，") ?? "");
+            }}
+          />
+        )}
         <SegmentedControl
           fullWidth
           aria-label="收支类型"
@@ -266,6 +275,14 @@ export function SimpleEntryEditor({
             placeholder="旅行，家庭，报销"
           />
         </div>
+        {!record && (
+          <Checkbox
+            label="保存后继续记账"
+            checked={keepOpen}
+            onChange={(event) => setKeepOpen(event.target.checked)}
+          />
+        )}
+        {savedMessage && <p role="status">{savedMessage}</p>}
         <EntryFormActions
           error={error}
           hasConflict={hasConflict}

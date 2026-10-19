@@ -1,8 +1,10 @@
+import type { TransactionsProps } from "./transaction-props";
+export type { BillFilter } from "./transaction-props";
+import { SavedFilters } from "./finance/SavedFilters";
 import {
   useBatchRecords,
   useBookMembers,
   useTransactionQuery,
-  type LedgerController,
 } from "@hamster-ledger/ledger-react";
 import { money, type ReimbursementState } from "@hamster-ledger/core";
 import { useNetworkClient } from "../hooks/useNetworkController";
@@ -18,27 +20,12 @@ import {
   type BillRecord,
   type Category,
   type Source,
-  type AssetAccount,
   UNASSIGNED_ACCOUNT_FILTER,
 } from "@hamster-ledger/core";
 import { Icons } from "./Icons";
 import { TransactionTable } from "./TransactionTable";
 import { exportRecords } from "../platform/browser/downloads";
 const PAGE_SIZE = 20;
-export interface BillFilter {
-  source: Source | "";
-  category: Category | "";
-  accountId?: string;
-}
-interface TransactionsProps {
-  records: BillRecord[];
-  controller: LedgerController;
-  accounts: AssetAccount[];
-  filter: BillFilter;
-  onFilter: (filter: BillFilter) => void;
-  onSelect: (record: BillRecord) => void;
-  onClearPeriod: () => void;
-}
 export function Transactions({
   records,
   controller,
@@ -118,6 +105,30 @@ export function Transactions({
           导出账单
         </Button>
       </div>
+      <SavedFilters
+        bookId={`web:${controller.mode}`}
+        filter={queryFilter}
+        position={pageIndex}
+        restoreLast={!filter.source && !filter.category && !filter.accountId}
+        onApply={({ filter: value, position }) => {
+          onFilter({
+            source: value.source,
+            category: value.category,
+            accountId: value.accountId,
+          });
+          setRange({
+            startDate: value.startDate,
+            endDate: value.endDate,
+            kind: value.kind,
+          });
+          setQuery(value.query);
+          setStatus(value.status);
+          setMember(value.memberId);
+          setReimbursement(value.reimbursement);
+          setPageIndex(position);
+          onClearPeriod();
+        }}
+      />
       <div className="filter-bar">
         <label className="search-field">
           <Icons.Search size={20} />

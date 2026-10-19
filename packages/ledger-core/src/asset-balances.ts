@@ -1,3 +1,4 @@
+import { accountActiveAt } from "./account-model.js";
 import {
   addMinor,
   convertToCny,
@@ -91,7 +92,7 @@ export function summarizeAssets(input: {
   missingBaselines: string[];
 } {
   const balances = input.ledger.accounts
-    .filter((account) => !account.isArchived)
+    .filter((account) => accountActiveAt(account, input.through))
     .map((account) => projectAccountBalance({ ...input, account }));
   let assets = 0;
   let liabilities = 0;
