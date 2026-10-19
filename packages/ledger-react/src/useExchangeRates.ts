@@ -33,12 +33,16 @@ export interface ExchangeRatesController {
   isLoading: boolean;
   setManual: (currency: Currency, rate: string) => void;
 }
+const EMPTY_RATES: RateQuote[] = [];
 export function useExchangeRates(input: {
   client: NetworkClient;
   currencies: Currency[];
   date: string;
 }): ExchangeRatesController {
-  const [rates, setRates] = useState<RateQuote[]>([]);
+  const [quote, setQuote] = useState<{ key: string; rates: RateQuote[] }>({
+    key: "",
+    rates: EMPTY_RATES,
+  });
   const [error, setError] = useState("");
   const [isLoading, setLoading] = useState(false);
   const current = useRef(input);
@@ -47,7 +51,7 @@ export function useExchangeRates(input: {
   useEffect(() => {
     let canceled = false;
     const { date, client, currencies } = current.current;
-    setRates([]);
+    setQuote({ key, rates: EMPTY_RATES });
     setError("");
     setLoading(true);
     void Promise.allSettled(
@@ -56,14 +60,28 @@ export function useExchangeRates(input: {
         .map((currency) => requestExchangeRate(client, currency, date)),
     ).then((results) => {
       if (canceled) return;
-      setRates(
-        results
-          .filter(
-            (result) =>
-              result.status === "fulfilled" && !result.value.needsConfirmation,
-          )
-          .map((result) => (result as PromiseFulfilledResult<RateQuote>).value),
-      );
+      const received = results
+        .filter(
+          (result) =>
+            result.status === "fulfilled" && !result.value.needsConfirmation,
+        )
+        .map((result) => (result as PromiseFulfilledResult<RateQuote>).value);
+      setQuote((previous) => {
+        const manual =
+          previous.key === key
+            ? previous.rates.filter((item) => item.source === "manual")
+            : [];
+        return {
+          key,
+          rates: [
+            ...received.filter(
+              (item) =>
+                !manual.some((value) => value.currency === item.currency),
+            ),
+            ...manual,
+          ],
+        };
+      });
       if (
         results.some(
           (result) =>
@@ -76,9 +94,9 @@ export function useExchangeRates(input: {
     return () => {
       canceled = true;
     };
-  }, [key]);
+  }, [key, input.client]);
   return {
-    rates,
+    rates: quote.key === key ? quote.rates : EMPTY_RATES,
     error,
     isLoading,
     setManual(currency, rate) {
@@ -89,10 +107,15 @@ export function useExchangeRates(input: {
           date: input.date,
           source: "manual",
         });
-        setRates((previous) => [
-          ...previous.filter((item) => item.currency !== currency),
-          value,
-        ]);
+        setQuote((previous) => ({
+          key,
+          rates: [
+            ...(previous.key === key
+              ? previous.rates.filter((item) => item.currency !== currency)
+              : []),
+            value,
+          ],
+        }));
         setError("");
       } catch {
         setError("汇率必须为大于零的数字。");

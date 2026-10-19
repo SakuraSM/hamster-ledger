@@ -9,6 +9,7 @@ import {
   normalizeAccountLabel,
 } from "./account-links.js";
 import type { Ledger } from "./model.js";
+import { accountBaselines } from "./account-baselines.js";
 export interface SaveAssetAccountInput {
   ledger: Ledger;
   account: AssetAccount;
@@ -59,6 +60,21 @@ export function saveAssetAccount(input: SaveAssetAccountInput): Ledger {
     ...account,
     checkpoints: [
       ...(previous?.checkpoints ?? []),
+      ...(previous &&
+      hasBalanceChange &&
+      !previous.checkpoints.some(
+        (item) =>
+          item.at === previous.balanceAt &&
+          item.balance === previous.openingBalance,
+      )
+        ? accountBaselines(previous)
+            .filter((item) => item.at === previous.balanceAt)
+            .map((item) => ({
+              ...item,
+              note: "保留原余额基准",
+              recordedAt: input.now,
+            }))
+        : []),
       ...(hasBalanceChange
         ? [
             {

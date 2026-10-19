@@ -14,6 +14,7 @@ import {
   type Ledger,
 } from "@hamster-ledger/core";
 import { AssetsPage } from "./assets/AssetsPage";
+import { AssetSnapshot } from "./assets/AssetSnapshot";
 import { Overview } from "./Overview";
 import { Transactions, type BillFilter } from "./Transactions";
 import { ImportPage } from "./ImportPage";
@@ -68,22 +69,25 @@ export function AppPages(props: Props): React.JSX.Element {
   const pending = pendingReviewCount(ledger);
   const pages: Record<PageId, () => React.JSX.Element> = {
     overview: () => (
-      <Overview
-        accounts={ledger.accounts}
-        records={periodRecords(ledger, month).filter(
-          (record) => record.status === "confirmed",
-        )}
-        month={month}
-        isDemo={mode === "demo"}
-        hideAmounts={ledger.preferences?.hideAmounts ?? false}
-        cycleStartDay={ledger.preferences?.cycleStartDay ?? 1}
-        pending={pending}
-        onReview={() => onNavigate("review")}
-        onAll={() => onNavigate("transactions")}
-        onCategory={onCategory}
-        onSelect={onSelect}
-        onImport={() => onNavigate("import")}
-      />
+      <>
+        <AssetSnapshot ledger={ledger} onOpen={() => onNavigate("assets")} />
+        <Overview
+          accounts={ledger.accounts}
+          records={periodRecords(ledger, month).filter(
+            (record) => record.status === "confirmed",
+          )}
+          month={month}
+          isDemo={mode === "demo"}
+          hideAmounts={ledger.preferences?.hideAmounts ?? false}
+          cycleStartDay={ledger.preferences?.cycleStartDay ?? 1}
+          pending={pending}
+          onReview={() => onNavigate("review")}
+          onAll={() => onNavigate("transactions")}
+          onCategory={onCategory}
+          onSelect={onSelect}
+          onImport={() => onNavigate("import")}
+        />
+      </>
     ),
     transactions: () => (
       <Transactions
@@ -99,6 +103,10 @@ export function AppPages(props: Props): React.JSX.Element {
     ),
     assets: () => (
       <AssetsPage
+        key={mode}
+        onCommit={controller.commit}
+        canUndo={controller.canUndo}
+        onUndo={controller.undo}
         ledger={ledger}
         isDemo={mode === "demo"}
         onSave={async (input) => {
