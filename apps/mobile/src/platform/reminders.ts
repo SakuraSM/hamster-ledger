@@ -45,3 +45,17 @@ export async function configureReminder(
     },
   });
 }
+
+export async function reminderDiagnostics(): Promise<string> {
+  const [permission, scheduled, channel] = await Promise.all([
+    Notifications.getPermissionsAsync(),
+    Notifications.getAllScheduledNotificationsAsync(),
+    Notifications.getNotificationChannelAsync(CHANNEL_ID),
+  ]);
+  return [
+    `系统通知权限：${permission.granted ? "已允许" : "未允许"}`,
+    `每日提醒任务：${scheduled.some((item) => item.identifier === REMINDER_ID) ? "已安排" : "未安排"}`,
+    `提醒通道：${!channel ? "尚未创建" : channel.importance === Notifications.AndroidImportance.NONE ? "已被系统关闭" : "已启用"}`,
+    "省电限制、锁屏显示与重启后的实际送达需在此设备测试；以上状态不代表已成功送达。",
+  ].join("\n");
+}

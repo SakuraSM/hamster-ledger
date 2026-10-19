@@ -94,6 +94,10 @@ export function BudgetScreen({
               {budget.start} 至 {budget.end}（不含结束日） · 结转 ¥
               {money(budget.carried)}
             </Text>
+            <Text>
+              本期预算 ¥{money(budget.amount)} + 上期结转 ¥
+              {money(budget.carried)} = 可用预算 ¥{money(budget.available)}
+            </Text>
             <ProgressBar
               progress={Math.min(1, budget.ratio)}
               color={budget.remaining < 0 ? "#a43222" : undefined}

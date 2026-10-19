@@ -10,7 +10,7 @@ import {
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { Screen, ErrorMessage } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
-import { configureReminder } from "../platform/reminders";
+import { configureReminder, reminderDiagnostics } from "../platform/reminders";
 interface PreferencesScreenProps {
   controller: LedgerController;
 }
@@ -21,6 +21,7 @@ export function PreferencesScreen({
     controller.ledger.preferences ?? DEFAULT_PREFERENCES,
   );
   const [error, setError] = useState("");
+  const [diagnostics, setDiagnostics] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   function update(patch: Partial<LedgerPreferences>): void {
     setDraft((current) => ({ ...current, ...patch }));
@@ -105,6 +106,23 @@ export function PreferencesScreen({
         提醒时间：{draft.reminderTime}
       </Button>
       <Text>设备的省电设置可能推迟提醒。通知不包含账单金额和账户内容。</Text>
+      <Button
+        mode="outlined"
+        onPress={() =>
+          void reminderDiagnostics()
+            .then(setDiagnostics)
+            .catch((cause) =>
+              setError(
+                cause instanceof Error ? cause.message : "无法读取通知状态。",
+              ),
+            )
+        }
+      >
+        检查提醒权限与任务
+      </Button>
+      {diagnostics && (
+        <Text accessibilityLiveRegion="polite">{diagnostics}</Text>
+      )}
       <ErrorMessage message={error} />
       <Button
         mode="contained"

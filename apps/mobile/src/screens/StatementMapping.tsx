@@ -1,7 +1,9 @@
+import { nativeStore } from "../platform/storage";
 import { useEffect, useMemo, useState } from "react";
 import { Button, TextInput, Text, HelperText } from "react-native-paper";
 import {
   FIELD_LABELS,
+  rememberMapping,
   FIELDS,
   changeHeader,
   detectStatementLayout,
@@ -139,6 +141,25 @@ export function StatementMapping({
           }
         />
       ))}
+      <Button
+        mode="outlined"
+        onPress={() =>
+          void (async () => {
+            try {
+              await rememberMapping(nativeStore, file);
+              onChange({ ...file, mappingConfirmed: true });
+              setError("");
+            } catch (cause) {
+              setError(
+                cause instanceof Error ? cause.message : "字段模板保存失败。",
+              );
+            }
+          })()
+        }
+        disabled={Boolean(mappingError)}
+      >
+        确认并保存同表头模板
+      </Button>
       {file.reviewFields?.length ? (
         <Button
           mode="contained"

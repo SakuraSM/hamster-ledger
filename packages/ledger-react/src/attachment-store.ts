@@ -40,14 +40,25 @@ export function remoteAttachments(client: NetworkClient): AttachmentStore {
     },
   };
 }
+export interface ArchiveProgress {
+  check?: () => void;
+  onProgress?: (completed: number, total: number) => void;
+}
 export async function exportArchive(
   store: AttachmentStore,
   bookId: string,
   ledger: Ledger,
+  progress: ArchiveProgress = {},
 ): Promise<string> {
   const images: Attachment[] = [];
-  for (const id of attachmentReferences(ledger))
+  const ids = attachmentReferences(ledger);
+  progress.onProgress?.(0, ids.length);
+  for (const id of ids) {
+    progress.check?.();
     images.push(await store.get(bookId, id));
+    progress.onProgress?.(images.length, ids.length);
+  }
+  progress.check?.();
   return createArchive(ledger, images);
 }
 export async function restoreArchive(input: {
@@ -56,9 +67,15 @@ export async function restoreArchive(input: {
   attachments: Attachment[];
   verify: (attachment: Attachment) => Promise<Attachment>;
   createBook: LedgerController["createBook"];
+  progress?: ArchiveProgress;
 }): Promise<LedgerMode> {
   createArchive(input.ledger, input.attachments);
-  for (const attachment of input.attachments) await input.verify(attachment);
+  input.progress?.check?.();
+  for (const attachment of input.attachments) {
+    input.progress?.check?.();
+    await input.verify(attachment);
+  }
+  input.progress?.check?.();
   let destination: LedgerMode | undefined;
   try {
     return await input.createBook(
@@ -67,8 +84,14 @@ export async function restoreArchive(input: {
       undefined,
       async (mode) => {
         destination = mode;
-        for (const attachment of input.attachments)
+        input.progress?.onProgress?.(0, input.attachments.length);
+        let completed = 0;
+        for (const attachment of input.attachments) {
+          input.progress?.check?.();
           await input.store.put(mode, attachment);
+          input.progress?.onProgress?.(++completed, input.attachments.length);
+        }
+        input.progress?.check?.();
       },
     );
   } catch (error) {

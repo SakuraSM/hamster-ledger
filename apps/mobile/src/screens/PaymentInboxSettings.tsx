@@ -57,6 +57,13 @@ export function PaymentInboxSettings({
       <Text accessibilityLiveRegion="polite">
         {captureLabel(status)} · 待确认 {status?.pendingCount ?? 0} 条
       </Text>
+      {status && (
+        <Text>
+          通知使用权：{status.permissionGranted ? "已授权" : "未授权"}
+          ；监听连接：{status.connected ? "已连接" : "未连接"}
+          。已授权但未连接时，可重新开启系统通知使用权后刷新。系统通知未出现、来源未勾选或省电限制，都可能导致未采集；请以原账单核对。
+        </Text>
+      )}
       {status?.error ? (
         <Text accessibilityLiveRegion="polite">
           {CAPTURE_ERRORS[status.error] ?? "支付消息采集异常，请检查后重试。"}

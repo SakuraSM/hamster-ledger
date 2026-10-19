@@ -1,3 +1,5 @@
+const LIST_PAGE_SIZE = 30;
+import { useState } from "react";
 import { Alert, Button, Group, Stack, Text } from "@mantine/core";
 import {
   PLANNING_TABS,
@@ -13,6 +15,7 @@ export function PlanningPanel({
 }: {
   controller: LedgerController;
 }): React.JSX.Element {
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
   const panel = usePlanningPanel(controller),
     ledger = controller.ledger;
   const unread =
@@ -62,33 +65,46 @@ export function PlanningPanel({
               全部标为已读
             </Button>
             {!ledger.notifications?.length ? <Text>暂时没有提醒。</Text> : null}
-            {[...(ledger.notifications ?? [])].reverse().map((item) => (
-              <article className="panel" key={item.id}>
-                <h3>
-                  {item.title}
-                  {item.isRead ? " · 已读" : ""}
-                </h3>
-                <Text>{item.body}</Text>
-                <Text size="sm">{item.date}</Text>
-                {!item.isRead ? (
-                  <Button
-                    variant="subtle"
-                    onClick={() =>
-                      void panel.commit((current) => ({
-                        ...current,
-                        notifications: current.notifications?.map((notice) =>
-                          notice.id === item.id
-                            ? { ...notice, isRead: true }
-                            : notice,
-                        ),
-                      }))
-                    }
-                  >
-                    标为已读
-                  </Button>
-                ) : null}
-              </article>
-            ))}
+            {(ledger.notifications?.length ?? 0) > visibleCount && (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setVisibleCount((count) => count + LIST_PAGE_SIZE)
+                }
+              >
+                加载更多通知
+              </Button>
+            )}
+            {[...(ledger.notifications ?? [])]
+              .reverse()
+              .slice(0, visibleCount)
+              .map((item) => (
+                <article className="panel" key={item.id}>
+                  <h3>
+                    {item.title}
+                    {item.isRead ? " · 已读" : ""}
+                  </h3>
+                  <Text>{item.body}</Text>
+                  <Text size="sm">{item.date}</Text>
+                  {!item.isRead ? (
+                    <Button
+                      variant="subtle"
+                      onClick={() =>
+                        void panel.commit((current) => ({
+                          ...current,
+                          notifications: current.notifications?.map((notice) =>
+                            notice.id === item.id
+                              ? { ...notice, isRead: true }
+                              : notice,
+                          ),
+                        }))
+                      }
+                    >
+                      标为已读
+                    </Button>
+                  ) : null}
+                </article>
+              ))}
           </>
         )}
       </Stack>

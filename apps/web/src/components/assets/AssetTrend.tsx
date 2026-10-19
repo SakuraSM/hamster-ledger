@@ -28,7 +28,12 @@ export function AssetTrend({
     end,
     client: useNetworkClient(),
   });
-  if (!ledger.accounts.some((account) => !account.isArchived)) return <></>;
+  if (
+    !ledger.accounts.some(
+      (account) => !account.isArchived || account.archiveHistory?.length,
+    )
+  )
+    return <></>;
   if (start > end)
     return <p className="muted">此日期以前尚无完整余额基准，暂不绘制趋势。</p>;
   return (
@@ -39,7 +44,7 @@ export function AssetTrend({
       </div>
       <p className="muted small">
         从 {start}{" "}
-        起按月末及起止日比较，使用当前未归档账户。缺少历史基准的日期不作比较。
+        起按月末及起止日比较，按归档历史确定各日期的账户范围。缺少历史基准的日期不作比较。
       </p>
       {report.error ? <p role="alert">{report.error}</p> : null}
       {report.isLoading ? <p role="status">正在查询参考汇率…</p> : null}

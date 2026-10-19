@@ -1,3 +1,4 @@
+const LIST_PAGE_SIZE = 30;
 import { DraftAttachments } from "./DraftAttachments";
 import { useMemo, useState } from "react";
 import { Alert, Button, Checkbox, FileInput, Textarea } from "@mantine/core";
@@ -73,6 +74,7 @@ export function AiPanel({
       setFileError(cause instanceof Error ? cause.message : "图片读取失败。");
     }
   }
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
   const pending =
     controller.ledger.aiDrafts?.filter((draft) => draft.state === "pending") ??
     [];
@@ -156,7 +158,15 @@ export function AiPanel({
         </Alert>
       ) : null}
       <h3>待确认草稿（{pending.length}）</h3>
-      {pending.map((draft) => (
+      {pending.length > visibleCount && (
+        <Button
+          variant="outline"
+          onClick={() => setVisibleCount((count) => count + LIST_PAGE_SIZE)}
+        >
+          加载更多草稿（{pending.length - visibleCount}）
+        </Button>
+      )}
+      {pending.slice(0, visibleCount).map((draft) => (
         <article className="panel" key={draft.id}>
           <h4>{draft.candidate.merchant || "交易对象待确认"}</h4>
           <p>
