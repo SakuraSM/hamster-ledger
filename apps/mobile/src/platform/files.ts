@@ -1,3 +1,4 @@
+import { decryptArchive } from "./archive-crypto";
 import { DATE_PART_WIDTH, CENTS_PER_YUAN } from "../constants";
 const HEX_RADIX = 16;
 import * as DocumentPicker from "expo-document-picker";
@@ -16,11 +17,11 @@ import {
 } from "@hamster-ledger/importers";
 import {
   parseArchive,
+  MAX_ENCRYPTED_ARCHIVE_BYTES,
   type Attachment,
   type Ledger,
 } from "@hamster-ledger/core";
 const MAX_STATEMENT_BYTES = 10_485_760;
-const MAX_BACKUP_BYTES = 167_772_160;
 XLSX.set_cptable(codepages);
 function excelCell(value: unknown): string {
   if (!(value instanceof Date)) return String(value ?? "");
@@ -84,7 +85,7 @@ export async function readStatement(
     removePickerCopy(file);
   }
 }
-export async function pickBackup(): Promise<{
+export async function pickBackup(password = ""): Promise<{
   ledger: Ledger;
   attachments: Attachment[];
 } | null> {
@@ -95,8 +96,9 @@ export async function pickBackup(): Promise<{
   if (result.canceled) return null;
   const file = new File(result.assets[0].uri);
   try {
-    if (file.size > MAX_BACKUP_BYTES) throw new Error("备份不能超过 160 MiB。");
-    return parseArchive(await file.text());
+    if (file.size > MAX_ENCRYPTED_ARCHIVE_BYTES)
+      throw new Error("备份不能超过 224 MiB。");
+    return parseArchive(await decryptArchive(await file.text(), password));
   } finally {
     removePickerCopy(file);
   }
@@ -162,4 +164,15 @@ function createExportFile(name: string): File {
   }
   // Receivers may read the shared URI after the chooser closes. Keep it until a later export.
   return new File(directory, `仓鼠记账-${Date.now()}-${name}`);
+}
+
+export async function shareImportErrors(text: string): Promise<void> {
+  if (!(await Sharing.isAvailableAsync()))
+    throw new Error("此设备暂不支持系统分享。");
+  const file = createExportFile("导入错误行.txt");
+  file.write(text);
+  await Sharing.shareAsync(file.uri, {
+    mimeType: "text/plain",
+    dialogTitle: "导出错误行与原始依据",
+  });
 }

@@ -1,5 +1,5 @@
 import { modelSecrets } from "./model-secrets.mjs";
-import { requestModel } from "./model-transport.mjs";
+import { requestModel, parseModelLanOrigins } from "./model-transport.mjs";
 import { startScheduler, schedulerDate } from "./scheduler.mjs";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -28,6 +28,7 @@ export async function createLedgerServer({
   enableScheduler = true,
   timeZone = "Asia/Shanghai",
   modelTransport = requestModel,
+  modelLanOrigins = parseModelLanOrigins(process.env.LEDGER_MODEL_LAN_ORIGINS),
 } = {}) {
   validateOrigin(publicOrigin);
   if (enableScheduler) schedulerDate(now(), timeZone);
@@ -42,7 +43,8 @@ export async function createLedgerServer({
       publicOrigin,
       allowRegistration,
       now,
-      modelTransport,
+      modelTransport: (input) => modelTransport({ ...input, modelLanOrigins }),
+      modelLanOrigins,
       secrets: modelSecrets(dataDirectory),
     });
   } catch (error) {

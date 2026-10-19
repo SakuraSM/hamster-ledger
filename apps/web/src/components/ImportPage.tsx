@@ -1,3 +1,5 @@
+import { protectedStore } from "../platform/browser/vault";
+import { downloadFile } from "../platform/browser/downloads";
 import { Button, FileButton } from "@mantine/core";
 import { readStatement } from "../platform/browser/files";
 import type { ImportSuccess } from "./ImportNotices";
@@ -10,6 +12,8 @@ import { useMemo, useRef, useState, type DragEvent } from "react";
 import { type Ledger, type BillRecord } from "@hamster-ledger/core";
 import {
   parseStatement,
+  reuseMapping,
+  importErrorReport,
   mappingNeedsReview,
   type StatementFile,
 } from "@hamster-ledger/importers";
@@ -73,7 +77,10 @@ export function ImportPage({
     const failures: string[] = [];
     for (const file of incoming) {
       try {
-        const statement = await readStatement(file);
+        const statement = await reuseMapping(
+          protectedStore,
+          await readStatement(file),
+        );
         if (knownHashes.has(statement.hash)) {
           failures.push(`${file.name} 已导入或已添加，本次未重复添加。`);
           continue;
@@ -149,6 +156,20 @@ export function ImportPage({
           原文件在本机解析，开启同步后账本数据会上传你的服务器。
         </p>
       </div>
+      {errors.length > 0 && (
+        <Button
+          variant="outline"
+          onClick={() =>
+            downloadFile({
+              name: "账单导入错误行.txt",
+              text: importErrorReport(parsed),
+              type: "text/plain;charset=utf-8",
+            })
+          }
+        >
+          导出错误行与原始依据
+        </Button>
+      )}
       <ol className="import-steps">
         <li className="complete">
           <span>1</span>添加文件

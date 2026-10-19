@@ -45,7 +45,7 @@ npm run android:apk
 
 数据库使用 SQLCipher，32 字节随机密钥保存在 SecureStore / Android Keystore 支持的存储中。所有读写在同一条已设置密钥的连接上串行执行；不能直接替换成另开连接的 exclusive transaction。读取、密钥或未知版本错误会停止写入，不创建空账本覆盖原数据。
 
-SQLite `user_version=1`，账本模型保持 `version: 1`。覆盖安装保留数据库与密钥；卸载会移除本机数据。禁用 Android 自动备份，跨设备迁移使用应用的 JSON 备份或云端恢复。
+SQLite `user_version=1`，账本模型保持 `version: 1`。覆盖安装保留数据库与密钥；卸载会移除本机数据。禁用 Android 自动备份，跨设备迁移使用应用的完整 .hamster 归档（可选密码加密）、旧 JSON 备份或云端恢复。
 
 系统选择器只访问用户选中的文件，不申请整个存储目录权限。单个账单最大 10 MB、15,000 行；只支持单工作表 Excel。CSV 使用 [独立编码实现](https://github.com/kayahr/text-encoding) 严格解码 UTF-8 / GB18030，支持四字节字符；无法识别的编码会报错。导入内容只在本机解析，用户确认后写入账本。解析用的缓存副本在读取结束后清理。
 

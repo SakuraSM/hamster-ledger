@@ -1,8 +1,10 @@
+import { protectedStore } from "../platform/browser/vault";
 import { useEffect, useMemo, useState } from "react";
 import { Button, NumberInput, TextInput, Alert, Table } from "@mantine/core";
 import { Choice } from "../ui/Choice";
 import {
   FIELD_LABELS,
+  rememberMapping,
   FIELDS,
   changeHeader,
   detectStatementLayout,
@@ -184,6 +186,25 @@ export function FieldMapping({
           </Table.Tbody>
         </Table>
       </div>
+      <Button
+        variant="outline"
+        onClick={() =>
+          void (async () => {
+            try {
+              await rememberMapping(protectedStore, file);
+              onChange({ ...file, mappingConfirmed: true });
+              setError("");
+            } catch (cause) {
+              setError(
+                cause instanceof Error ? cause.message : "字段模板保存失败。",
+              );
+            }
+          })()
+        }
+        disabled={Boolean(mappingError)}
+      >
+        确认并保存同表头模板
+      </Button>
       {file.reviewFields?.length ? (
         <Button
           type="button"

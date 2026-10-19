@@ -22,20 +22,27 @@ npm run db:migrate
 npm start
 ```
 
-| 环境变量                  | 默认值                    | 作用                                             |
-| ------------------------- | ------------------------- | ------------------------------------------------ |
-| `DATABASE_URL`            | 必填                      | PostgreSQL 连接地址；手机与浏览器不持有此凭据    |
-| `LEDGER_DATA_DIR`         | 仓库 `data`；容器 `/data` | 模型主密钥目录                                   |
-| `LEDGER_MODEL_MASTER_KEY` | 未设置                    | 可选，原有 32 字节 Base64 主密钥；需另行安全备份 |
-| `HOST` / `PORT`           | `127.0.0.1` / `4180`      | 监听地址与端口                                   |
-| `PUBLIC_ORIGIN`           | 本机请求 Origin           | 对外部署设置实际 HTTPS Origin                    |
-| `ALLOW_REGISTRATION`      | `true`                    | 设置 `false` 关闭注册                            |
-| `LEDGER_TIMEZONE`         | `Asia/Shanghai`           | 服务端周期记账时区                               |
-| `WEB_ROOT`                | `apps/web/dist/client`    | 网页构建目录                                     |
+| 环境变量                   | 默认值                    | 作用                                                     |
+| -------------------------- | ------------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`             | 必填                      | PostgreSQL 连接地址；手机与浏览器不持有此凭据            |
+| `LEDGER_DATA_DIR`          | 仓库 `data`；容器 `/data` | 模型主密钥目录                                           |
+| `LEDGER_MODEL_MASTER_KEY`  | 未设置                    | 可选，原有 32 字节 Base64 主密钥；需另行安全备份         |
+| `LEDGER_MODEL_LAN_ORIGINS` | 空，禁止私网模型访问      | 逗号分隔的精确模型 origin 白名单，含协议和端口，不含路径 |
+| `HOST` / `PORT`            | `127.0.0.1` / `4180`      | 监听地址与端口                                           |
+| `PUBLIC_ORIGIN`            | 本机请求 Origin           | 对外部署设置实际 HTTPS Origin                            |
+| `ALLOW_REGISTRATION`       | `true`                    | 设置 `false` 关闭注册                                    |
+| `LEDGER_TIMEZONE`          | `Asia/Shanghai`           | 服务端周期记账时区                                       |
+| `WEB_ROOT`                 | `apps/web/dist/client`    | 网页构建目录                                             |
 
 应用启动校验 schema，不自行回退到 SQLite。迁移命令是独立步骤；Compose 会在应用启动前运行迁移任务。`/api/health` 检查数据库连通性，返回 `storage: postgresql`；健康不等同于模型服务或业务验收。
 
 外部 PG 应使用校验服务端证书的 TLS 连接。反向代理部署时保持应用端口只监听回环地址，配置真实 HTTPS `PUBLIC_ORIGIN`；写入 Origin 不匹配会被拒绝。
+
+## 局域网模型授权
+
+私网模型需要同时满足部署白名单和用户的局域网选项。例如，模型接口是 `http://192.168.1.10:11434/v1` 时，在部署环境设置 `LEDGER_MODEL_LAN_ORIGINS=http://192.168.1.10:11434`。不同协议、主机或端口不会自动获得授权。不支持通配符。
+
+升级后，旧的局域网配置也受此限制。白名单为空时，已有配置的列表、测试和识别请求都会被拒绝；公网 HTTPS 模型的默认行为保持不变。授权目标仍受禁止地址检查、DNS 固定、响应大小和超时约束。
 
 ## 旧 SQLite 迁移
 
@@ -63,7 +70,7 @@ PG 接受新写入后，旧 SQLite 不再包含最新数据，不能直接切回
 
 同步 API、版本冲突和权限行为保持原协议。个人同步以完整账本为单位；联网账本使用版本与幂等键提交业务操作。服务端无法访问手机未确认的通知收件箱。
 
-应用内完整归档适合单账本转移，不包含账号、Token 或模型主密钥。服务端恢复必须同时保存 PG 逻辑备份和模型主密钥，步骤见 [容器备份与恢复](container-operations.md)。
+应用内完整归档适合单账本转移，可选择密码加密；不包含账号、Token、筛选偏好、支付通知收件箱或模型主密钥。加密备份密码不会保存，也不能通过账号密码重置恢复。服务端恢复必须同时保存 PG 逻辑备份和模型主密钥，步骤见 [容器备份与恢复](container-operations.md)。
 
 服务端账本并非端到端加密；模型凭据单独加密。忘记账号密码可由管理员执行 `npm run auth:reset`，详见 [认证策略](authentication.md)。
 

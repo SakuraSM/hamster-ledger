@@ -1,11 +1,15 @@
-import { deliverPlanningNotifications } from "./platform/planning-notifications";
+import { useBookMonth } from "./hooks/useBookMonth";
+import { LedgerSnackbar } from "./ui/LedgerSnackbar";
+import { LedgerViewBoundary } from "./ui/LedgerViewBoundary";
+import { useNativeSync } from "./hooks/useNativeSync";
+import { usePlanningNotifications } from "./hooks/usePlanningNotifications";
 import { MONTH_KEY_LENGTH } from "./constants";
 const FLOATING_GAP = 16;
 const MIN_NOTICE_HEIGHT = 48;
 import { useEffect, useState, useCallback } from "react";
 import { BackHandler, View } from "react-native";
 import { useSystemFontScale } from "./hooks/useSystemFontScale";
-import { FAB, Snackbar, Banner } from "react-native-paper";
+import { FAB, Banner } from "react-native-paper";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -39,7 +43,6 @@ import { ToolPage } from "./screens/ToolPage";
 import { EntryEditor } from "./screens/EntryEditor";
 import { RecordDetail } from "./screens/RecordDetail";
 import { RecordMetadataEditor } from "./screens/RecordMetadataEditor";
-import { localNow } from "./platform/runtime";
 import { useNativeAccount } from "./auth/NativeAccount";
 import { AccountScreen } from "./screens/AccountScreen";
 const ASSET_INDEX = APP_ROUTES.findIndex(({ key }) => key === "assets");
@@ -48,12 +51,13 @@ export function AppShell(): React.JSX.Element {
   const local = useLedger();
   const controller = useNetworkController(local);
   const account = useNativeAccount();
+  const sync = useNativeSync(controller);
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisibility();
   const [noticeHeight, setNoticeHeight] = useState(MIN_NOTICE_HEIGHT);
   const [index, setIndex] = useState(0);
   const [tool, setTool] = useState<ToolPageName | null>(null);
-  const [month, setMonth] = useState("2026-09");
+  const [month, setMonth] = useBookMonth(controller.mode);
   const [editor, setEditor] = useState<{
     record?: BillRecord;
     date?: string;
@@ -61,30 +65,11 @@ export function AppShell(): React.JSX.Element {
   const [detail, setDetail] = useState<BillRecord | null>(null);
   const [metadata, setMetadata] = useState<BillRecord | null>(null);
   const hasReducedMotion = useReducedMotion();
-  useEffect(() => {
-    if (!controller.ledger.preferences?.reminderEnabled) return;
-    void deliverPlanningNotifications(
-      controller.mode,
-      controller.ledger.notifications ?? [],
-    ).catch(() => {
-      /* Notices remain available in the notification center when the OS delivery fails. */
-    });
-  }, [
-    controller.mode,
-    controller.ledger.notifications,
-    controller.ledger.preferences?.reminderEnabled,
-  ]);
+  usePlanningNotifications(controller);
   const themeName = controller.ledger.preferences?.theme;
   const isDark = themeName === "night";
   const theme = useAppTheme({ themeName, hasReducedMotion });
   const openReview = useCallback(() => setTool("review"), []);
-  useEffect(() => {
-    setMonth(
-      controller.mode === "demo"
-        ? "2026-09"
-        : localNow().slice(0, MONTH_KEY_LENGTH),
-    );
-  }, [controller.mode]);
   useEffect(() => {
     const listener = BackHandler.addEventListener("hardwareBackPress", () => {
       if (tool) {
@@ -149,7 +134,20 @@ export function AppShell(): React.JSX.Element {
           }
         />
       ),
-      tools: <ToolsScreen onSelect={setTool} />,
+      tools: (
+        <ToolsScreen
+          onSelect={setTool}
+          ledger={controller.ledger}
+          onAssets={() => setIndex(ASSET_INDEX)}
+          storageDescription={
+            controller.network?.isConnected
+              ? "家庭联网账本：修改保存在服务器；断网时仅可查看本机缓存。"
+              : sync.link
+                ? "个人同步账本：本机可离线编辑，应用在前台时尝试自动同步；冲突时保留双方版本。"
+                : "本机账本：数据保存在此设备，可离线编辑；尚未连接云端同步。"
+          }
+        />
+      ),
     };
     return pages[route.key];
   }
@@ -199,30 +197,36 @@ export function AppShell(): React.JSX.Element {
           ) : account.needsEntry ? (
             <AccountScreen onLocal={() => undefined} />
           ) : (
-            <NavigationLayer
-              hasReducedMotion={hasReducedMotion}
-              transitionKey={tool ? `${controller.mode}:${tool}` : undefined}
-              tool={
-                tool ? (
-                  <ToolPage
-                    key={`${controller.mode}:${tool}`}
-                    page={tool}
-                    controller={controller}
-                    onRecord={setDetail}
-                    onAdd={(date) => setEditor({ date })}
-                    onReview={openReview}
-                  />
-                ) : null
-              }
+            <LedgerViewBoundary
+              resetKey={`${controller.mode}:${tool ?? index}`}
+              onRecovery={() => setTool("backup")}
             >
-              <AppNavigation
-                index={index}
-                onIndexChange={setIndex}
-                renderScene={renderScene}
+              <NavigationLayer
                 hasReducedMotion={hasReducedMotion}
-                bottomInset={insets.bottom}
-              />
-            </NavigationLayer>
+                transitionKey={tool ? `${controller.mode}:${tool}` : undefined}
+                tool={
+                  tool ? (
+                    <ToolPage
+                      key={`${controller.mode}:${tool}`}
+                      page={tool}
+                      sync={sync}
+                      controller={controller}
+                      onRecord={setDetail}
+                      onAdd={(date) => setEditor({ date })}
+                      onReview={openReview}
+                    />
+                  ) : null
+                }
+              >
+                <AppNavigation
+                  index={index}
+                  onIndexChange={setIndex}
+                  renderScene={renderScene}
+                  hasReducedMotion={hasReducedMotion}
+                  bottomInset={insets.bottom}
+                />
+              </NavigationLayer>
+            </LedgerViewBoundary>
           )}
         </SafeAreaView>
         {hasNavigation &&
@@ -244,19 +248,11 @@ export function AppShell(): React.JSX.Element {
             }}
           />
         ) : null}
-        <Snackbar
-          wrapperStyle={{ bottom: navigationHeight, paddingBottom: 0 }}
-          onLayout={(event) => setNoticeHeight(event.nativeEvent.layout.height)}
-          visible={Boolean(controller.notice)}
-          onDismiss={controller.dismissNotice}
-          action={
-            controller.canUndo
-              ? { label: "撤销", onPress: controller.undo }
-              : undefined
-          }
-        >
-          {controller.notice}
-        </Snackbar>
+        <LedgerSnackbar
+          controller={controller}
+          bottom={navigationHeight}
+          onHeight={setNoticeHeight}
+        />
         {detail ? (
           <RecordDetail
             controller={controller}

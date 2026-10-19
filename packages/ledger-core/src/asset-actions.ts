@@ -1,3 +1,4 @@
+import { dateTimeSchema } from "./date-schemas.js";
 import {
   ASSET_TYPES,
   LIABILITY_TYPES,
@@ -58,6 +59,9 @@ export function saveAssetAccount(input: SaveAssetAccountInput): Ledger {
     previous.balanceAt !== account.balanceAt;
   const saved: AssetAccount = {
     ...account,
+    ...(previous?.archiveHistory
+      ? { archiveHistory: previous.archiveHistory }
+      : {}),
     checkpoints: [
       ...(previous?.checkpoints ?? []),
       ...(previous &&
@@ -105,12 +109,30 @@ export function archiveAssetAccount(input: {
   ledger: Ledger;
   accountId: string;
   isArchived: boolean;
+  at?: string;
 }): Ledger {
   const account = input.ledger.accounts.find(
     (item) => item.id === input.accountId,
   );
   if (!account) throw new Error("账户不存在。");
-  const updated = { ...account, isArchived: input.isArchived };
+  if (account.isArchived === input.isArchived) return input.ledger;
+  if (input.at) {
+    dateTimeSchema.parse(input.at);
+    if ((account.archiveHistory?.at(-1)?.at ?? "") > input.at)
+      throw new Error("归档时间不能早于上次状态变更。");
+  }
+  const updated = assetAccountSchema.parse({
+    ...account,
+    isArchived: input.isArchived,
+    ...(input.at
+      ? {
+          archiveHistory: [
+            ...(account.archiveHistory ?? []),
+            { at: input.at, isArchived: input.isArchived },
+          ],
+        }
+      : {}),
+  });
   const labels = new Set(
     [updated.name, ...updated.aliases].map(normalizeAccountLabel),
   );

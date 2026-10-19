@@ -68,3 +68,23 @@ it("rejects corrupt backup payloads before writing or changing existing attachme
     attachment,
   );
 });
+it("includes saved workflow preferences when enabling the browser vault", async () => {
+  const { STORAGE_PREFIX } = await import("@hamster-ledger/core");
+  const vault = await import("../apps/web/src/platform/browser/vault");
+  const keys = [
+    "saved-filters.v1:web:personal",
+    "import-mapping.v1:synthetic",
+    "backup.last.v1:personal",
+  ].map((suffix) => STORAGE_PREFIX + suffix);
+  for (const key of keys)
+    await vault.protectedStore.setItem(key, "synthetic-workflow-preference");
+  await vault.enableVault("synthetic-workflow-password");
+  for (const key of keys) {
+    expect(localStorage.getItem(key)).toBeNull();
+    expect(await vault.protectedStore.getItem(key)).toBe(
+      "synthetic-workflow-preference",
+    );
+  }
+  await vault.clearVaultSession();
+  await expect(vault.protectedStore.getItem(keys[0])).rejects.toThrow("锁定");
+});

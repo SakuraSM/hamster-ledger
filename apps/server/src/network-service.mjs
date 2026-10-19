@@ -168,10 +168,11 @@ export async function applyOperation({
         error instanceof Error ? error.message : "操作无效。",
       );
     }
+    const previousRecords = new Map(
+      before.records.map((record) => [record.id, record]),
+    );
     for (const record of next.records) {
-      const previousRecord = before.records.find(
-        (item) => item.id === record.id,
-      );
+      const previousRecord = previousRecords.get(record.id);
       if (
         JSON.stringify(previousRecord?.detail?.splits) ===
         JSON.stringify(record.detail?.splits)

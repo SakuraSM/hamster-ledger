@@ -165,6 +165,10 @@ export function BudgetPage({
             <p className="muted">
               {budget.start} 至 {budget.end}（不含结束日）
             </p>
+            <p className="muted">
+              本期预算 ¥{money(budget.amount)} + 上期结转 ¥
+              {money(budget.carried)} = 可用预算 ¥{money(budget.available)}
+            </p>
             <strong>
               ¥ {money(budget.remaining)}
               <small>{budget.remaining < 0 ? " 超出预算" : " 剩余"}</small>

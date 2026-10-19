@@ -35,6 +35,7 @@ services:
       <<: *ledger-environment
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://127.0.0.1:4180}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      LEDGER_MODEL_LAN_ORIGINS: ${LEDGER_MODEL_LAN_ORIGINS:-}
       LEDGER_TIMEZONE: ${LEDGER_TIMEZONE:-Asia/Shanghai}
     depends_on:
       migrate:

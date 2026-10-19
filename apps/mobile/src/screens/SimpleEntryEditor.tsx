@@ -1,9 +1,16 @@
 import type { EntryDraft } from "@hamster-ledger/ledger-react";
 import { CENTS_PER_YUAN } from "../constants";
-import { useState } from "react";
-import { Button, SegmentedButtons, TextInput, Text } from "react-native-paper";
+import { useMemo, useState } from "react";
+import {
+  Button,
+  SegmentedButtons,
+  TextInput,
+  Text,
+  Checkbox,
+} from "react-native-paper";
 import {
   categoryNames,
+  quickEntryTemplates,
   defaultCategory,
   resolveAssetAccount,
   type Ledger,
@@ -34,6 +41,9 @@ export function SimpleEntryEditor({
   onSave,
 }: EntryEditorProps): React.JSX.Element {
   const [baseline] = useState(record);
+  const [keepOpen, setKeepOpen] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
+  const templates = useMemo(() => quickEntryTemplates(ledger), [ledger]);
   const [kind, setKind] = useState<Kind>(record?.kind ?? "支出");
   const [amount, setAmount] = useState(
     record ? String(record.amount / CENTS_PER_YUAN) : "",
@@ -107,7 +117,14 @@ export function SimpleEntryEditor({
         accountId: accountId || null,
         transferToAccountId: destination || null,
       });
-      onClose();
+      if (keepOpen && !record) {
+        setAmount("");
+        setMerchant("");
+        setDescription("");
+        setTags("");
+        setError("");
+        setSavedMessage("已保存，可继续记下一笔。");
+      } else onClose();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "保存失败，草稿已保留。",
@@ -148,6 +165,29 @@ export function SimpleEntryEditor({
       >
         更多交易类型 / 多币种 / AA 分摊
       </Button>
+      {!record && templates.length > 0 && (
+        <>
+          <Text variant="labelLarge">常用交易快捷填入</Text>
+          {templates.map((item) => (
+            <Button
+              key={item.id}
+              onPress={() => {
+                setAmount(String(item.amount / CENTS_PER_YUAN));
+                setMerchant(item.merchant);
+                setKind(item.kind);
+                setCategory(item.category);
+                setAccountId(
+                  resolveAssetAccount(item, ledger.accounts)?.id ?? "",
+                );
+                setDescription(item.description);
+                setTags(item.tags?.join("，") ?? "");
+              }}
+            >
+              {item.merchant}
+            </Button>
+          ))}
+        </>
+      )}
       <SegmentedButtons
         value={kind}
         onValueChange={(value) => {
@@ -228,6 +268,16 @@ export function SimpleEntryEditor({
         value={tags}
         onChangeText={setTags}
       />
+      {!record && (
+        <Checkbox.Item
+          label="保存后继续记账"
+          status={keepOpen ? "checked" : "unchecked"}
+          onPress={() => setKeepOpen(!keepOpen)}
+        />
+      )}
+      {savedMessage && (
+        <Text accessibilityLiveRegion="polite">{savedMessage}</Text>
+      )}
       <ErrorMessage message={error} />
       {record?.status === "pending" ? (
         <Text>这笔账单仍需重复核对，保存不会自动计入收支。</Text>

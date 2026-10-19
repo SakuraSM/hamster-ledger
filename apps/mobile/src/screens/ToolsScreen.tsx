@@ -1,3 +1,4 @@
+import { pendingReviewCount, type Ledger } from "@hamster-ledger/core";
 import { List, Text } from "react-native-paper";
 import { Screen } from "../ui/Screen";
 export const TOOLS = [
@@ -40,7 +41,7 @@ export const TOOLS = [
   {
     key: "sync",
     title: "云端同步",
-    description: "主动同步、预览与冲突保留",
+    description: "前台自动同步、预览与冲突保留",
     icon: "upload",
   },
   {
@@ -101,23 +102,76 @@ export const TOOLS = [
 export type ToolPage = (typeof TOOLS)[number]["key"];
 export function ToolsScreen({
   onSelect,
+  ledger,
+  storageDescription,
+  onAssets,
 }: {
   onSelect: (page: ToolPage) => void;
+  ledger: Ledger;
+  storageDescription: string;
+  onAssets: () => void;
 }): React.JSX.Element {
   return (
     <Screen>
       <Text variant="headlineSmall" accessibilityRole="header">
         更多功能
       </Text>
-      {TOOLS.map((tool) => (
+      <Text>{storageDescription}</Text>
+      {!ledger.accounts.length && (
         <List.Item
-          key={tool.key}
-          title={tool.title}
-          description={tool.description}
-          onPress={() => onSelect(tool.key)}
-          left={(props) => <List.Icon {...props} icon={tool.icon} />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          title="建立首个账户与余额基准"
+          onPress={onAssets}
+          left={(props) => <List.Icon {...props} icon="wallet-outline" />}
         />
+      )}
+      <Text variant="titleMedium" accessibilityRole="header">
+        待处理
+      </Text>
+      <List.Item
+        title={`账单核对 · ${pendingReviewCount(ledger)}`}
+        onPress={() => onSelect("review")}
+        left={(props) => <List.Icon {...props} icon="content-duplicate" />}
+      />
+      <List.Item
+        title={`AI 草稿 · ${ledger.aiDrafts?.filter((item) => item.state === "pending").length ?? 0}`}
+        onPress={() => onSelect("ai")}
+        left={(props) => (
+          <List.Icon {...props} icon="text-box-search-outline" />
+        )}
+      />
+      <List.Item
+        title="支付通知待确认"
+        description="打开本机收件箱查看"
+        onPress={() => onSelect("payment-inbox")}
+        left={(props) => <List.Icon {...props} icon="message-text-outline" />}
+      />
+      {[
+        {
+          title: "记录与核对",
+          keys: ["import", "calendar", "ai", "payment-inbox", "review"],
+        },
+        {
+          title: "预算与计划",
+          keys: ["budgets", "recurring", "planning", "notifications"],
+        },
+        { title: "账本与数据", keys: ["books", "network", "sync", "backup"] },
+        { title: "账号与偏好", keys: ["account", "categories", "preferences"] },
+      ].map((group) => (
+        <List.Section key={group.title}>
+          <List.Subheader>{group.title}</List.Subheader>
+          {group.keys
+            .map((key) => TOOLS.find((item) => item.key === key)!)
+            .map((tool) => (
+              <List.Item
+                key={tool.key}
+                title={tool.title}
+                description={tool.description}
+                onPress={() => onSelect(tool.key)}
+                left={(props) => <List.Icon {...props} icon={tool.icon} />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              />
+            ))}
+        </List.Section>
       ))}
       <Text variant="bodySmall">
         账本在本机的加密数据库中保存。删除应用会移除本机数据，请定期导出备份。
