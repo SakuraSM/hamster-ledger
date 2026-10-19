@@ -42,3 +42,5 @@ export * from "./payment-notification-actions.js";
 export * from "./account-baselines.js";
 export * from "./account-activity.js";
 export * from "./asset-comparison.js";
+
+export { validateAggregateAmounts } from "./money-bounds.js";

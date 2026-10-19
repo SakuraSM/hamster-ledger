@@ -1,5 +1,5 @@
 import { HttpError, json } from "./http.mjs";
-import { modelUrl } from "./model-transport.mjs";
+import { assertModelPolicy } from "./model-transport.mjs";
 import { aiCandidateSchema } from "@hamster-ledger/core";
 export async function readModelProfile(database, userId) {
   const row = await database
@@ -14,9 +14,11 @@ export async function modelCredentials({
   userId,
   secrets,
   requireModel = true,
+  modelLanOrigins = [],
 }) {
   const profile = await readModelProfile(database, userId);
   if (!profile) throw new HttpError(400, "尚未配置模型服务。");
+  assertModelPolicy(profile.config, modelLanOrigins);
   if (requireModel && !profile.config.model)
     throw new HttpError(400, "请选择模型并保存配置后重试。");
   if (!profile.secret && !profile.config.noKey)
@@ -123,7 +125,7 @@ export async function modelsApi(context) {
     };
     if (config.model.length > 200 || config.endpoint.length > 1000)
       throw new HttpError(400, "模型地址或模型名格式无效。");
-    modelUrl(config.endpoint, config.allowLan);
+    assertModelPolicy(config, context.modelLanOrigins);
     const old = await readModelProfile(database, userId);
     let secret = old?.secret ?? null;
     if (body.clearKey === true) secret = null;

@@ -65,18 +65,18 @@ npm run android:apk     # 可独立安装的 arm64 APK，默认开发签名
 
 ## 项目目录
 
-| 目录                           | 职责                                              |
-| ------------------------------ | ------------------------------------------------- |
-| `apps/server`                  | Node.js HTTP API、账号会话、SQLite 与静态页面服务 |
-| `apps/mobile`                  | Expo、原生页面、SQLCipher、文件选择与分享         |
-| `apps/web`                     | React 页面、浏览器文件读取、存储和导出            |
-| `packages/ledger-core`         | 数据模型、分类、去重、收支计算与异步存储协议      |
-| `packages/statement-importers` | 表头映射、日期金额解析、交易标准化                |
-| `packages/design-tokens`       | Web 与 Android 的 JSON 设计变量                   |
-| `packages/fixtures`            | 两端共用的虚拟演示账本                            |
-| `packages/ledger-react`        | 注入平台适配器的共享 React 账本控制器             |
-| `tests`                        | 账务行为、共享包契约和 Web 异步存储测试           |
-| `docs`                         | 架构、设计依据、能力边界及 App 开发准备           |
+| 目录                           | 职责                                                  |
+| ------------------------------ | ----------------------------------------------------- |
+| `apps/server`                  | Node.js HTTP API、账号会话、PostgreSQL 与静态页面服务 |
+| `apps/mobile`                  | Expo、原生页面、SQLCipher、文件选择与分享             |
+| `apps/web`                     | React 页面、浏览器文件读取、存储和导出                |
+| `packages/ledger-core`         | 数据模型、分类、去重、收支计算与异步存储协议          |
+| `packages/statement-importers` | 表头映射、日期金额解析、交易标准化                    |
+| `packages/design-tokens`       | Web 与 Android 的 JSON 设计变量                       |
+| `packages/fixtures`            | 两端共用的虚拟演示账本                                |
+| `packages/ledger-react`        | 注入平台适配器的共享 React 账本控制器                 |
+| `tests`                        | 账务行为、共享包契约和 Web 异步存储测试               |
+| `docs`                         | 架构、设计依据、能力边界及 App 开发准备               |
 
 业务包在不提供 DOM 类型的配置下独立编译；`ledger-react` 仅依赖 React 和共享协议，Web 与 Android 各自注入存储、时间及 ID 适配器。
 

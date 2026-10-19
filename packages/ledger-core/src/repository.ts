@@ -1,5 +1,6 @@
 import { bookSchema, DEFAULT_BOOKS, type Book } from "./planning-model.js";
 import { ledgerSchema, type Ledger, type LedgerMode } from "./model.js";
+import { validateAggregateAmounts } from "./money-bounds.js";
 import { migrateLedger } from "./migration.js";
 
 /** Platform adapter: localStorage, SQLite or another local store. */
@@ -49,6 +50,7 @@ export function createLedgerRepository(store: KeyValueStore): LedgerRepository {
     },
     async save(mode, ledger): Promise<void> {
       const validated = migrateLedger(ledger);
+      validateAggregateAmounts(validated);
       const previous = loadedRaw.get(mode);
       if (previous && ledgerSchema.parse(JSON.parse(previous)).version === 1) {
         const backupKey = STORAGE_PREFIX + "migration-v1." + mode;
