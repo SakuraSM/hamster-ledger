@@ -4,6 +4,7 @@ import { Alert } from "react-native";
 import { Button, Card, Text, List } from "react-native-paper";
 import {
   archiveAssetAccount,
+  accountActiveAt,
   assetTrendStart,
   money,
   type AssetAccount,
@@ -43,7 +44,7 @@ export function AssetsScreen({
   );
   const ledger = controller.ledger;
   const currencies = ledger.accounts
-    .filter((account) => !account.isArchived)
+    .filter((account) => accountActiveAt(account, valuationDate + " 23:59:59"))
     .map((account) => account.currency ?? "CNY");
   const { totals, comparison, rates } = useAssetSummary({
     ledger,
@@ -63,6 +64,7 @@ export function AssetsScreen({
           ledger,
           accountId: item.id,
           isArchived: !item.isArchived,
+          at: localNow(),
         }),
       );
       setSelected(null);

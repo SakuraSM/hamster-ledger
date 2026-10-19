@@ -1,3 +1,4 @@
+import { nativeStore } from "../platform/storage";
 import { DATE_KEY_LENGTH } from "../constants";
 const IMPORT_PREVIEW_LIMIT = 5;
 const ERROR_PREVIEW_LIMIT = 10;
@@ -7,10 +8,16 @@ import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { planImport, money } from "@hamster-ledger/core";
 import {
   parseStatement,
+  reuseMapping,
+  importErrorReport,
   mappingNeedsReview,
   type StatementFile,
 } from "@hamster-ledger/importers";
-import { pickStatements, readStatement } from "../platform/files";
+import {
+  pickStatements,
+  readStatement,
+  shareImportErrors,
+} from "../platform/files";
 import { Screen, Section, ErrorMessage } from "../ui/Screen";
 import { StatementMapping } from "./StatementMapping";
 interface ImportScreenProps {
@@ -60,7 +67,10 @@ export function ImportScreen({
       ]);
       const added: StatementFile[] = [];
       for (const asset of selected) {
-        const file = await readStatement(asset);
+        const file = await reuseMapping(
+          nativeStore,
+          await readStatement(asset),
+        );
         if (known.has(file.hash))
           throw new Error(`${file.name} 已添加或导入，不会重复处理。`);
         known.add(file.hash);
@@ -174,6 +184,20 @@ export function ImportScreen({
         ))}
         {errors.length ? (
           <Section title={`${errors.length} 行无法识别`}>
+            <Button
+              onPress={() =>
+                void shareImportErrors(importErrorReport(parsed)).catch(
+                  (cause) =>
+                    setError(
+                      cause instanceof Error
+                        ? cause.message
+                        : "错误行导出失败。",
+                    ),
+                )
+              }
+            >
+              导出错误行与原始依据
+            </Button>
             <Text>{errors.slice(0, ERROR_PREVIEW_LIMIT).join("\n")}</Text>
             <Checkbox.Item
               label="跳过错误行，仅导入有效记录"

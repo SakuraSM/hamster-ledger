@@ -81,15 +81,14 @@ export async function storeAttachment({
   now,
 }) {
   return database.transaction(async () => {
-    if (!bookId)
-      await database.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
-        "attachment:" + userId,
-      ]);
     if (
       bookId &&
       (await membership(database, bookId, userId)).role === "viewer"
     )
       throw new HttpError(403, "只读成员不能上传。");
+    await database.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+      "attachment:" + userId,
+    ]);
     const image = parseAttachment(body);
     if (
       body.id !== undefined &&

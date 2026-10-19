@@ -122,7 +122,9 @@ export function AppPages(props: Props): React.JSX.Element {
           controller.notify("账户已保存。");
         }}
         onArchive={async (input) => {
-          await controller.commit(archiveAssetAccount({ ledger, ...input }));
+          await controller.commit(
+            archiveAssetAccount({ ledger, ...input, at: localNow() }),
+          );
         }}
         onRecord={onSelect}
         onLoadExamples={() =>

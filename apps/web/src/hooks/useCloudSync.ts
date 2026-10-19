@@ -1,3 +1,4 @@
+import { snapshotSyncAction } from "@hamster-ledger/core";
 import { useAuth } from "../auth/auth-context";
 const CONFLICT_STATUS = 409;
 const SYNC_DEBOUNCE_MS = 1200;
@@ -14,6 +15,8 @@ const SYNC_INTERVAL_MS = 15000;
 import { fingerprint, linkKey, type Link } from "../platform/browser/sync-link";
 import type { CloudController } from "./cloud-controller";
 export type { CloudController } from "./cloud-controller";
+const nameOf = (value: LedgerController): string | undefined =>
+  value.books.find((book) => book.id === value.mode)?.name;
 export function useCloudSync(controller: LedgerController): CloudController {
   const auth = useAuth();
   const { user } = auth;
@@ -101,7 +104,7 @@ export function useCloudSync(controller: LedgerController): CloudController {
       setIsLinked(true);
       const localFingerprint = await fingerprint({
         ledger: original.ledger,
-        name: original.books.find((book) => book.id === original.mode)?.name,
+        name: nameOf(original),
       });
       const remote = await cloud.load(link.id, userId);
       if (
@@ -110,18 +113,17 @@ export function useCloudSync(controller: LedgerController): CloudController {
         current.current.mode !== mode ||
         (await fingerprint({
           ledger: current.current.ledger,
-          name: current.current.books.find((book) => book.id === mode)?.name,
+          name: nameOf(current.current),
         })) !== localFingerprint
       )
         return;
-      if (
-        current.current.ledger !== original.ledger ||
-        current.current.mode !== mode
-      )
-        return;
-      const hasLocalChange = localFingerprint !== link.fingerprint;
-      const hasRemoteChange = remote.revision !== link.revision;
-      if (hasLocalChange && hasRemoteChange) {
+      if (current.current.ledger !== original.ledger) return;
+      const action = snapshotSyncAction(
+        localFingerprint,
+        remote.revision,
+        link,
+      );
+      if (action === "conflict") {
         conflict.current = true;
         setPreview(remote);
         throw new CloudError(
@@ -130,11 +132,9 @@ export function useCloudSync(controller: LedgerController): CloudController {
         );
       }
       let nextLink = link;
-      if (hasRemoteChange) {
+      if (action === "download") {
         await current.current.commit(remote.ledger, mode);
-        if (
-          original.books.find((book) => book.id === mode)?.name !== remote.name
-        )
+        if (nameOf(original) !== remote.name)
           await current.current.updateBooks(
             original.books.map((book) =>
               book.id === mode ? { ...book, name: remote.name } : book,
@@ -149,12 +149,12 @@ export function useCloudSync(controller: LedgerController): CloudController {
           }),
         };
         setMessage("已获取云端更新。");
-      } else if (hasLocalChange) {
+      } else if (action === "upload") {
         const saved = await cloud.save({
           userId,
           id: link.id,
           revision: link.revision,
-          name: original.books.find((book) => book.id === mode)?.name ?? "账本",
+          name: nameOf(original) ?? "账本",
           ledger: original.ledger,
         });
         nextLink = {
@@ -218,9 +218,7 @@ export function useCloudSync(controller: LedgerController): CloudController {
       const original = current.current;
       const saved = await cloud.save({
         userId: user.id,
-        name:
-          original.books.find((book) => book.id === original.mode)?.name ??
-          "账本",
+        name: nameOf(original) ?? "账本",
         ledger: original.ledger,
       });
       if (!active.current || currentUser.current?.id !== user.id) return;
@@ -231,8 +229,7 @@ export function useCloudSync(controller: LedgerController): CloudController {
           revision: saved.revision,
           fingerprint: await fingerprint({
             ledger: original.ledger,
-            name: original.books.find((book) => book.id === original.mode)
-              ?.name,
+            name: nameOf(original),
           }),
         }),
       );

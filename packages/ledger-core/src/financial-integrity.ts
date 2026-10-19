@@ -1,3 +1,4 @@
+import { validateAggregateAmounts } from "./money-bounds.js";
 import type { Ledger } from "./model.js";
 import { ASSET_TYPES, LIABILITY_TYPES } from "./account-model.js";
 import { categoryDefinitions } from "./categories.js";
@@ -5,6 +6,10 @@ import { saveGoal } from "./debts-goals.js";
 import { saveSubscription } from "./subscriptions.js";
 /** Shared validation for coupled amounts and references after a batch is applied. */
 export function validateFinancialIntegrity(ledger: Ledger): void {
+  validateAggregateAmounts(ledger);
+  const recordsById = new Map(
+    ledger.records.map((record) => [record.id, record]),
+  );
   for (const account of ledger.accounts) {
     const allowed: readonly string[] =
       account.kind === "asset" ? ASSET_TYPES : LIABILITY_TYPES;
@@ -27,14 +32,13 @@ export function validateFinancialIntegrity(ledger: Ledger): void {
   for (const record of ledger.records) {
     if (record.isDeleted || record.status !== "confirmed") continue;
     if (record.kind === "退款" && record.detail?.relatedId) {
-      const original = ledger.records.find(
-        (item) =>
-          item.id === record.detail?.relatedId &&
-          item.kind === "支出" &&
-          item.status === "confirmed" &&
-          !item.isDeleted,
-      );
-      if (!original)
+      const original = recordsById.get(record.detail.relatedId);
+      if (
+        !original ||
+        original.kind !== "支出" ||
+        original.status !== "confirmed" ||
+        original.isDeleted
+      )
         throw new Error("关联报销或退款仍存在，请先处理回款记录。");
       const total = (returns.get(original.id) ?? 0n) + BigInt(record.amount);
       if (total > BigInt(original.amount))

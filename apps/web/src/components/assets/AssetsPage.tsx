@@ -7,6 +7,7 @@ import { UnstyledButton, Button, Checkbox, TextInput } from "@mantine/core";
 import { useState } from "react";
 import {
   projectAccountBalance,
+  accountActiveAt,
   resolveAssetAccount,
   type AssetAccount,
   type Ledger,
@@ -73,7 +74,7 @@ export function AssetsPage({
   );
   const through = valuationDate + " 23:59:59";
   const currencies = ledger.accounts
-    .filter((account) => !account.isArchived)
+    .filter((account) => accountActiveAt(account, valuationDate + " 23:59:59"))
     .map((account) => account.currency ?? "CNY");
   const { rates, totals, comparison } = useAssetSummary({
     ledger,

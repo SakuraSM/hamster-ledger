@@ -1,3 +1,5 @@
+const LIST_PAGE_SIZE = 30;
+import { useState } from "react";
 import { Button, Text } from "react-native-paper";
 import {
   PLANNING_TABS,
@@ -18,6 +20,7 @@ export function PlanningScreen({
   controller: LedgerController;
   initialTab?: PlanningTab;
 }): React.JSX.Element {
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
   const panel = usePlanningPanel(controller, initialTab),
     ledger = controller.ledger;
   const unread =
@@ -59,31 +62,44 @@ export function PlanningScreen({
               全部标为已读
             </Button>
             {!ledger.notifications?.length ? <Text>暂时没有提醒。</Text> : null}
-            {[...(ledger.notifications ?? [])].reverse().map((item) => (
-              <Section
-                key={item.id}
-                title={`${item.title}${item.isRead ? " · 已读" : ""}`}
+            {(ledger.notifications?.length ?? 0) > visibleCount && (
+              <Button
+                mode="outlined"
+                onPress={() =>
+                  setVisibleCount((count) => count + LIST_PAGE_SIZE)
+                }
               >
-                <Text>{item.body}</Text>
-                <Text>{item.date}</Text>
-                {!item.isRead ? (
-                  <Button
-                    onPress={() =>
-                      void panel.commit((current) => ({
-                        ...current,
-                        notifications: current.notifications?.map((notice) =>
-                          notice.id === item.id
-                            ? { ...notice, isRead: true }
-                            : notice,
-                        ),
-                      }))
-                    }
-                  >
-                    标为已读
-                  </Button>
-                ) : null}
-              </Section>
-            ))}
+                加载更多通知
+              </Button>
+            )}
+            {[...(ledger.notifications ?? [])]
+              .reverse()
+              .slice(0, visibleCount)
+              .map((item) => (
+                <Section
+                  key={item.id}
+                  title={`${item.title}${item.isRead ? " · 已读" : ""}`}
+                >
+                  <Text>{item.body}</Text>
+                  <Text>{item.date}</Text>
+                  {!item.isRead ? (
+                    <Button
+                      onPress={() =>
+                        void panel.commit((current) => ({
+                          ...current,
+                          notifications: current.notifications?.map((notice) =>
+                            notice.id === item.id
+                              ? { ...notice, isRead: true }
+                              : notice,
+                          ),
+                        }))
+                      }
+                    >
+                      标为已读
+                    </Button>
+                  ) : null}
+                </Section>
+              ))}
           </>
         )}
       </Screen>

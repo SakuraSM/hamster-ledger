@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import {
   assetComparisonDate,
+  accountActiveAt,
   compareAssets,
   summarizeAssets,
   type Ledger,
@@ -23,7 +24,11 @@ export function useAssetSummary(input: {
   client: NetworkClient;
 }): AssetSummaryController {
   const currencies = input.ledger.accounts
-    .filter((account) => !account.isArchived)
+    .filter(
+      (account) =>
+        accountActiveAt(account, input.date + " 23:59:59") ||
+        accountActiveAt(account, assetComparisonDate(input.date) + " 23:59:59"),
+    )
     .map((account) => account.currency ?? "CNY");
   const rates = useExchangeRates({
     client: input.client,

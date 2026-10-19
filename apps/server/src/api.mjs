@@ -4,7 +4,7 @@ import { modelsApi } from "./models.mjs";
 import { attachmentsApi } from "./attachments.mjs";
 import { aiApi } from "./ai-api.mjs";
 import { randomUUID } from "node:crypto";
-import { ledgerSchema } from "@hamster-ledger/core";
+import { ledgerSchema, validateAggregateAmounts } from "@hamster-ledger/core";
 import { createAuthApi } from "./auth.mjs";
 import { requireSession } from "./sessions.mjs";
 import { json, readJson, HttpError, verifyWriteOrigin } from "./http.mjs";
@@ -13,6 +13,11 @@ import { exchangeApi } from "./exchange-api.mjs";
 function parseBook(body) {
   const parsed = ledgerSchema.safeParse(body.ledger);
   if (!parsed.success) throw new HttpError(400, "账本格式不正确。");
+  try {
+    validateAggregateAmounts(parsed.data);
+  } catch (error) {
+    throw new HttpError(400, error.message);
+  }
   const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!name || name.length > 40)
     throw new HttpError(400, "账本名称需为 1–40 个字符。");
@@ -37,6 +42,7 @@ export function createApi({
   allowRegistration = true,
   now = Date.now,
   modelTransport,
+  modelLanOrigins = [],
   secrets,
 }) {
   const auth = createAuthApi({ database, allowRegistration, now });
@@ -56,6 +62,7 @@ export function createApi({
         response,
         now,
         modelTransport,
+        modelLanOrigins,
         secrets,
       });
       return;
@@ -113,6 +120,7 @@ export function createApi({
       userId: user.id,
       now,
       modelTransport,
+      modelLanOrigins,
       secrets,
       revalidate: async () =>
         await requireSession(request, database, { write: true, now: now() }),

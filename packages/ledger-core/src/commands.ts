@@ -1,7 +1,12 @@
 import { validateFinancialIntegrity } from "./financial-integrity.js";
 import { z } from "zod";
-import { ledgerSchema, recordSchema, type Ledger } from "./model.js";
-import { migrateLedger } from "./migration.js";
+import {
+  ledgerSchema,
+  recordSchema,
+  EMPTY_LEDGER,
+  type Ledger,
+} from "./model.js";
+import { migrateLedger, normalizeLegacyRecord } from "./migration.js";
 import { saveAdvancedEntry } from "./advanced-entries.js";
 
 export const BOOK_ROLES = ["owner", "admin", "member", "viewer"] as const;
@@ -79,6 +84,14 @@ export function applyLedgerPatch(input: {
   if (!canManage && (patch.rules || patch.preferences))
     throw new Error("修改账本配置需要管理员权限。");
   let next = migrateLedger(input.ledger);
+  const indexes = new Map(
+    COLLECTIONS.map((name) => [
+      name,
+      new Map<string, { id: string }>(
+        (next[name] ?? []).map((item) => [item.id, item]),
+      ),
+    ]),
+  );
   const keys = new Set<string>();
   for (const change of patch.changes) {
     const key = change.collection + ":" + change.id;
@@ -90,7 +103,10 @@ export function applyLedgerPatch(input: {
     )
       throw new Error("修改共享配置需要管理员权限。");
     if (change.collection === "accounts") {
-      const account = next.accounts.find((item) => item.id === change.id);
+      const account = ledgerSchema.shape.accounts
+        .unwrap()
+        .element.optional()
+        .parse(indexes.get("accounts")?.get(change.id));
       if (
         account &&
         change.value &&
@@ -108,12 +124,15 @@ export function applyLedgerPatch(input: {
       )
         throw new Error("已有账户不能删除或更改币种，请归档后新建。");
     }
-    const collection = next[change.collection] ?? [];
-    const previous = collection.find((item) => item.id === change.id);
+    const collection = indexes.get(change.collection)!;
+    const previous = collection.get(change.id);
     let value = change.value;
     if (change.collection === "aiDrafts") {
       if (value === null) throw new Error("草稿须标记丢弃以保留识别去重信息。");
-      const oldDraft = next.aiDrafts?.find((item) => item.id === change.id);
+      const oldDraft = ledgerSchema.shape.aiDrafts
+        .unwrap()
+        .element.optional()
+        .parse(previous);
       if (!canManage && oldDraft && oldDraft.memberId !== actor.userId)
         throw new Error("只能修改自己的草稿。");
       if (value && typeof value === "object")
@@ -142,18 +161,17 @@ export function applyLedgerPatch(input: {
       )
         throw new Error("不能将新版交易降级为旧流水。");
       const isLegacy = !record.detail || record.detail.origin === "legacy";
-      const normalized = migrateLedger({
-        ...next,
-        version: 1,
-        records: [isLegacy ? { ...record, detail: undefined } : record],
-      }).records[0];
+      const normalized = normalizeLegacyRecord(record);
       if (
         isLegacy &&
         [record.accountId, record.transferToAccountId].some(
           (id) =>
             id &&
-            (next.accounts.find((account) => account.id === id)?.currency ??
-              "CNY") !== "CNY",
+            (ledgerSchema.shape.accounts
+              .unwrap()
+              .element.optional()
+              .parse(indexes.get("accounts")?.get(id))?.currency ?? "CNY") !==
+              "CNY",
         )
       )
         throw new Error("外币账户须使用多币种交易。");
@@ -172,25 +190,57 @@ export function applyLedgerPatch(input: {
       (typeof value !== "object" || !("id" in value) || value.id !== change.id)
     )
       throw new Error("操作对象 ID 不匹配。");
-    next = ledgerSchema.parse({
-      ...next,
-      [change.collection]: [
-        ...collection.filter((item) => item.id !== change.id),
-        ...(value === null ? [] : [value]),
-      ],
-    });
+    if (value === null) collection.delete(change.id);
+    else {
+      const parsed = ledgerSchema.parse({
+        ...EMPTY_LEDGER,
+        [change.collection]: [value],
+      })[change.collection]?.[0];
+      if (!parsed) throw new Error("操作对象无效。");
+      // Preserve the existing move-to-end ordering for updated objects.
+      collection.delete(change.id);
+      collection.set(change.id, parsed);
+    }
   }
   next = ledgerSchema.parse({
     ...next,
+    ...Object.fromEntries(
+      [...indexes]
+        .filter(
+          ([name]) =>
+            next[name] !== undefined ||
+            patch.changes.some((change) => change.collection === name),
+        )
+        .map(([name, values]) => [name, [...values.values()]]),
+    ),
     ...(patch.rules ? { rules: patch.rules } : {}),
     ...(patch.preferences ? { preferences: patch.preferences } : {}),
     ...(patch.files ? { files: patch.files } : {}),
   });
+  const modernChanges = patch.changes.filter((change) => {
+    if (change.collection !== "records" || !change.value) return false;
+    const record = recordSchema.parse(change.value);
+    return (
+      record.detail &&
+      record.detail.origin !== "legacy" &&
+      !record.isDeleted &&
+      record.status === "confirmed"
+    );
+  }).length;
+  const MAX_REBUILD_WORK = 2_000_000;
+  if (
+    modernChanges * (next.records.length + next.accounts.length) >
+    MAX_REBUILD_WORK
+  )
+    throw new Error("操作规模过大，请减少本次修改的账单数量后重试。");
+  const recordsById = new Map(
+    next.records.map((record) => [record.id, record]),
+  );
   // Rebuild account movements from trusted account metadata, never from a client's movement array.
   for (const change of patch.changes.filter(
     (item) => item.collection === "records",
   )) {
-    const record = next.records.find((item) => item.id === change.id);
+    const record = recordsById.get(change.id);
     if (
       !record?.detail ||
       record.detail.origin === "legacy" ||

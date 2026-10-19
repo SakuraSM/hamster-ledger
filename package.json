@@ -43,7 +43,9 @@
     "db:migrate": "node apps/server/src/migrate.mjs",
     "db:import-sqlite": "node apps/server/src/import-sqlite-cli.mjs",
     "android:test-inbox": "node scripts/test-android-inbox.mjs",
-    "android:qa-publishers": "node scripts/build-notification-publishers.mjs"
+    "android:qa-publishers": "node scripts/build-notification-publishers.mjs",
+    "evaluate:ai": "npm run build:packages && node scripts/evaluate-ai-rules.mjs",
+    "benchmark:ledger": "npm run build:packages && node scripts/benchmark-ledger.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",

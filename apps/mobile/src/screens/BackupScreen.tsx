@@ -1,8 +1,12 @@
+import { encryptArchive } from "../platform/archive-crypto";
+import { nativeStore } from "../platform/storage";
+import { archivePassword } from "@hamster-ledger/core";
 import { useMemo, useState } from "react";
-import { Button, Text, Card } from "react-native-paper";
+import { Button, Text, Card, Checkbox, TextInput } from "react-native-paper";
 import type { Ledger, Attachment } from "@hamster-ledger/core";
 import {
   exportArchive,
+  useArchiveProgress,
   restoreArchive,
   cleanupAttachments,
   remoteAttachments,
@@ -24,12 +28,17 @@ export function BackupScreen({
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [isBusy, setBusy] = useState(false);
+  const [encrypted, setEncrypted] = useState(false);
+  const [password, setPassword] = useState("");
+  const progress = useArchiveProgress(nativeStore, controller.mode);
   const client = useNativeAccount().client,
     remote = useMemo(() => remoteAttachments(client), [client]),
     book = controller.books.find((item) => item.id === controller.mode),
     storageId = book?.cloud?.id ?? controller.mode,
     store = book?.cloud ? remote : nativeAttachments;
   async function run(action: () => Promise<void>): Promise<void> {
+    if (isBusy) return;
+    progress.begin();
     setBusy(true);
     setError("");
     setMessage("");
@@ -38,6 +47,7 @@ export function BackupScreen({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "文件操作失败。");
     } finally {
+      progress.finish();
       setBusy(false);
     }
   }
@@ -48,18 +58,55 @@ export function BackupScreen({
       </Text>
       <Text>
         完整归档包含账本、草稿和附件凭证，支持在 Web
-        与安卓之间恢复。导出文件为明文，请妥善保存。
+        与安卓之间恢复。可选密码加密；密码不会保存，忘记后无法恢复加密文件。
       </Text>
+      <Checkbox.Item
+        label="使用密码加密备份"
+        status={encrypted ? "checked" : "unchecked"}
+        disabled={isBusy}
+        onPress={() => setEncrypted(!encrypted)}
+      />
+      <TextInput
+        label="备份密码（加密导出或解密恢复）"
+        accessibilityLabel="备份密码"
+        secureTextEntry
+        value={password}
+        disabled={isBusy}
+        onChangeText={setPassword}
+      />
+      <Text>
+        {progress.lastExport
+          ? `最近生成备份：${new Date(progress.lastExport).toLocaleString()}`
+          : "尚未在此设备生成备份"}
+        。分享后请确认文件已保存。
+      </Text>
+      {isBusy && (
+        <>
+          <Text accessibilityLiveRegion="polite">{progress.status}</Text>
+          <Button onPress={progress.cancel}>取消操作</Button>
+        </>
+      )}
       <Button
         mode="contained"
         icon="share-variant"
         disabled={isBusy}
         onPress={() =>
-          void run(async () =>
-            shareBackup(
-              await exportArchive(store, storageId, controller.ledger),
-            ),
-          )
+          void run(async () => {
+            if (encrypted) archivePassword(password);
+            const plain = await exportArchive(
+              store,
+              storageId,
+              controller.ledger,
+              progress.options,
+            );
+            progress.check();
+            const text = encrypted
+              ? await encryptArchive(plain, password)
+              : plain;
+            progress.check();
+            await shareBackup(text);
+            await progress.markExported();
+          })
         }
       >
         导出含附件完整备份
@@ -79,10 +126,12 @@ export function BackupScreen({
         onPress={() =>
           void run(async () => {
             setPreview(null);
-            const archive = await pickBackup();
+            const archive = await pickBackup(password);
+            progress.check();
             if (archive)
               for (const image of archive.attachments)
                 await verifyAttachment(image);
+            progress.check();
             setPreview(archive);
           })
         }
@@ -112,6 +161,7 @@ export function BackupScreen({
                     ...preview,
                     verify: verifyAttachment,
                     createBook: controller.createBook,
+                    progress: progress.options,
                   });
                   setPreview(null);
                   controller.notify("已恢复为新账本");

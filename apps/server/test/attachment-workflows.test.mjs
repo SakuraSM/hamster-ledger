@@ -185,18 +185,39 @@ test("HTTP model transport bounds time, refuses redirects, and reports provider 
     endpoint: `http://127.0.0.1:${server.address().port}`,
     allowLan: true,
   };
-  const result = await requestModel({ config, key: "", path: "/models" });
+  const result = await requestModel({
+    config,
+    modelLanOrigins: [config.endpoint],
+    key: "",
+    path: "/models",
+  });
   assert.equal(result.data[0].id, "synthetic-model");
   await assert.rejects(
-    requestModel({ config, key: "", path: "/limited" }),
+    requestModel({
+      config,
+      modelLanOrigins: [config.endpoint],
+      key: "",
+      path: "/limited",
+    }),
     (error) => error.status === 429,
   );
   await assert.rejects(
-    requestModel({ config, key: "", path: "/redirect" }),
+    requestModel({
+      config,
+      modelLanOrigins: [config.endpoint],
+      key: "",
+      path: "/redirect",
+    }),
     (error) => error.status === 502,
   );
   await assert.rejects(
-    requestModel({ config, key: "", path: "/slow", timeoutMs: 50 }),
+    requestModel({
+      config,
+      modelLanOrigins: [config.endpoint],
+      key: "",
+      path: "/slow",
+      timeoutMs: 50,
+    }),
     (error) => error.status === 504,
   );
 });

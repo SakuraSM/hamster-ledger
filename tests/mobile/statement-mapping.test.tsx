@@ -8,6 +8,9 @@ import {
   type StatementFile,
 } from "@hamster-ledger/importers";
 import { StatementMapping } from "../../apps/mobile/src/screens/StatementMapping";
+vi.mock("../../apps/mobile/src/platform/storage", () => ({
+  nativeStore: { getItem: async () => null, setItem: async () => {} },
+}));
 vi.mock("../../apps/mobile/src/ui/FormSheet", () => ({
   FormSheet: ({ children }: { children: ReactNode }) => (
     <section role="dialog">{children}</section>

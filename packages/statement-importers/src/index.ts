@@ -5,3 +5,5 @@ export * from "./detection.js";
 export * from "./mapping.js";
 
 export * from "./csv.js";
+
+export * from "./mapping-template.js";

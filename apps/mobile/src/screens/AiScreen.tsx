@@ -1,3 +1,4 @@
+const LIST_PAGE_SIZE = 30;
 import { DraftAttachments } from "./DraftAttachments";
 import { useMemo, useState } from "react";
 import { Button, Card, Checkbox, Text, TextInput } from "react-native-paper";
@@ -54,6 +55,7 @@ export function AiScreen({
       setImageError(cause instanceof Error ? cause.message : "图片读取失败。");
     }
   }
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
   const pending =
       controller.ledger.aiDrafts?.filter(
         (draft) => draft.state === "pending",
@@ -123,7 +125,15 @@ export function AiScreen({
       </Button>
       <ErrorMessage message={ai.error || imageError} />
       <Text variant="titleMedium">待确认草稿（{pending.length}）</Text>
-      {pending.map((draft) => (
+      {pending.length > visibleCount && (
+        <Button
+          mode="outlined"
+          onPress={() => setVisibleCount((count) => count + LIST_PAGE_SIZE)}
+        >
+          加载更多草稿（{pending.length - visibleCount}）
+        </Button>
+      )}
+      {pending.slice(0, visibleCount).map((draft) => (
         <Card key={draft.id} mode="outlined">
           <Card.Content style={{ gap: 8 }}>
             <Text variant="titleMedium">
