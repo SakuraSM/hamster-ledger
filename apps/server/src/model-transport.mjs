@@ -77,6 +77,25 @@ export function modelUrl(endpoint, allowLan) {
     throw new HttpError(400, "模型地址须使用 HTTPS；局域网 HTTP 需显式开启。");
   return url;
 }
+export function parseModelLanOrigins(value = "") {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const url = modelUrl(item, true);
+      if (url.pathname !== "/")
+        throw new Error(
+          "LEDGER_MODEL_LAN_ORIGINS 仅接受含端口的完整 origin，不含路径。",
+        );
+      return url.origin;
+    });
+}
+export function assertModelPolicy(config, modelLanOrigins = []) {
+  const url = modelUrl(config.endpoint, config.allowLan);
+  if (config.allowLan && !modelLanOrigins.includes(url.origin))
+    throw new HttpError(403, "此模型地址未获服务管理员的局域网访问授权。");
+}
 async function lookupWithDeadline(hostname, timeoutMs) {
   let timer;
   try {
@@ -99,7 +118,9 @@ export async function requestModel({
   path,
   body,
   timeoutMs = 20000,
+  modelLanOrigins = [],
 }) {
+  assertModelPolicy(config, modelLanOrigins);
   const url = modelUrl(
     config.endpoint.replace(/\/$/, "") + path,
     config.allowLan,
