@@ -10,6 +10,7 @@ import {
   summarize,
   periodRecords,
   reportGroups,
+  budgetProgress,
   pendingReviewCount,
   type Ledger,
   type BillRecord,
@@ -50,6 +51,9 @@ export const OverviewScreen = memo(function OverviewScreen({
   const summary = summarize(records);
   const groups = reportGroups({ records, dimension: "category", kind: "支出" });
   const pending = pendingReviewCount(ledger);
+  const budget = budgetProgress(ledger, month).find(
+    (item) => item.category === null,
+  );
   const months = [
     ...new Set([
       month,
@@ -63,11 +67,14 @@ export const OverviewScreen = memo(function OverviewScreen({
     isAmountHidden ? HIDDEN_AMOUNT : `¥${money(value)}`;
   return (
     <Screen>
-      <Text variant="headlineMedium" accessibilityRole="header">
-        把每一笔，存进小日子
+      <Text
+        variant="headlineLarge"
+        accessibilityRole="header"
+        style={{ fontWeight: "700" }}
+      >
+        这个月，花得清楚
       </Text>
       {isDemo ? <Text>示例账本 · 以下均为虚拟数据</Text> : null}
-      <AssetSnapshot ledger={ledger} onOpen={onAssets} />
       <ChoiceField
         label="账期"
         value={month}
@@ -118,8 +125,25 @@ export const OverviewScreen = memo(function OverviewScreen({
           {pending} 项流水待核对
         </Button>
       ) : null}
+      {budget ? (
+        <Section title="本月预算">
+          <Text>
+            {budget.remaining >= 0 ? "还可支出" : "已超出"}{" "}
+            {amount(Math.abs(budget.remaining))} / {amount(budget.available)}
+          </Text>
+          {!isAmountHidden ? (
+            <ProgressBar
+              color={colors.expense}
+              progress={Math.min(1, budget.ratio)}
+            />
+          ) : null}
+        </Section>
+      ) : null}
+      <AssetSnapshot ledger={ledger} onOpen={onAssets} />
       <Section title="支出分类">
-        {groups.length ? (
+        {isAmountHidden ? (
+          <Text>金额已隐藏，分类图表暂不展示。</Text>
+        ) : groups.length ? (
           groups.map((group) => (
             <View key={group.name} style={{ gap: 6 }}>
               <View

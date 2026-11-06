@@ -76,6 +76,7 @@ export function RecurringEditor({
           />
           <TextInput
             label={<>金额（元）</>}
+            type={ledger.preferences?.hideAmounts ? "password" : "text"}
             required
             inputMode="decimal"
             value={amount}

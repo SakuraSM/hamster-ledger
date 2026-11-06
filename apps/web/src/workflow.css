@@ -544,3 +544,133 @@
 .mapping-review-alert .mantine-Alert-message {
   color: var(--ink);
 }
+
+/* Review and import use the same warm, quiet surfaces as the ledger. */
+.review-workspace {
+  border-color: var(--line);
+  border-radius: 12px;
+}
+.review-queue {
+  background: var(--sidebar);
+}
+.review-queue h2 span,
+.review-queue > button small {
+  color: var(--muted);
+}
+.review-queue > button {
+  border-color: var(--line);
+}
+.review-queue > button.selected {
+  background: #e2e8c9;
+  color: var(--ink);
+}
+.review-detail {
+  background: var(--bg);
+}
+.review-title h2,
+.review-title strong {
+  color: var(--ink);
+}
+.comparison-table thead {
+  background: var(--sidebar);
+}
+.comparison-table td,
+.comparison-table th {
+  border-color: var(--line);
+}
+.match-evidence,
+.merge-preview {
+  background: #e8ecd8;
+  border-color: #dce3c4;
+  color: #46552a;
+  border-radius: 10px;
+}
+.import-steps {
+  color: var(--muted);
+}
+.import-steps li:not(:last-child)::after {
+  background: var(--line);
+}
+.import-steps li > span {
+  background: var(--sidebar);
+  color: var(--ink);
+}
+.import-steps .active {
+  color: var(--positive);
+}
+.import-steps .active > span,
+.import-steps .complete > span {
+  background: #dfe6c2;
+  color: var(--ink);
+}
+.import-page .page-heading h1 {
+  color: var(--ink);
+  font-size: 34px;
+}
+.import-page .page-heading p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.upload-zone {
+  background: #fffefa;
+  border-color: #c6c8b6;
+  color: #a75b38;
+  border-radius: 12px;
+}
+.upload-zone h2 {
+  color: var(--ink);
+}
+.upload-zone p,
+.upload-zone small {
+  color: var(--muted);
+}
+.upload-zone.dragging {
+  background: #edf0df;
+  border-color: var(--positive);
+}
+.mapping-panel {
+  background: var(--sidebar);
+  border-radius: 10px;
+}
+.import-summary > div:last-child strong {
+  color: var(--positive);
+}
+@media (max-width: 700px) {
+  .import-page .page-heading h1 {
+    font-size: 29px;
+  }
+  .review-workspace {
+    border: 0;
+  }
+  .review-queue {
+    border-right: 0;
+  }
+}
+:root[data-theme="night"] .review-queue > button.selected {
+  background: #424d32;
+  color: var(--ink);
+}
+:root[data-theme="night"] .match-evidence,
+:root[data-theme="night"] .merge-preview {
+  background: var(--sidebar);
+  border-color: var(--line);
+  color: var(--ink);
+}
+:root[data-theme="night"] .upload-zone {
+  background: var(--sidebar);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-theme="night"] .upload-zone.dragging {
+  background: #343d29;
+  border-color: #a6b97a;
+}
+:root[data-theme="night"] .import-steps .active > span,
+:root[data-theme="night"] .import-steps .complete > span {
+  background: #424d32;
+  color: var(--ink);
+}
+
+:root[data-theme="night"] .review-queue > button.selected small {
+  color: var(--muted);
+}

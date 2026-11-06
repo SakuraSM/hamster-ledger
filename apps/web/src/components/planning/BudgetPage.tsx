@@ -2,6 +2,7 @@ import { TextInput, Button, Checkbox } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
 import { DateField } from "../../ui/DateField";
 const CENTS_PER_YUAN = 100;
+const DEFAULT_ALERT_PERCENT = 80;
 import { useState } from "react";
 import {
   BUDGET_PERIODS,
@@ -15,6 +16,7 @@ import {
 } from "@hamster-ledger/core";
 import { parseAmount } from "@hamster-ledger/importers";
 import { newEntityId } from "../../platform/browser/runtime";
+import { Dialog } from "../Dialog";
 interface Props {
   ledger: Ledger;
   month: string;
@@ -32,9 +34,16 @@ export function BudgetPage({
   const [period, setPeriod] =
     useState<NonNullable<Budget["period"]>>("monthly");
   const [rollover, setRollover] = useState(false);
-  const [threshold, setThreshold] = useState("80");
+  const [threshold, setThreshold] = useState(String(DEFAULT_ALERT_PERCENT));
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingBudget, setDeletingBudget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
+  const amountLabel = (minor: number): string =>
+    isHidden ? "••••" : `¥${money(minor)}`;
   const budgets = budgetProgress(ledger, month);
   const range = cycleRange(month, ledger.preferences?.cycleStartDay ?? 1);
   async function save(
@@ -65,13 +74,18 @@ export function BudgetPage({
     }
   }
   async function remove(id: string): Promise<void> {
+    setIsSaving(true);
+    setError("");
     try {
       await onCommit({
         ...ledger,
         budgets: ledger.budgets?.filter((item) => item.id !== id),
       });
-    } catch {
-      setError("删除预算失败。");
+      setDeletingBudget(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "删除预算失败。");
+    } finally {
+      setIsSaving(false);
     }
   }
   return (
@@ -125,6 +139,7 @@ export function BudgetPage({
         </Choice>
         <TextInput
           label={<>预算金额（元）</>}
+          type={isHidden ? "password" : "text"}
           required
           inputMode="decimal"
           value={amount}
@@ -157,7 +172,13 @@ export function BudgetPage({
                 variant="subtle"
                 type="submit"
                 className="text-button"
-                onClick={() => void remove(budget.id)}
+                onClick={() => {
+                  setError("");
+                  setDeletingBudget({
+                    id: budget.id,
+                    name: budget.category ?? "总预算",
+                  });
+                }}
               >
                 删除
               </Button>
@@ -166,21 +187,24 @@ export function BudgetPage({
               {budget.start} 至 {budget.end}（不含结束日）
             </p>
             <p className="muted">
-              本期预算 ¥{money(budget.amount)} + 上期结转 ¥
-              {money(budget.carried)} = 可用预算 ¥{money(budget.available)}
+              本期预算 {amountLabel(budget.amount)} + 上期结转{" "}
+              {amountLabel(budget.carried)} = 可用预算{" "}
+              {amountLabel(budget.available)}
             </p>
             <strong>
-              ¥ {money(budget.remaining)}
+              {amountLabel(budget.remaining)}
               <small>{budget.remaining < 0 ? " 超出预算" : " 剩余"}</small>
             </strong>
-            <progress
-              max={budget.available}
-              value={Math.min(budget.spent, budget.available)}
-              aria-label={`${budget.category ?? "整月"}预算已用`}
-            />
+            {!isHidden ? (
+              <progress
+                max={budget.available}
+                value={Math.min(budget.spent, budget.available)}
+                aria-label={`${budget.category ?? "整月"}预算已用`}
+              />
+            ) : null}
             <p>
-              已用 ¥{money(budget.spent)} / ¥{money(budget.available)} · 结转 ¥
-              {money(budget.carried)}
+              已用 {amountLabel(budget.spent)} / {amountLabel(budget.available)}{" "}
+              · 结转 {amountLabel(budget.carried)}
             </p>
             <Button
               variant="outline"
@@ -191,7 +215,9 @@ export function BudgetPage({
                 setAmount(String(budget.amount / CENTS_PER_YUAN));
                 setPeriod(budget.period ?? "monthly");
                 setRollover(budget.rollover ?? false);
-                setThreshold(String(budget.alertPercent ?? 80));
+                setThreshold(
+                  String(budget.alertPercent ?? DEFAULT_ALERT_PERCENT),
+                );
               }}
             >
               调整预算
@@ -203,6 +229,35 @@ export function BudgetPage({
         <div className="empty-panel">
           这个账期还没有预算，先设一个合适的金额。
         </div>
+      ) : null}
+      {deletingBudget ? (
+        <Dialog title="删除预算" onClose={() => setDeletingBudget(null)}>
+          <p>
+            删除“{deletingBudget.name}
+            ”后，该预算不再参与这个账期的预算计算。已有账单不会删除。
+          </p>
+          {error ? (
+            <p role="alert" className="error-message">
+              {error}
+            </p>
+          ) : null}
+          <div className="dialog-actions">
+            <Button
+              variant="outline"
+              disabled={isSaving}
+              onClick={() => setDeletingBudget(null)}
+            >
+              取消
+            </Button>
+            <Button
+              className="primary-button"
+              loading={isSaving}
+              onClick={() => void remove(deletingBudget.id)}
+            >
+              确认删除
+            </Button>
+          </div>
+        </Dialog>
       ) : null}
     </section>
   );

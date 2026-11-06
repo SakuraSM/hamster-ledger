@@ -20,6 +20,8 @@ import { Screen } from "../ui/Screen";
 import { AmountText, useAmountColors } from "../ui/AmountText";
 import { RecordRow } from "./RecordRow";
 import { localNow } from "../platform/runtime";
+import { ReceiptAction } from "./ReceiptAction";
+import tokens from "@hamster-ledger/design-tokens/tokens.json";
 interface CalendarScreenProps {
   ledger: Ledger;
   onRecord: (record: BillRecord) => void;
@@ -39,6 +41,7 @@ export function CalendarScreen({
   const offset =
     (new Date(year, monthNumber - 1, 1).getDay() + MONDAY_OFFSET) %
     DAYS_PER_WEEK;
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const theme = useTheme();
   const colors = useAmountColors();
   const records = ledger.records.filter(
@@ -59,7 +62,11 @@ export function CalendarScreen({
   }
   return (
     <Screen>
-      <Text variant="headlineSmall" accessibilityRole="header">
+      <Text
+        variant="headlineLarge"
+        accessibilityRole="header"
+        style={{ fontWeight: "700" }}
+      >
         账单日历
       </Text>
       <View
@@ -88,7 +95,11 @@ export function CalendarScreen({
           </Text>
         ))}
       </View>
-      <Text>底色越明显，当日净支出越多。</Text>
+      <Text>
+        {isAmountHidden
+          ? "金额已隐藏，选择日期查看账单。"
+          : "底色越明显，当日净支出越多。"}
+      </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {Array.from({ length: offset }, (_, index) => (
           <View key={`offset-${index}`} style={{ width: "14.285%" }} />
@@ -105,17 +116,27 @@ export function CalendarScreen({
                 compact
                 mode={date === selected ? "contained" : "text"}
                 onPress={() => setSelected(date)}
-                accessibilityLabel={`${date}，净支出 ${money(heat[index]?.expense ?? 0)} 元`}
+                accessibilityLabel={
+                  isAmountHidden
+                    ? `${date}，金额已隐藏`
+                    : `${date}，净支出 ${money(heat[index]?.expense ?? 0)} 元`
+                }
                 style={{
                   borderRadius: 12,
                   backgroundColor:
                     date === selected
-                      ? theme.colors.primary
-                      : heatColors[heat[index]?.level ?? 0],
+                      ? theme.dark
+                        ? theme.colors.primary
+                        : tokens.color.action
+                      : isAmountHidden
+                        ? theme.colors.surface
+                        : heatColors[heat[index]?.level ?? 0],
                 }}
                 textColor={
                   date === selected
-                    ? theme.colors.onPrimary
+                    ? theme.dark
+                      ? theme.colors.onPrimary
+                      : tokens.color.actionText
                     : theme.colors.onSurface
                 }
                 contentStyle={{ minHeight: 48 }}
@@ -143,20 +164,31 @@ export function CalendarScreen({
           variant="titleMedium"
           amount={totals.expense}
           tone="expense"
+          isMuted={isAmountHidden}
         >
-          ¥{money(totals.expense)}
+          {isAmountHidden ? "••••" : `¥${money(totals.expense)}`}
         </AmountText>{" "}
         · 收入{" "}
-        <AmountText variant="titleMedium" amount={totals.income} tone="income">
-          ¥{money(totals.income)}
+        <AmountText
+          variant="titleMedium"
+          amount={totals.income}
+          tone="income"
+          isMuted={isAmountHidden}
+        >
+          {isAmountHidden ? "••••" : `¥${money(totals.income)}`}
         </AmountText>
       </Text>
-      <Button mode="outlined" icon="plus" onPress={() => onAdd(selected)}>
+      <ReceiptAction icon="plus" onPress={() => onAdd(selected)}>
         为这一天记一笔
-      </Button>
+      </ReceiptAction>
       {daily.length ? (
         daily.map((record) => (
-          <RecordRow key={record.id} record={record} onPress={onRecord} />
+          <RecordRow
+            key={record.id}
+            record={record}
+            isAmountHidden={isAmountHidden}
+            onPress={onRecord}
+          />
         ))
       ) : (
         <Text>这一天还没有已确认账单。</Text>

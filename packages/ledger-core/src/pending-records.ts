@@ -24,6 +24,24 @@ export function pendingReviewCount(ledger: Ledger): number {
   );
 }
 
+/** Select a real pending record for the inbox without changing its status. */
+export function pendingPreviewRecord(ledger: Ledger): BillRecord | undefined {
+  const unpaired = unpairedPendingRecords(ledger)[0];
+  if (unpaired) return unpaired;
+  const recordsById = new Map(
+    ledger.records.map((record) => [record.id, record]),
+  );
+  for (const review of ledger.reviews) {
+    if (review.state !== "pending") continue;
+    for (const id of [review.leftId, review.rightId]) {
+      const record = recordsById.get(id);
+      if (record && !record.isDeleted && record.status === "pending")
+        return record;
+    }
+  }
+  return undefined;
+}
+
 export function pendingMatchCandidates(
   ledger: Ledger,
   record: BillRecord,
@@ -58,6 +76,8 @@ export function resolvePendingRecord(
     !unpairedPendingRecords(ledger).some((record) => record.id === current.id)
   )
     throw new Error("这笔待确认账单已变化，请重新打开核对。");
+  if (current.duplicateOf)
+    throw new Error("这笔待确认账单已有重复关联，请先核对关联后再确认。");
   if (input.decision === "confirm") {
     return {
       ...ledger,

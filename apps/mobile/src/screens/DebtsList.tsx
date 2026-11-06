@@ -19,6 +19,7 @@ export function DebtsList({
   panel: PlanningPanelController;
 }): React.JSX.Element {
   const today = localNow().slice(0, 10);
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   return (
     <>
       <Button
@@ -31,16 +32,23 @@ export function DebtsList({
       {ledger.debts?.map((item) => (
         <Section
           key={item.id}
-          title={`${item.name} · ${item.direction === "receivable" ? "应收" : "应付"}${item.isArchived ? " · 已归档" : ""}`}
+          title={`${isAmountHidden ? "借贷台账" : item.name} · ${item.direction === "receivable" ? "应收" : "应付"}${item.isArchived ? " · 已归档" : ""}`}
         >
           <Text>
             剩余本金{" "}
-            {formatCurrency({
-              minor: debtRemaining(ledger, item),
-              currency: item.currency,
-            })}{" "}
+            {isAmountHidden
+              ? "••••"
+              : formatCurrency({
+                  minor: debtRemaining(ledger, item),
+                  currency: item.currency,
+                })}{" "}
             /{" "}
-            {formatCurrency({ minor: item.principal, currency: item.currency })}
+            {isAmountHidden
+              ? "••••"
+              : formatCurrency({
+                  minor: item.principal,
+                  currency: item.currency,
+                })}
           </Text>
           <Text>
             {item.openedOn} 起 ·{" "}
@@ -75,8 +83,12 @@ export function DebtsList({
               .map((record) => (
                 <List.Item
                   key={record.id}
-                  title={`${record.date.slice(0, 10)} · ${record.merchant}`}
-                  description={`${record.isDeleted ? "已删除 · " : ""}${formatCurrency(record.detail!.original)}`}
+                  title={
+                    isAmountHidden
+                      ? `${record.date.slice(0, 10)} · 账单`
+                      : `${record.date.slice(0, 10)} · ${record.merchant}`
+                  }
+                  description={`${record.isDeleted ? "已删除 · " : ""}${isAmountHidden ? "金额已隐藏" : formatCurrency(record.detail!.original)}`}
                 />
               ))}
           </List.Accordion>

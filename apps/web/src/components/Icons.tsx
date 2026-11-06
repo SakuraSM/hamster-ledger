@@ -25,6 +25,7 @@ import { CaretRightIcon } from "@phosphor-icons/react/dist/csr/CaretRight";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/csr/MagnifyingGlass";
 import { SlidersHorizontalIcon } from "@phosphor-icons/react/dist/csr/SlidersHorizontal";
 import { TrayIcon } from "@phosphor-icons/react/dist/csr/Tray";
+import { ReceiptIcon } from "@phosphor-icons/react/dist/csr/Receipt";
 import { CalendarBlankIcon } from "@phosphor-icons/react/dist/csr/CalendarBlank";
 import { WechatLogoIcon } from "@phosphor-icons/react/dist/csr/WechatLogo";
 import { BankIcon } from "@phosphor-icons/react/dist/csr/Bank";
@@ -61,6 +62,7 @@ export const Icons = {
   Search: MagnifyingGlassIcon,
   Settings: SlidersHorizontalIcon,
   Empty: TrayIcon,
+  Receipt: ReceiptIcon,
   Calendar: CalendarBlankIcon,
   Wechat: WechatLogoIcon,
   Bank: BankIcon,

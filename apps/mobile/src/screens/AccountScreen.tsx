@@ -27,8 +27,9 @@ export function AccountScreen({
   return (
     <Screen>
       <Text variant="headlineSmall" accessibilityRole="header">
-        {onLocal ? "欢迎使用仓鼠记账" : "账号与登录"}
+        {onLocal ? "让账本留在你手里" : "账号与登录"}
       </Text>
+      <Text>本机账本可离线使用，登录后可按需连接与同步。</Text>
       {account.isLoading ? (
         <ActivityIndicator />
       ) : account.credentials ? (

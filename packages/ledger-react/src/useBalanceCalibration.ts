@@ -1,5 +1,5 @@
 const DECIMAL_BASE = 10;
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   addMinor,
   CURRENCY_DIGITS,
@@ -9,6 +9,19 @@ import {
   type AssetAccount,
   type Ledger,
 } from "@hamster-ledger/core";
+
+function snapshotAccount(account: AssetAccount): AssetAccount {
+  return {
+    ...account,
+    aliases: [...account.aliases],
+    checkpoints: account.checkpoints.map((checkpoint) => ({ ...checkpoint })),
+    ...(account.archiveHistory
+      ? {
+          archiveHistory: account.archiveHistory.map((event) => ({ ...event })),
+        }
+      : {}),
+  };
+}
 
 export interface BalanceCalibrationController {
   amount: string;
@@ -31,27 +44,33 @@ export function useBalanceCalibration(input: {
   account: AssetAccount;
   initialAt: string;
   now: () => string;
-  onSave: (value: { account: AssetAccount; note: string }) => Promise<void>;
+  onSave: (value: {
+    account: AssetAccount;
+    expectedAccount: AssetAccount;
+    note: string;
+  }) => Promise<void>;
   onClose: () => void;
 }): BalanceCalibrationController {
+  const [expectedAccount] = useState(() => snapshotAccount(input.account));
   const currentAccount = input.ledger.accounts.find(
     (account) => account.id === input.account.id,
   );
   const currency = input.account.currency ?? "CNY";
   const [at, setAt] = useState(input.initialAt);
-  const [amount, setAmount] = useState(() =>
-    String(
-      projectAccountBalance({
-        ledger: input.ledger,
-        account: input.account,
-        through: input.initialAt,
-      }).balance /
-        DECIMAL_BASE ** CURRENCY_DIGITS[currency],
-    ),
-  );
+  const [amount, setAmount] = useState(() => {
+    const projection = projectAccountBalance({
+      ledger: input.ledger,
+      account: input.account,
+      through: input.initialAt,
+    });
+    return projection.baseline
+      ? String(projection.balance / DECIMAL_BASE ** CURRENCY_DIGITS[currency])
+      : "";
+  });
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setSaving] = useState(false);
+  const saveInProgress = useRef(false);
   let preview: BalanceCalibrationController["preview"] = null;
   try {
     dateTimeSchema.parse(at);
@@ -72,7 +91,8 @@ export function useBalanceCalibration(input: {
     // Incomplete form input has no meaningful preview; save reports its validation error.
   }
   async function save(): Promise<void> {
-    if (isSaving) return;
+    if (saveInProgress.current) return;
+    saveInProgress.current = true;
     setSaving(true);
     setError("");
     try {
@@ -84,12 +104,14 @@ export function useBalanceCalibration(input: {
       const balance = parseMinor({ value: amount, currency });
       await input.onSave({
         account: { ...currentAccount, openingBalance: balance, balanceAt: at },
+        expectedAccount,
         note: note.trim() || "核对实际余额",
       });
       input.onClose();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "余额校准失败。");
     } finally {
+      saveInProgress.current = false;
       setSaving(false);
     }
   }

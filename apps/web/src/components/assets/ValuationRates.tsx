@@ -12,7 +12,7 @@ export function ValuationRates({
   const [manual, setManual] = useState<Record<string, string>>({});
   if (!currencies.some((currency) => currency !== "CNY")) return null;
   return (
-    <details className="panel">
+    <details className="panel asset-rates">
       <summary>估值汇率（原币 1 单位折合人民币）</summary>
       <Stack>
         {controller.isLoading ? <Text>正在获取参考汇率…</Text> : null}

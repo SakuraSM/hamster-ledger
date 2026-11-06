@@ -1,3 +1,4 @@
+import { ReceiptAction } from "./ReceiptAction";
 import { CENTS_PER_YUAN, DATE_KEY_LENGTH } from "../constants";
 import { useState } from "react";
 import { Button, TextInput, Text } from "react-native-paper";
@@ -179,14 +180,13 @@ export function RecurringEditor({
       />
       <Text>打开账本时自动补齐到期账单，月末与闰年沿用账本规则。</Text>
       <ErrorMessage message={error} />
-      <Button
-        mode="contained"
+      <ReceiptAction
         disabled={controller.isSaving}
         loading={controller.isSaving}
         onPress={() => void save()}
       >
         保存规则
-      </Button>
+      </ReceiptAction>
     </FormSheet>
   );
 }

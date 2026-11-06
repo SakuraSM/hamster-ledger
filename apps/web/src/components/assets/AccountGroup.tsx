@@ -1,17 +1,22 @@
 import { UnstyledButton } from "@mantine/core";
-import { formatCurrency, type AccountBalance } from "@hamster-ledger/core";
+import { type AccountBalance, type AssetAccount } from "@hamster-ledger/core";
+import { accountAmount, assetAccountLabel } from "./asset-format";
 import { Icons } from "../Icons";
 interface AccountGroupProps {
   title: string;
   accounts: AccountBalance[];
+  allAccounts: AssetAccount[];
   changes: Record<string, number | null>;
+  isHidden: boolean;
   onSelect: (id: string) => void;
 }
 export function AccountGroup({
   title,
   accounts,
+  allAccounts,
   onSelect,
   changes,
+  isHidden,
 }: AccountGroupProps): React.JSX.Element {
   if (!accounts.length)
     return (
@@ -40,7 +45,7 @@ export function AccountGroup({
                 : Icons.Wallet;
           return (
             <UnstyledButton
-              type="submit"
+              type="button"
               className="asset-account-row"
               key={account.id}
               onClick={() => onSelect(account.id)}
@@ -49,22 +54,29 @@ export function AccountGroup({
                 <Icon size={24} weight="duotone" />
               </span>
               <span className="account-name">
-                <strong>{account.name}</strong>
+                <strong>
+                  {assetAccountLabel({
+                    account,
+                    accounts: allAccounts,
+                    isHidden,
+                  })}
+                </strong>
                 <small>
                   {account.type} ·{" "}
                   {account.isArchived
                     ? "已归档"
                     : change == null
                       ? "暂无月初基准"
-                      : `本月 ${change >= 0 ? "+" : ""}${formatCurrency({ minor: change, currency: account.currency ?? "CNY" })}`}
+                      : `本月 ${!isHidden && change >= 0 ? "+" : ""}${accountAmount({ minor: change, currency: account.currency ?? "CNY", isHidden })}`}
                 </small>
               </span>
               <span className="account-row-balance">
-                {account.kind === "liability" && balance < 0 ? (
+                {!isHidden && account.kind === "liability" && balance < 0 ? (
                   <small>预存</small>
                 ) : null}
                 {baseline
-                  ? formatCurrency({
+                  ? accountAmount({
+                      isHidden,
                       minor:
                         account.kind === "liability"
                           ? Math.abs(balance)

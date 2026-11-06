@@ -1,31 +1,29 @@
-const DATE_KEY_LENGTH = 10;
-import { useAssetSummary } from "@hamster-ledger/ledger-react";
-import { useNetworkClient } from "../../hooks/useNetworkController";
-import { DateField } from "../../ui/DateField";
-import { ValuationRates } from "./ValuationRates";
-import { UnstyledButton, Button, Checkbox, TextInput } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { useState } from "react";
+import { useAssetSummary } from "@hamster-ledger/ledger-react";
 import {
-  projectAccountBalance,
-  accountActiveAt,
-  resolveAssetAccount,
   type AssetAccount,
   type Ledger,
   type BillRecord,
 } from "@hamster-ledger/core";
+import { useNetworkClient } from "../../hooks/useNetworkController";
 import { localNow } from "../../platform/browser/runtime";
-import { AccountEditor, type AccountSave } from "./AccountEditor";
-import { AccountGroup } from "./AccountGroup";
+import {
+  AccountEditor,
+  type AccountSave,
+  type AssetBookContext,
+} from "./AccountEditor";
 import { AccountDetail } from "./AccountDetail";
 import { BalanceCalibration } from "./BalanceCalibration";
-import { AssetTotals } from "./AssetTotals";
-import { AssetTrend } from "./AssetTrend";
-import { AdvancedEntryEditor } from "../finance/AdvancedEntryEditor";
-import type { EntryDraft } from "@hamster-ledger/ledger-react";
-import { Icons } from "../Icons";
+import { AssetContext } from "./AssetContext";
+import { TransferEditor } from "./TransferEditor";
+import { AssetOverview } from "./AssetOverview";
+
+const DATE_KEY_LENGTH = 10;
 interface AssetsPageProps {
   ledger: Ledger;
   isDemo: boolean;
+  bookContext?: AssetBookContext;
   onSave: (input: AccountSave) => Promise<void>;
   onArchive: (input: {
     accountId: string;
@@ -38,9 +36,11 @@ interface AssetsPageProps {
   canUndo?: boolean;
   onUndo?: () => void;
 }
+
 export function AssetsPage({
   ledger,
   isDemo,
+  bookContext,
   onSave,
   onArchive,
   onRecord,
@@ -55,11 +55,41 @@ export function AssetsPage({
     account?: AssetAccount;
     isCalibration?: boolean;
   } | null>(null);
-  const [search, setSearch] = useState("");
-  const [transfer, setTransfer] = useState<Partial<EntryDraft> | null>(null);
+  const [transfer, setTransfer] = useState<{
+    sourceId?: string;
+    repaymentAccount?: AssetAccount;
+  } | null>(null);
+  const [search, setSearch] = useState<{
+    value: string;
+    isHidden: boolean;
+  } | null>(null);
+  const [visibilityOverride, setVisibilityOverride] = useState<boolean | null>(
+    null,
+  );
   const [showArchived, setShowArchived] = useState(false);
+  const [showTrend, setShowTrend] = useState(false);
+  const [recordRequest, setRecordRequest] = useState(0);
+  const [traceRequest, setTraceRequest] = useState(0);
+  const [focusAccounts, setFocusAccounts] = useState(false);
+  const [settingsTarget, setSettingsTarget] = useState<"date" | "rates" | null>(
+    null,
+  );
   const [actionError, setActionError] = useState("");
+  const [isLoadingExamples, setLoadingExamples] = useState(false);
+  const [valuationDate, setValuationDate] = useState(
+    localNow().slice(0, DATE_KEY_LENGTH),
+  );
+  const through = valuationDate + " 23:59:59";
+  const isHidden =
+    visibilityOverride ?? Boolean(ledger.preferences?.hideAmounts);
+  const summary = useAssetSummary({
+    ledger,
+    date: valuationDate,
+    client: useNetworkClient(),
+  });
+  const selected = ledger.accounts.find((account) => account.id === selectedId);
   async function loadExamples(): Promise<void> {
+    setLoadingExamples(true);
     try {
       await onLoadExamples();
       setActionError("");
@@ -67,42 +97,15 @@ export function AssetsPage({
       setActionError(
         cause instanceof Error ? cause.message : "示例账户载入失败。",
       );
+    } finally {
+      setLoadingExamples(false);
     }
   }
-  const [valuationDate, setValuationDate] = useState(
-    localNow().slice(0, DATE_KEY_LENGTH),
-  );
-  const through = valuationDate + " 23:59:59";
-  const currencies = ledger.accounts
-    .filter((account) => accountActiveAt(account, valuationDate + " 23:59:59"))
-    .map((account) => account.currency ?? "CNY");
-  const { rates, totals, comparison } = useAssetSummary({
-    ledger,
-    date: valuationDate,
-    client: useNetworkClient(),
-  });
-  const selected = ledger.accounts.find((account) => account.id === selectedId);
-  const displayed = (
-    showArchived
-      ? ledger.accounts.map((account) =>
-          projectAccountBalance({ account, ledger, through }),
-        )
-      : totals.balances
-  ).filter(({ account }) =>
-    [account.name, account.type, ...account.aliases].some((value) =>
-      value.toLowerCase().includes(search.trim().toLowerCase()),
-    ),
-  );
-  const unassigned = ledger.records.filter(
-    (record) =>
-      !record.isDeleted &&
-      record.status === "confirmed" &&
-      (record.kind === "收入" ||
-        record.kind === "支出" ||
-        record.kind === "退款") &&
-      !record.detail?.movements.length &&
-      !resolveAssetAccount(record, ledger.accounts),
-  ).length;
+  function selectAccount(id: string): void {
+    setRecordRequest(0);
+    setTraceRequest(0);
+    setSelectedId(id);
+  }
   return (
     <>
       {actionError ? (
@@ -115,179 +118,109 @@ export function AssetsPage({
           撤销上一次修改
         </Button>
       ) : null}
-      <div className="assets-page">
-        {selected ? (
-          <AccountDetail
-            account={selected}
-            ledger={ledger}
-            through={through}
-            onBack={() => setSelectedId(null)}
-            onEdit={() => setEditor({ account: selected })}
-            onCalibrate={() =>
-              setEditor({ account: selected, isCalibration: true })
-            }
-            onTransfer={() =>
-              setTransfer(
-                selected.kind === "liability"
-                  ? {
-                      type: "transfer",
-                      destinationId: selected.id,
-                      accountId:
-                        ledger.accounts.find(
-                          (item) => !item.isArchived && item.kind === "asset",
-                        )?.id ?? "",
-                      merchant: "信用卡还款",
-                    }
-                  : {
-                      type: "transfer",
-                      accountId: selected.id,
-                      merchant: "账户转账",
-                    },
-              )
-            }
-            onArchive={() =>
-              onArchive({
-                accountId: selected.id,
-                isArchived: !selected.isArchived,
-              })
-            }
-            onRecord={onRecord}
-          />
-        ) : (
-          <>
-            <div className="page-heading heading-with-action">
-              <div>
-                <h1>资产管理</h1>
-                <p>看清每个账户的余额，也看清钱的变化</p>
-              </div>
-              <Button
-                variant="filled"
-                type="submit"
-                className="primary-button"
-                onClick={() => setEditor({})}
-              >
-                <Icons.Plus size={19} />
-                添加账户
-              </Button>
-            </div>
-            <DateField
-              className="asset-valuation-date"
-              max={localNow().slice(0, DATE_KEY_LENGTH)}
-              label="资产估值日"
-              type="date"
-              value={valuationDate}
-              onChange={(value) => {
-                if (value) setValuationDate(value);
-              }}
-            />
-            <ValuationRates controller={rates} currencies={currencies} />
-            <AssetTotals
-              totals={totals}
-              comparison={comparison}
-              isDemo={isDemo}
+      <div className="assets-page asset-layout">
+        <div className="asset-main">
+          {selected ? (
+            <AccountDetail
+              account={selected}
+              ledger={ledger}
               through={through}
+              isHidden={isHidden}
+              recordRequest={recordRequest}
+              traceRequest={traceRequest}
+              onBack={() => setSelectedId(null)}
+              onEdit={() => setEditor({ account: selected })}
+              onCalibrate={() =>
+                setEditor({ account: selected, isCalibration: true })
+              }
+              onTransfer={() =>
+                setTransfer(
+                  selected.kind === "liability"
+                    ? { repaymentAccount: selected }
+                    : { sourceId: selected.id },
+                )
+              }
+              onArchive={onArchive}
+              onRecord={onRecord}
             />
-            {!ledger.accounts.length ? (
-              <div className="asset-onboarding">
-                <Icons.Wallet size={42} weight="duotone" />
-                <h2>先添加一个资产或负债账户</h2>
-                <p>
-                  填写某时点的余额，并设置导入账单的账户别名。之后的已确认流水会更新账户余额。
-                </p>
-                <Button
-                  variant="filled"
-                  type="submit"
-                  className="primary-button"
-                  onClick={() => setEditor({})}
-                >
-                  添加第一个账户
-                </Button>
-                {isDemo ? (
-                  <Button
-                    variant="subtle"
-                    type="submit"
-                    className="text-button"
-                    onClick={loadExamples}
-                  >
-                    载入虚拟资产示例
-                  </Button>
-                ) : null}
-              </div>
-            ) : null}
-            {unassigned > 0 ? (
-              <UnstyledButton
-                type="submit"
-                className="account-link-reminder"
-                onClick={onUnassigned}
-              >
-                <Icons.Link size={20} />
-                {unassigned} 条账单尚未关联资产账户
-                <Icons.Arrow size={18} />
-              </UnstyledButton>
-            ) : null}
-            <TextInput
-              label="查找账户"
-              placeholder="账户名称、类型或别名"
-              value={search}
-              onChange={(event) => setSearch(event.currentTarget.value)}
+          ) : (
+            <AssetOverview
+              ledger={ledger}
+              isDemo={isDemo}
+              isHidden={isHidden}
+              valuationDate={valuationDate}
+              summary={summary}
+              search={search?.isHidden === isHidden ? search.value : ""}
+              showArchived={showArchived}
+              showTrend={showTrend}
+              isLoadingExamples={isLoadingExamples}
+              focusAccounts={focusAccounts}
+              settingsTarget={settingsTarget}
+              onAccountsFocused={() => setFocusAccounts(false)}
+              onSettingsOpened={() => setSettingsTarget(null)}
+              onAdd={() => setEditor({})}
+              onSelect={selectAccount}
+              onTransfer={() => setTransfer({})}
+              onUnassigned={onUnassigned}
+              onLoadExamples={() => void loadExamples()}
+              onSearch={(value) => setSearch({ value, isHidden })}
+              onToggleAmounts={() => {
+                setSearch(null);
+                setVisibilityOverride(!isHidden);
+              }}
+              onShowArchived={setShowArchived}
+              onShowTrend={setShowTrend}
+              onDate={setValuationDate}
             />
-            {search && !displayed.length ? (
-              <p role="status">没有匹配的账户。</p>
-            ) : null}
-            <div className="asset-groups">
-              <AccountGroup
-                title="资产账户"
-                accounts={displayed.filter(
-                  (item) => item.account.kind === "asset",
-                )}
-                changes={comparison.accountChanges}
-                onSelect={setSelectedId}
-              />
-              <AccountGroup
-                title="负债账户"
-                accounts={displayed.filter(
-                  (item) => item.account.kind === "liability",
-                )}
-                changes={comparison.accountChanges}
-                onSelect={setSelectedId}
-              />
-            </div>
-            <Checkbox
-              label={<>显示已归档账户</>}
-              className="checkbox-label"
-
-              checked={showArchived}
-              onChange={(event) => setShowArchived(event.target.checked)}
-            />
-            <AssetTrend ledger={ledger} end={valuationDate} />
-            <p className="muted small asset-explanation">
-              账户余额需要你维护基准。收入/退款增加资产余额，支出减少资产余额；信用卡支出增加负债，退款与还款减少负债。余额未接入银行实时查询。
-            </p>
-          </>
-        )}
+          )}
+        </div>
+        <AssetContext
+          totals={summary.totals}
+          comparison={summary.comparison}
+          date={valuationDate}
+          isHidden={isHidden}
+          isDetail={Boolean(selected)}
+          onTrace={() => {
+            if (selected) setTraceRequest((value) => value + 1);
+            else setFocusAccounts(true);
+          }}
+          onSettings={(target) => {
+            setSelectedId(null);
+            setSettingsTarget(target);
+          }}
+        />
       </div>
       {editor?.isCalibration && editor.account ? (
         <BalanceCalibration
           account={editor.account}
+          bookContext={bookContext}
           ledger={ledger}
           date={valuationDate}
+          isHidden={isHidden}
           onSave={onSave}
           onClose={() => setEditor(null)}
+          onRecords={() => {
+            setEditor(null);
+            setRecordRequest((value) => value + 1);
+          }}
         />
       ) : editor ? (
         <AccountEditor
           account={editor.account}
+          bookContext={bookContext}
+          isHidden={isHidden}
           onSave={onSave}
           onClose={() => setEditor(null)}
         />
       ) : null}
       {transfer ? (
-        <AdvancedEntryEditor
+        <TransferEditor
           ledger={ledger}
-          initialDraft={transfer}
+          sourceId={transfer.sourceId}
+          repaymentAccount={transfer.repaymentAccount}
+          isHidden={isHidden}
           onSave={async (next) => {
             await onCommit(next);
-            setTransfer(null);
           }}
           onClose={() => setTransfer(null)}
         />

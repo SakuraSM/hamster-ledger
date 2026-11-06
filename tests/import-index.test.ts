@@ -196,7 +196,7 @@ describe("indexed reimbursement filtering", () => {
       ledger.records
         .filter(createFinanceFilter(ledger, { reimbursement: "pending" }))
         .map((item) => item.id),
-    ).toEqual(["pending"]);
+    ).toEqual(["partial", "pending"]);
   });
 });
 

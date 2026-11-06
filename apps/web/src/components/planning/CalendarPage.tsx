@@ -26,6 +26,7 @@ export function CalendarPage({
   onSelect,
   onAdd,
 }: Props): React.JSX.Element {
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
   const [selected, setSelected] = useState(month + "-01");
   const day = selected.startsWith(month) ? selected : month + "-01";
   const [year, monthNumber] = month.split("-").map(Number);
@@ -53,7 +54,11 @@ export function CalendarPage({
           onChange={(value) => value && onMonth(value)}
         />
       </div>
-      <p className="muted">底色越深，当日净支出越多。</p>
+      <p className="muted">
+        {isHidden
+          ? "金额已隐藏，日历热度暂不展示。"
+          : "底色越深，当日净支出越多。"}
+      </p>
       <div className="calendar-grid" role="group" aria-label="账单日历">
         {["一", "二", "三", "四", "五", "六", "日"].map((name) => (
           <div className="calendar-weekday" key={name}>
@@ -75,17 +80,21 @@ export function CalendarPage({
               className={
                 date === day ? "calendar-day selected" : "calendar-day"
               }
-              data-heat={heat[index]?.level ?? 0}
-              aria-label={`${date}，净支出 ${money(total.expense)} 元`}
+              data-heat={isHidden ? 0 : (heat[index]?.level ?? 0)}
+              aria-label={
+                isHidden
+                  ? `${date}，金额已隐藏`
+                  : `${date}，净支出 ${money(total.expense)} 元`
+              }
               key={date}
               onClick={() => setSelected(date)}
               aria-pressed={date === day}
             >
               <span>{index + 1}</span>
-              {total.expense !== 0 ? (
+              {!isHidden && total.expense !== 0 ? (
                 <small>支 {money(total.expense)}</small>
               ) : null}
-              {total.income !== 0 ? (
+              {!isHidden && total.income !== 0 ? (
                 <small className="income">收 {money(total.income)}</small>
               ) : null}
             </UnstyledButton>
@@ -96,7 +105,9 @@ export function CalendarPage({
         <div>
           <h2>{day}</h2>
           <p className="muted">
-            支出 ¥{money(totals.expense)} · 收入 ¥{money(totals.income)}
+            {isHidden
+              ? "金额已隐藏"
+              : `支出 ¥${money(totals.expense)} · 收入 ¥${money(totals.income)}`}
           </p>
         </div>
         <Button
@@ -110,6 +121,7 @@ export function CalendarPage({
       </div>
       <TransactionTable
         accounts={ledger.accounts}
+        hideAmounts={isHidden}
         records={dayRecords}
         onSelect={onSelect}
       />

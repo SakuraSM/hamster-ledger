@@ -19,16 +19,23 @@ export function AssetSnapshot({
     client: useNativeAccount().client,
   });
   const isHidden = Boolean(ledger.preferences?.hideAmounts);
+  const hasValuation = totals.balances.some(
+    ({ account, baseline }) =>
+      Boolean(baseline) &&
+      !totals.missingCurrencies.includes(account.currency ?? "CNY"),
+  );
   const amount = (minor: number): string =>
-    isHidden ? "••••" : `¥${money(minor)}`;
+    hasValuation ? (isHidden ? "••••" : `¥${money(minor)}`) : "暂无估值";
   return (
     <Card mode="outlined">
       <Card.Content style={{ gap: 8 }}>
         <Text variant="titleMedium">当前净资产</Text>
         <Text variant="headlineLarge">
-          {totals.missingCurrencies.length || totals.missingBaselines.length
-            ? "估值待补全"
-            : amount(totals.netAssets)}
+          {!hasValuation
+            ? "暂无估值"
+            : totals.missingCurrencies.length || totals.missingBaselines.length
+              ? "估值待补全"
+              : amount(totals.netAssets)}
         </Text>
         <Text>
           总资产 {amount(totals.assets)} · 总负债 {amount(totals.liabilities)}

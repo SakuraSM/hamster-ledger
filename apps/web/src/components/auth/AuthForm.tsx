@@ -91,7 +91,7 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
   return (
     <>
       <div className="auth-heading">
-        <h1>{isRegister ? "创建你的账号" : "欢迎回来"}</h1>
+        <h1>{isRegister ? "为自己的账，留个位置" : "接着记下生活"}</h1>
         <p>
           {isRegister
             ? "注册后，把需要同步的账本带到其他设备。"

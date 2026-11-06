@@ -42,6 +42,7 @@ export function RecordFilters({
   onChange: (filter: FinanceFilter) => void;
   isTrash?: boolean;
 }): React.JSX.Element {
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   return (
     <>
       <DateField
@@ -83,9 +84,9 @@ export function RecordFilters({
         options={[
           { value: "", label: "全部账户" },
           { value: UNASSIGNED_ACCOUNT_FILTER, label: "未关联账户" },
-          ...ledger.accounts.map((item) => ({
+          ...ledger.accounts.map((item, index) => ({
             value: item.id,
-            label: item.name,
+            label: isAmountHidden ? `账户 ${index + 1}` : item.name,
           })),
         ]}
       />
@@ -96,7 +97,10 @@ export function RecordFilters({
         options={[
           { value: "", label: "全部分类" },
           ...[...new Set(ledger.records.map((item) => item.category))].map(
-            (name) => ({ value: name, label: name }),
+            (name, index) => ({
+              value: name,
+              label: isAmountHidden ? `分类 ${index + 1}` : name,
+            }),
           ),
         ]}
       />
@@ -106,7 +110,10 @@ export function RecordFilters({
         onChange={(memberId) => onChange({ ...filter, memberId })}
         options={[
           { value: "", label: "全部成员" },
-          ...members.map((item) => ({ value: item.id, label: item.username })),
+          ...members.map((item, index) => ({
+            value: item.id,
+            label: isAmountHidden ? `成员 ${index + 1}` : item.username,
+          })),
         ]}
       />
       <ChoiceField

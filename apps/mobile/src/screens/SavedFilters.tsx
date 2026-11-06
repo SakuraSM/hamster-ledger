@@ -12,11 +12,13 @@ export function SavedFilters({
   bookId,
   filter,
   position,
+  isAmountHidden = false,
   onApply,
 }: {
   bookId: string;
   filter: TransactionFilter;
   position: number;
+  isAmountHidden?: boolean;
   onApply: (view: SavedTransactionView) => void;
 }): React.JSX.Element {
   const [name, setName] = useState("");
@@ -69,14 +71,14 @@ export function SavedFilters({
       >
         保存当前筛选
       </Button>
-      {saved.presets.map((item) => (
+      {saved.presets.map((item, index) => (
         <Button
           key={item.name}
           onPress={() => onApply({ filter: item.filter, position: 0 })}
           onLongPress={() => void saved.remove(item.name)}
           accessibilityHint="点击应用，长按删除筛选方案"
         >
-          {item.name}
+          {isAmountHidden ? `筛选方案 ${index + 1}` : item.name}
         </Button>
       ))}
       {saved.error && <Text accessibilityRole="alert">{saved.error}</Text>}

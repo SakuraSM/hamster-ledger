@@ -37,6 +37,7 @@ export function useNetworkController(
     local,
     client,
     userId: auth.user?.id ?? null,
+    identityLoading: auth.isChecking,
     server: location.origin,
     repository: ledgerRepository,
     newId: newEntityId,

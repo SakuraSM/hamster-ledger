@@ -14,6 +14,7 @@ export function BatchActions({
   onSelectAll: () => void;
 }): React.JSX.Element {
   const [category, setCategory] = useState("");
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   return (
     <View style={{ gap: 8 }}>
       <Text>已选 {batch.selected.length} 笔</Text>
@@ -51,7 +52,10 @@ export function BatchActions({
                 .filter((item) => !item.isArchived)
                 .map((item) => item.name),
             ),
-          ].map((name) => ({ value: name, label: name })),
+          ].map((name, index) => ({
+            value: name,
+            label: isAmountHidden ? `分类 ${index + 1}` : name,
+          })),
         ]}
       />
       <View style={{ flexDirection: "row" }}>

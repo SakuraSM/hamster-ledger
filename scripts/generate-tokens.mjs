@@ -15,6 +15,8 @@ const names = {
   muted: "muted",
   primary: "primary",
   primaryHover: "primary-hover",
+  action: "action",
+  actionText: "action-ink",
   divider: "line",
   selected: "apricot",
   positive: "positive",

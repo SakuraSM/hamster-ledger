@@ -12,11 +12,13 @@ export function PaymentReceiptRecovery({
   receipt,
   inbox,
   onClose,
+  isAmountHidden = false,
 }: {
   record: BillRecord;
   receipt: PaymentReceipt;
   inbox: PaymentInboxController;
   onClose: () => void;
+  isAmountHidden?: boolean;
 }): React.JSX.Element {
   async function finish(): Promise<void> {
     if (await inbox.link({ receipt, recordId: record.id })) onClose();
@@ -29,7 +31,9 @@ export function PaymentReceiptRecovery({
           : "账单已保存，消息状态尚未更新。"}
       </Text>
       <Text>
-        {record.merchant} · {signedMoney(record)} · {record.date}
+        {isAmountHidden
+          ? `账单金额已隐藏 · ${record.date}`
+          : `${record.merchant} · ${signedMoney(record)} · ${record.date}`}
       </Text>
       <Text>此操作只更新本机收件箱状态，不会新增账单或重复计入金额。</Text>
       <ErrorMessage message={inbox.error} />

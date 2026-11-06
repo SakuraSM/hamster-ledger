@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, TextInput, Text } from "react-native-paper";
 import {
   CURRENCIES,
@@ -16,6 +16,22 @@ import { DateField } from "../ui/DateField";
 import { FormSheet } from "../ui/FormSheet";
 import { ErrorMessage } from "../ui/Screen";
 import { localNow, newEntityId } from "../platform/runtime";
+import { assetBookKey, assetCommitOptions } from "./asset-archive";
+const DECIMAL_BASE = 10;
+
+function snapshotAccount(account?: AssetAccount): AssetAccount | null {
+  if (!account) return null;
+  return {
+    ...account,
+    aliases: [...account.aliases],
+    checkpoints: account.checkpoints.map((checkpoint) => ({ ...checkpoint })),
+    ...(account.archiveHistory
+      ? {
+          archiveHistory: account.archiveHistory.map((event) => ({ ...event })),
+        }
+      : {}),
+  };
+}
 interface AccountEditorProps {
   account?: AssetAccount;
   controller: LedgerController;
@@ -26,6 +42,9 @@ export function AccountEditor({
   controller,
   onClose,
 }: AccountEditorProps): React.JSX.Element {
+  const [expectedAccount] = useState(() => snapshotAccount(account));
+  const [accountId] = useState(() => account?.id ?? newEntityId());
+  const [expectedBookKey] = useState(() => assetBookKey(controller));
   const [name, setName] = useState(account?.name ?? "");
   const [kind, setKind] = useState<AssetAccount["kind"]>(
     account?.kind ?? "asset",
@@ -37,7 +56,7 @@ export function AccountEditor({
   const [creditLimit, setCreditLimit] = useState(
     account?.creditLimit === undefined
       ? ""
-      : String(account.creditLimit / 10 ** CURRENCY_DIGITS[currency]),
+      : String(account.creditLimit / DECIMAL_BASE ** CURRENCY_DIGITS[currency]),
   );
   const [statementDay, setStatementDay] = useState(
     String(account?.statementDay ?? ""),
@@ -47,57 +66,99 @@ export function AccountEditor({
   );
   const [balance, setBalance] = useState(
     account
-      ? String(account.openingBalance / 10 ** CURRENCY_DIGITS[currency])
-      : "0",
+      ? String(
+          account.openingBalance / DECIMAL_BASE ** CURRENCY_DIGITS[currency],
+        )
+      : "",
   );
   const [balanceAt, setBalanceAt] = useState(account?.balanceAt ?? localNow());
   const [aliases, setAliases] = useState(account?.aliases.join("，") ?? "");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const initial = useRef({
+    name,
+    kind,
+    type,
+    currency,
+    creditLimit,
+    statementDay,
+    paymentDay,
+    balance,
+    balanceAt,
+    aliases,
+    note,
+  });
+  const hasUnsavedChanges = Object.entries({
+    name,
+    kind,
+    type,
+    currency,
+    creditLimit,
+    statementDay,
+    paymentDay,
+    balance,
+    balanceAt,
+    aliases,
+    note,
+  }).some(
+    ([key, value]) =>
+      initial.current[key as keyof typeof initial.current] !== value,
+  );
   async function save(): Promise<void> {
     try {
+      if ((account?.id ?? null) !== (expectedAccount?.id ?? null))
+        throw new Error("账户已切换，请重新打开后再保存。");
+      if (assetBookKey(controller) !== expectedBookKey)
+        throw new Error("账本已切换，请重新打开账户后再保存。");
+      if (!balance.trim()) throw new Error("请输入账户基准余额，可填写 0。");
       const amount = parseMinor({ value: balance, currency });
-      await controller.commit(
-        saveAssetAccount({
-          ledger: controller.ledger,
-          account: {
-            ...account,
-            id: account?.id ?? newEntityId(),
-            name,
-            kind,
-            type,
-            currency,
-            creditLimit:
-              type === "信用卡" && creditLimit
-                ? parseMinor({ value: creditLimit, currency })
-                : undefined,
-            statementDay:
-              type === "信用卡" && statementDay
-                ? Number(statementDay)
-                : undefined,
-            paymentDay:
-              type === "信用卡" && paymentDay ? Number(paymentDay) : undefined,
-            openingBalance: amount,
-            balanceAt,
-            aliases: aliases
-              .split(/[，,]/)
-              .map((value) => value.trim())
-              .filter(Boolean),
-            isArchived: account?.isArchived ?? false,
-            checkpoints: account?.checkpoints ?? [],
-          },
-          now: localNow(),
-          checkpointId: newEntityId(),
-          note,
-        }),
-      );
+      const options = assetCommitOptions(controller);
+      const next = saveAssetAccount({
+        ledger: controller.ledger,
+        expectedAccount,
+        account: {
+          ...expectedAccount,
+          id: accountId,
+          name,
+          kind,
+          type,
+          currency,
+          creditLimit:
+            type === "信用卡" && creditLimit
+              ? parseMinor({ value: creditLimit, currency })
+              : undefined,
+          statementDay:
+            type === "信用卡" && statementDay
+              ? Number(statementDay)
+              : undefined,
+          paymentDay:
+            type === "信用卡" && paymentDay ? Number(paymentDay) : undefined,
+          openingBalance: amount,
+          balanceAt,
+          aliases: aliases
+            .split(/[，,]/)
+            .map((value) => value.trim())
+            .filter(Boolean),
+          isArchived: expectedAccount?.isArchived ?? false,
+          checkpoints: expectedAccount?.checkpoints ?? [],
+        },
+        now: localNow(),
+        checkpointId: newEntityId(),
+        note,
+      });
+      if (options) await controller.commit(next, options);
+      else await controller.commit(next);
       onClose();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "账户保存失败");
     }
   }
   return (
-    <FormSheet title={account ? "编辑账户" : "添加资产账户"} onClose={onClose}>
+    <FormSheet
+      title={account ? "编辑账户" : "添加账户"}
+      onClose={onClose}
+      hasUnsavedChanges={hasUnsavedChanges}
+    >
       <TextInput
         accessibilityLabel="账户名称"
         mode="outlined"
@@ -157,6 +218,7 @@ export function AccountEditor({
           />
         </>
       ) : null}
+      <Text variant="titleMedium">设定余额基准</Text>
       <TextInput
         accessibilityLabel={
           kind === "asset"
@@ -201,6 +263,7 @@ export function AccountEditor({
         mode="contained"
         loading={controller.isSaving}
         disabled={controller.isSaving}
+        contentStyle={{ minHeight: 48 }}
         onPress={() => void save()}
       >
         保存账户
