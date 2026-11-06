@@ -13,7 +13,7 @@ export const ledgerScenes2: SceneSpec[] = [
           { label: "支出", selected: true },
           { label: "转账", target: "entry-transfer" },
           { label: "退款", target: "related-entry" },
-          { label: "报销", target: "related-entry" },
+          { label: "报销", target: "reimburse-entry" },
         ],
       },
       {

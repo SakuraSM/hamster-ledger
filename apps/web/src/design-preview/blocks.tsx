@@ -15,7 +15,7 @@ export function ItemRow({
   onNavigate,
 }: {
   item: VisualItem;
-  onNavigate: (id: string) => void;
+  onNavigate: BlockProps["onNavigate"];
 }): React.JSX.Element {
   const content = (
     <>
@@ -34,7 +34,7 @@ export function ItemRow({
     <button
       type="button"
       className="ledger-row"
-      onClick={() => onNavigate(item.target!)}
+      onClick={() => onNavigate(item.target!, item.label)}
     >
       {content}
     </button>
@@ -144,7 +144,9 @@ function ChoiceBlock({ block, onNavigate }: BlockProps): React.JSX.Element {
             type="button"
             className={`chip ${item.selected ? "is-selected" : ""}`}
             aria-pressed={Boolean(item.selected)}
-            onClick={() => (item.target ? onNavigate(item.target) : undefined)}
+            onClick={() =>
+              item.target ? onNavigate(item.target, item.label) : undefined
+            }
           >
             {item.label}
           </button>

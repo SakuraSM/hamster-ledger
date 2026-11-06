@@ -109,11 +109,11 @@ export interface SceneSpec {
 export interface SceneBodyProps {
   scene: SceneSpec;
   mode: DesignMode;
-  onNavigate: (id: string) => void;
+  onNavigate: (id: string, subject?: string) => void;
 }
 export interface BlockProps {
   block: VisualBlock;
-  onNavigate: (id: string) => void;
+  onNavigate: (id: string, subject?: string) => void;
 }
 export interface ChildrenProps {
   children: ReactNode;
