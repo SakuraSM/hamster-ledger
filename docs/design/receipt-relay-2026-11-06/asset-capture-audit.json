@@ -1,0 +1,242 @@
+[
+  {
+    "id": "assets",
+    "mode": "mobile",
+    "scene": "assets",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "account-detail",
+    "mode": "mobile",
+    "scene": "account-detail",
+    "width": 390,
+    "height": 844,
+    "scroll": 90,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "liability-detail",
+    "mode": "mobile",
+    "scene": "liability-detail",
+    "width": 390,
+    "height": 844,
+    "scroll": 39,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "card-repayment",
+    "mode": "mobile",
+    "scene": "card-repayment",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "calibration-difference",
+    "mode": "mobile",
+    "scene": "calibration-difference",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "account-history",
+    "mode": "mobile",
+    "scene": "account-history",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "account-records",
+    "mode": "mobile",
+    "scene": "account-records",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "asset-unassigned",
+    "mode": "mobile",
+    "scene": "asset-unassigned",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "foreign-account",
+    "mode": "mobile",
+    "scene": "foreign-account",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "rates",
+    "mode": "mobile",
+    "scene": "rates",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "missing-baseline",
+    "mode": "mobile",
+    "scene": "missing-baseline",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "net-worth",
+    "mode": "mobile",
+    "scene": "net-worth",
+    "width": 390,
+    "height": 844,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "assets",
+    "mode": "desktop",
+    "scene": "assets",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "account-detail",
+    "mode": "desktop",
+    "scene": "account-detail",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "liability-detail",
+    "mode": "desktop",
+    "scene": "liability-detail",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "card-repayment",
+    "mode": "desktop",
+    "scene": "card-repayment",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "calibration-difference",
+    "mode": "desktop",
+    "scene": "calibration-difference",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "account-history",
+    "mode": "desktop",
+    "scene": "account-history",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "account-records",
+    "mode": "desktop",
+    "scene": "account-records",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "asset-unassigned",
+    "mode": "desktop",
+    "scene": "asset-unassigned",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "foreign-account",
+    "mode": "desktop",
+    "scene": "foreign-account",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "rates",
+    "mode": "desktop",
+    "scene": "rates",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "missing-baseline",
+    "mode": "desktop",
+    "scene": "missing-baseline",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  },
+  {
+    "id": "net-worth",
+    "mode": "desktop",
+    "scene": "net-worth",
+    "width": 1440,
+    "height": 1024,
+    "scroll": 0,
+    "brokenImages": 0,
+    "overlay": false
+  }
+]

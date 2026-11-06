@@ -1,0 +1,12 @@
+.desktop-scene.auth-layout .scene-actions {
+  margin-top: 30px;
+}
+.desktop-scene.auth-layout .scene-heading h1 {
+  font-size: 40px;
+}
+.desktop-scene.state-layout .desktop-main {
+  padding-top: 50px;
+}
+.desktop-scene.state-layout .scene-actions {
+  margin-top: auto;
+}
