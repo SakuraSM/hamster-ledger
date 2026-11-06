@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "initial": {
+    "protocol": "file:",
+    "title": "钱在哪里，一眼清楚",
+    "source": "screens/mobile/assets.png",
+    "count": "140个页面与状态 / 本端138张"
+  },
+  "desktop": {
+    "source": "screens/desktop/assets.png",
+    "naturalWidth": 1440
+  }
+}

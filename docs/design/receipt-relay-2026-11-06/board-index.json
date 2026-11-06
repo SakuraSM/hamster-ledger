@@ -1,0 +1,755 @@
+[
+  {
+    "id": "mobile-01",
+    "title": "手机视觉稿 / 01",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-01.html",
+    "png": "boards/mobile-01.png",
+    "scenes": [
+      "assets",
+      "account-detail",
+      "account-edit",
+      "calibration",
+      "account-history",
+      "rates"
+    ]
+  },
+  {
+    "id": "mobile-02",
+    "title": "手机视觉稿 / 02",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-02.html",
+    "png": "boards/mobile-02.png",
+    "scenes": [
+      "reports",
+      "report-range",
+      "net-worth",
+      "extended-reports",
+      "bank-detail",
+      "liability-detail"
+    ]
+  },
+  {
+    "id": "mobile-03",
+    "title": "手机视觉稿 / 03",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-03.html",
+    "png": "boards/mobile-03.png",
+    "scenes": [
+      "liability-edit",
+      "card-repayment",
+      "card-repayment-done",
+      "calibration-difference",
+      "calibration-done",
+      "account-records"
+    ]
+  },
+  {
+    "id": "mobile-04",
+    "title": "手机视觉稿 / 04",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-04.html",
+    "png": "boards/mobile-04.png",
+    "scenes": [
+      "asset-unassigned",
+      "asset-date",
+      "missing-baseline",
+      "foreign-account",
+      "investment-account",
+      "welcome"
+    ]
+  },
+  {
+    "id": "mobile-05",
+    "title": "手机视觉稿 / 05",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-05.html",
+    "png": "boards/mobile-05.png",
+    "scenes": [
+      "login",
+      "register",
+      "registration-closed",
+      "connect",
+      "password",
+      "sessions"
+    ]
+  },
+  {
+    "id": "mobile-06",
+    "title": "手机视觉稿 / 06",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-06.html",
+    "png": "boards/mobile-06.png",
+    "scenes": [
+      "onboarding",
+      "inbox",
+      "duplicate",
+      "unpaired",
+      "ai-input",
+      "ai-drafts"
+    ]
+  },
+  {
+    "id": "mobile-07",
+    "title": "手机视觉稿 / 07",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-07.html",
+    "png": "boards/mobile-07.png",
+    "scenes": [
+      "model",
+      "attachment",
+      "metadata",
+      "credit-prepaid",
+      "asset-archived",
+      "account-types"
+    ]
+  },
+  {
+    "id": "mobile-08",
+    "title": "手机视觉稿 / 08",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-08.html",
+    "png": "boards/mobile-08.png",
+    "scenes": [
+      "record-source",
+      "ledger-export",
+      "attachment-manage",
+      "ai-policy",
+      "payment-discard",
+      "payment-clear"
+    ]
+  },
+  {
+    "id": "mobile-09",
+    "title": "手机视觉稿 / 09",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-09.html",
+    "png": "boards/mobile-09.png",
+    "scenes": [
+      "payment-permission",
+      "entry-income",
+      "entry-transfer",
+      "reimburse-entry",
+      "loan-edit",
+      "goal-edit"
+    ]
+  },
+  {
+    "id": "mobile-10",
+    "title": "手机视觉稿 / 10",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-10.html",
+    "png": "boards/mobile-10.png",
+    "scenes": [
+      "goal-contribute",
+      "connection-success",
+      "notifications-read",
+      "session-revoked",
+      "restore-record-done",
+      "cleanup-done"
+    ]
+  },
+  {
+    "id": "mobile-11",
+    "title": "手机视觉稿 / 11",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-11.html",
+    "png": "boards/mobile-11.png",
+    "scenes": [
+      "backup-error",
+      "login-error",
+      "model-error",
+      "unsaved",
+      "member-remove",
+      "debt-paid"
+    ]
+  },
+  {
+    "id": "mobile-12",
+    "title": "手机视觉稿 / 12",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-12.html",
+    "png": "boards/mobile-12.png",
+    "scenes": [
+      "import",
+      "mapping",
+      "import-errors",
+      "import-done",
+      "overview",
+      "transactions"
+    ]
+  },
+  {
+    "id": "mobile-13",
+    "title": "手机视觉稿 / 13",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-13.html",
+    "png": "boards/mobile-13.png",
+    "scenes": [
+      "record",
+      "entry",
+      "advanced-entry",
+      "split-entry",
+      "related-entry",
+      "filters"
+    ]
+  },
+  {
+    "id": "mobile-14",
+    "title": "手机视觉稿 / 14",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-14.html",
+    "png": "boards/mobile-14.png",
+    "scenes": [
+      "batch",
+      "calendar",
+      "network-delete",
+      "network-leave",
+      "payment-inbox",
+      "payment-review"
+    ]
+  },
+  {
+    "id": "mobile-15",
+    "title": "手机视觉稿 / 15",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-15.html",
+    "png": "boards/mobile-15.png",
+    "scenes": [
+      "payment-settings",
+      "payment-recovery",
+      "reminder-diagnostics",
+      "budgets",
+      "budget-edit",
+      "recurring"
+    ]
+  },
+  {
+    "id": "mobile-16",
+    "title": "手机视觉稿 / 16",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-16.html",
+    "png": "boards/mobile-16.png",
+    "scenes": [
+      "recurring-edit",
+      "subscriptions",
+      "debts",
+      "debt-payment",
+      "goals",
+      "finance-edit"
+    ]
+  },
+  {
+    "id": "mobile-17",
+    "title": "手机视觉稿 / 17",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-17.html",
+    "png": "boards/mobile-17.png",
+    "scenes": [
+      "notifications",
+      "backup",
+      "restore",
+      "backup-progress",
+      "categories",
+      "category-edit"
+    ]
+  },
+  {
+    "id": "mobile-18",
+    "title": "手机视觉稿 / 18",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-18.html",
+    "png": "boards/mobile-18.png",
+    "scenes": [
+      "preferences",
+      "theme",
+      "privacy",
+      "trash",
+      "deleted-record",
+      "attachment-cleanup"
+    ]
+  },
+  {
+    "id": "mobile-19",
+    "title": "手机视觉稿 / 19",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-19.html",
+    "png": "boards/mobile-19.png",
+    "scenes": [
+      "empty",
+      "offline",
+      "readonly",
+      "loading",
+      "error",
+      "delete-confirm"
+    ]
+  },
+  {
+    "id": "mobile-20",
+    "title": "手机视觉稿 / 20",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-20.html",
+    "png": "boards/mobile-20.png",
+    "scenes": [
+      "confirmed",
+      "entry-saved",
+      "deleted",
+      "archive-confirm",
+      "restore-done",
+      "backup-done"
+    ]
+  },
+  {
+    "id": "mobile-21",
+    "title": "手机视觉稿 / 21",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-21.html",
+    "png": "boards/mobile-21.png",
+    "scenes": [
+      "backup-cancelled",
+      "night",
+      "wallet-accounts",
+      "tools",
+      "books",
+      "book-edit"
+    ]
+  },
+  {
+    "id": "mobile-22",
+    "title": "手机视觉稿 / 22",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-22.html",
+    "png": "boards/mobile-22.png",
+    "scenes": [
+      "sync",
+      "sync-conflict",
+      "network",
+      "invite",
+      "invite-ready",
+      "join-book"
+    ]
+  },
+  {
+    "id": "mobile-23",
+    "title": "手机视觉稿 / 23",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/mobile-23.html",
+    "png": "boards/mobile-23.png",
+    "scenes": [
+      "members",
+      "member-role",
+      "ownership",
+      "activity",
+      "open-tokens",
+      "token-created"
+    ]
+  },
+  {
+    "id": "desktop-01",
+    "title": "桌面视觉稿 / 01",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-01.html",
+    "png": "boards/desktop-01.png",
+    "scenes": ["assets", "account-detail", "account-edit", "calibration"]
+  },
+  {
+    "id": "desktop-02",
+    "title": "桌面视觉稿 / 02",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-02.html",
+    "png": "boards/desktop-02.png",
+    "scenes": ["account-history", "rates", "reports", "report-range"]
+  },
+  {
+    "id": "desktop-03",
+    "title": "桌面视觉稿 / 03",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-03.html",
+    "png": "boards/desktop-03.png",
+    "scenes": [
+      "net-worth",
+      "extended-reports",
+      "bank-detail",
+      "liability-detail"
+    ]
+  },
+  {
+    "id": "desktop-04",
+    "title": "桌面视觉稿 / 04",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-04.html",
+    "png": "boards/desktop-04.png",
+    "scenes": [
+      "liability-edit",
+      "card-repayment",
+      "card-repayment-done",
+      "calibration-difference"
+    ]
+  },
+  {
+    "id": "desktop-05",
+    "title": "桌面视觉稿 / 05",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-05.html",
+    "png": "boards/desktop-05.png",
+    "scenes": [
+      "calibration-done",
+      "account-records",
+      "asset-unassigned",
+      "asset-date"
+    ]
+  },
+  {
+    "id": "desktop-06",
+    "title": "桌面视觉稿 / 06",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-06.html",
+    "png": "boards/desktop-06.png",
+    "scenes": [
+      "missing-baseline",
+      "foreign-account",
+      "investment-account",
+      "welcome"
+    ]
+  },
+  {
+    "id": "desktop-07",
+    "title": "桌面视觉稿 / 07",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-07.html",
+    "png": "boards/desktop-07.png",
+    "scenes": ["login", "register", "registration-closed", "password"]
+  },
+  {
+    "id": "desktop-08",
+    "title": "桌面视觉稿 / 08",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-08.html",
+    "png": "boards/desktop-08.png",
+    "scenes": ["sessions", "unlock", "vault-setup", "onboarding"]
+  },
+  {
+    "id": "desktop-09",
+    "title": "桌面视觉稿 / 09",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-09.html",
+    "png": "boards/desktop-09.png",
+    "scenes": ["inbox", "duplicate", "unpaired", "ai-input"]
+  },
+  {
+    "id": "desktop-10",
+    "title": "桌面视觉稿 / 10",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-10.html",
+    "png": "boards/desktop-10.png",
+    "scenes": ["ai-drafts", "model", "attachment", "metadata"]
+  },
+  {
+    "id": "desktop-11",
+    "title": "桌面视觉稿 / 11",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-11.html",
+    "png": "boards/desktop-11.png",
+    "scenes": [
+      "credit-prepaid",
+      "asset-archived",
+      "account-types",
+      "record-source"
+    ]
+  },
+  {
+    "id": "desktop-12",
+    "title": "桌面视觉稿 / 12",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-12.html",
+    "png": "boards/desktop-12.png",
+    "scenes": [
+      "ledger-export",
+      "attachment-manage",
+      "ai-policy",
+      "entry-income"
+    ]
+  },
+  {
+    "id": "desktop-13",
+    "title": "桌面视觉稿 / 13",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-13.html",
+    "png": "boards/desktop-13.png",
+    "scenes": ["entry-transfer", "reimburse-entry", "loan-edit", "goal-edit"]
+  },
+  {
+    "id": "desktop-14",
+    "title": "桌面视觉稿 / 14",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-14.html",
+    "png": "boards/desktop-14.png",
+    "scenes": [
+      "goal-contribute",
+      "connection-success",
+      "notifications-read",
+      "session-revoked"
+    ]
+  },
+  {
+    "id": "desktop-15",
+    "title": "桌面视觉稿 / 15",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-15.html",
+    "png": "boards/desktop-15.png",
+    "scenes": [
+      "restore-record-done",
+      "cleanup-done",
+      "backup-error",
+      "login-error"
+    ]
+  },
+  {
+    "id": "desktop-16",
+    "title": "桌面视觉稿 / 16",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-16.html",
+    "png": "boards/desktop-16.png",
+    "scenes": ["model-error", "unsaved", "member-remove", "debt-paid"]
+  },
+  {
+    "id": "desktop-17",
+    "title": "桌面视觉稿 / 17",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-17.html",
+    "png": "boards/desktop-17.png",
+    "scenes": ["import", "mapping", "import-errors", "import-done"]
+  },
+  {
+    "id": "desktop-18",
+    "title": "桌面视觉稿 / 18",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-18.html",
+    "png": "boards/desktop-18.png",
+    "scenes": ["overview", "transactions", "record", "entry"]
+  },
+  {
+    "id": "desktop-19",
+    "title": "桌面视觉稿 / 19",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-19.html",
+    "png": "boards/desktop-19.png",
+    "scenes": ["advanced-entry", "split-entry", "related-entry", "filters"]
+  },
+  {
+    "id": "desktop-20",
+    "title": "桌面视觉稿 / 20",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-20.html",
+    "png": "boards/desktop-20.png",
+    "scenes": ["batch", "calendar", "network-delete", "network-leave"]
+  },
+  {
+    "id": "desktop-21",
+    "title": "桌面视觉稿 / 21",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-21.html",
+    "png": "boards/desktop-21.png",
+    "scenes": ["budgets", "budget-edit", "recurring", "recurring-edit"]
+  },
+  {
+    "id": "desktop-22",
+    "title": "桌面视觉稿 / 22",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-22.html",
+    "png": "boards/desktop-22.png",
+    "scenes": ["subscriptions", "debts", "debt-payment", "goals"]
+  },
+  {
+    "id": "desktop-23",
+    "title": "桌面视觉稿 / 23",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-23.html",
+    "png": "boards/desktop-23.png",
+    "scenes": ["finance-edit", "notifications", "backup", "restore"]
+  },
+  {
+    "id": "desktop-24",
+    "title": "桌面视觉稿 / 24",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-24.html",
+    "png": "boards/desktop-24.png",
+    "scenes": ["backup-progress", "categories", "category-edit", "preferences"]
+  },
+  {
+    "id": "desktop-25",
+    "title": "桌面视觉稿 / 25",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-25.html",
+    "png": "boards/desktop-25.png",
+    "scenes": ["theme", "privacy", "trash", "deleted-record"]
+  },
+  {
+    "id": "desktop-26",
+    "title": "桌面视觉稿 / 26",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-26.html",
+    "png": "boards/desktop-26.png",
+    "scenes": ["attachment-cleanup", "empty", "offline", "readonly"]
+  },
+  {
+    "id": "desktop-27",
+    "title": "桌面视觉稿 / 27",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-27.html",
+    "png": "boards/desktop-27.png",
+    "scenes": ["loading", "error", "delete-confirm", "confirmed"]
+  },
+  {
+    "id": "desktop-28",
+    "title": "桌面视觉稿 / 28",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-28.html",
+    "png": "boards/desktop-28.png",
+    "scenes": ["entry-saved", "deleted", "archive-confirm", "restore-done"]
+  },
+  {
+    "id": "desktop-29",
+    "title": "桌面视觉稿 / 29",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-29.html",
+    "png": "boards/desktop-29.png",
+    "scenes": ["backup-done", "backup-cancelled", "night", "wallet-accounts"]
+  },
+  {
+    "id": "desktop-30",
+    "title": "桌面视觉稿 / 30",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-30.html",
+    "png": "boards/desktop-30.png",
+    "scenes": ["tools", "books", "book-edit", "sync"]
+  },
+  {
+    "id": "desktop-31",
+    "title": "桌面视觉稿 / 31",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-31.html",
+    "png": "boards/desktop-31.png",
+    "scenes": ["sync-conflict", "network", "invite", "invite-ready"]
+  },
+  {
+    "id": "desktop-32",
+    "title": "桌面视觉稿 / 32",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-32.html",
+    "png": "boards/desktop-32.png",
+    "scenes": ["join-book", "members", "member-role", "ownership"]
+  },
+  {
+    "id": "desktop-33",
+    "title": "桌面视觉稿 / 33",
+    "mode": "desktop",
+    "width": 1520,
+    "html": "boards/desktop-33.html",
+    "png": "boards/desktop-33.png",
+    "scenes": ["activity", "open-tokens", "token-created"]
+  },
+  {
+    "id": "assets-main",
+    "title": "资产管理 / 总览、负债与余额依据",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/assets-main.html",
+    "png": "boards/assets-main.png",
+    "scenes": [
+      "assets",
+      "account-detail",
+      "liability-detail",
+      "card-repayment",
+      "calibration-difference",
+      "net-worth"
+    ]
+  },
+  {
+    "id": "assets-history",
+    "title": "资产管理 / 历史、账户关联与估值边界",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/assets-history.html",
+    "png": "boards/assets-history.png",
+    "scenes": [
+      "account-history",
+      "account-records",
+      "asset-unassigned",
+      "foreign-account",
+      "missing-baseline",
+      "asset-archived"
+    ]
+  },
+  {
+    "id": "assets-types",
+    "title": "资产管理 / 账户类型与特殊余额",
+    "mode": "mobile",
+    "width": 1270,
+    "html": "boards/assets-types.html",
+    "png": "boards/assets-types.png",
+    "scenes": [
+      "account-types",
+      "account-edit",
+      "liability-edit",
+      "credit-prepaid",
+      "investment-account",
+      "rates"
+    ]
+  }
+]
