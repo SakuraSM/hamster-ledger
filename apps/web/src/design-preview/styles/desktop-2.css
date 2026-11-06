@@ -1,0 +1,230 @@
+.rail-links {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.rail-links button {
+  width: 100%;
+  justify-content: flex-start !important;
+  font-size: 12px;
+  min-height: 42px;
+  gap: 10px !important;
+}
+.rail-links button > svg:last-child {
+  margin-left: auto;
+}
+.desktop-main > .block {
+  max-width: 740px;
+}
+.desktop-main .scene-actions {
+  max-width: 740px;
+  margin-top: auto;
+  padding-top: 22px;
+  flex-direction: row;
+  gap: 15px;
+  align-items: center;
+}
+.desktop-main .scene-actions .primary-action {
+  max-width: 320px;
+  min-width: 180px;
+  width: auto;
+  min-height: 48px;
+  padding: 12px 27px;
+  font-size: 15px;
+}
+.desktop-main .scene-actions .secondary-action {
+  padding: 12px 20px;
+  font-size: 13px;
+}
+.desktop-main .metrics {
+  gap: 45px;
+  max-width: 740px;
+  margin-bottom: 24px;
+}
+.desktop-main .metrics strong {
+  font-size: 26px;
+}
+.desktop-main .scene-hero > strong {
+  font-size: 58px;
+}
+.desktop-main .scene-hero {
+  margin-bottom: 33px;
+}
+.desktop-main .ledger-row {
+  min-height: 76px;
+}
+.desktop-main .row-copy > strong {
+  font-size: 15px;
+}
+.desktop-main .row-copy > small {
+  font-size: 12px;
+}
+.desktop-main .row-value {
+  font-size: 16px;
+  max-width: 220px;
+}
+.desktop-main .list-block {
+  margin-bottom: 28px;
+}
+.desktop-main .field {
+  padding: 11px 0 14px;
+}
+.desktop-main .fields-block {
+  max-width: 650px;
+}
+.desktop-main .field input,
+.desktop-main .field select {
+  font-size: 17px;
+  min-height: 30px;
+}
+.desktop-main .field > span:first-child {
+  font-size: 12px;
+}
+.desktop-main .notice {
+  max-width: 740px;
+  padding: 17px 18px;
+  margin-bottom: 25px;
+}
+.desktop-main .notice strong {
+  font-size: 14px;
+}
+.desktop-main .notice p {
+  font-size: 13px;
+  line-height: 1.85;
+}
+.desktop-main .chart {
+  height: 240px;
+}
+.desktop-main .month-calendar {
+  max-width: 740px;
+}
+.desktop-main .calendar-grid button {
+  min-height: 52px;
+}
+.desktop-main .calendar-grid small {
+  font-size: 10px;
+}
+.desktop-main .calendar-grid strong {
+  font-size: 18px;
+}
+.desktop-main .source-image {
+  max-width: 680px;
+  padding: 35px;
+}
+.desktop-main .comparison-block {
+  gap: 22px;
+}
+.desktop-main .comparison-block article {
+  padding: 30px;
+}
+.desktop-main .comparison-block strong {
+  font-size: 32px;
+}
+.desktop-main .comparison-block p {
+  font-size: 13px;
+}
+.desktop-main .upload-block {
+  min-height: 280px;
+  justify-content: center;
+}
+.desktop-main .state-symbol {
+  margin: 35px 0 40px;
+  width: 110px;
+  height: 110px;
+}
+.desktop-main .theme-tiles {
+  max-width: 700px;
+}
+.desktop-main .theme-tile {
+  padding: 20px !important;
+}
+.desktop-main .theme-tile .mini-sheet {
+  width: 220px;
+}
+.desktop-main .theme-tile b {
+  font-size: 17px;
+}
+.desktop-scene.receipt-layout .desktop-main {
+  align-items: center;
+  padding-left: 60px;
+  padding-right: 60px;
+}
+.desktop-scene.receipt-layout .scene-heading {
+  width: 100%;
+  margin-bottom: 22px;
+}
+.desktop-scene.receipt-layout .scene-heading h1 {
+  font-size: 49px;
+  line-height: 1.2;
+}
+.desktop-scene.receipt-layout .receipt-filters {
+  width: 100%;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.desktop-scene.receipt-layout .receipt-filters .chip {
+  font-size: 14px;
+  padding: 8px 16px;
+  min-height: 37px;
+}
+.desktop-scene .receipt-sheet {
+  height: 450px;
+  width: 100%;
+  max-width: 480px;
+}
+.desktop-scene .sheet-content {
+  padding: 30px 35px;
+}
+.desktop-scene .receipt-origin {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.desktop-scene .receipt-sheet h2 {
+  font-size: 25px;
+}
+.desktop-scene .receipt-amount {
+  font-size: 55px;
+}
+.desktop-scene .receipt-source {
+  height: 130px;
+  margin-top: 3px;
+}
+.desktop-scene .receipt-date {
+  font-size: 14px !important;
+  margin-bottom: 18px;
+}
+.desktop-scene .receipt-fields button {
+  min-height: 43px;
+  font-size: 14px;
+}
+.desktop-scene .receipt-fields button > strong {
+  font-size: 14px;
+}
+.desktop-scene .receipt-pager {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 10px;
+  height: 45px;
+}
+.desktop-scene .receipt-undo {
+  width: 100%;
+  max-width: 480px;
+  min-height: 36px;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.desktop-scene.receipt-layout .scene-actions {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 8px;
+  flex-direction: column;
+  gap: 5px;
+}
+.desktop-scene.receipt-layout .scene-actions .primary-action {
+  width: 100%;
+  max-width: none;
+}
+.desktop-scene.auth-layout .desktop-main {
+  padding: 78px 90px;
+  justify-content: center;
+}

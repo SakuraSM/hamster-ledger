@@ -1,0 +1,157 @@
+.scene-navigation button {
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  min-width: 70px;
+  min-height: 49px;
+}
+.scene-navigation button.active {
+  color: var(--accent);
+}
+.auth-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 6px 0 18px;
+}
+.auth-layout .scene-heading {
+  padding-top: 47px;
+  margin-bottom: 27px;
+}
+.auth-layout .scene-heading h1 {
+  font-size: 33px;
+  line-height: 1.33;
+}
+.state-layout .scene-heading h1 {
+  font-size: 31px;
+}
+.state-symbol {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: var(--olive);
+  color: #6c7541;
+  margin: 16px auto 27px;
+}
+.state-layout .scene-hero {
+  text-align: center;
+}
+.state-layout .scene-actions {
+  padding-bottom: 20px;
+}
+.text-action {
+  font-size: 13px;
+  color: var(--muted) !important;
+}
+.block {
+  margin-bottom: 20px;
+}
+.block > h2 {
+  margin-bottom: 12px;
+}
+.ledger-row {
+  width: 100%;
+  display: flex !important;
+  text-align: left;
+  gap: 12px;
+  min-height: 70px;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  justify-content: initial !important;
+}
+.row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  color: #42473b;
+}
+.row-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.row-copy > strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.row-copy > small {
+  line-height: 1.5;
+  font-size: 11px;
+}
+.row-value {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 155px;
+}
+.tone-red {
+  color: #9e4435 !important;
+}
+.tone-orange {
+  color: #914322 !important;
+}
+.tone-olive {
+  color: #57642e !important;
+}
+.metrics {
+  display: flex;
+  gap: 24px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.metrics > div {
+  flex: 1;
+}
+.metrics small {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.metrics strong {
+  font-size: 19px;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+.notice {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--soft);
+  border-radius: 12px;
+  align-items: flex-start;
+}
+.notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.notice strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+.notice p {
+  font-size: 12px;
+  line-height: 1.75;
+  color: #5a614f;
+}
+.notice.tone-olive {
+  background: #e8ead6;
+}
+.notice.tone-orange {
+  background: #faeadc;
+}
+.notice.tone-red {
+  background: #f5e5df;
+}
+.notice.tone-red p {
+  color: #864b3f;
+}

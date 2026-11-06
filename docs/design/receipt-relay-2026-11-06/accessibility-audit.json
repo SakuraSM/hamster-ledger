@@ -1,0 +1,1351 @@
+{
+  "complete": true,
+  "audited": 269,
+  "results": [
+    {
+      "id": "assets",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "account-detail",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "account-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "calibration",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "account-history",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "rates",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "reports",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "report-range",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "net-worth",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "extended-reports",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "bank-detail",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "liability-detail",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "liability-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "card-repayment",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "card-repayment-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "calibration-difference",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "calibration-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "account-records",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "asset-unassigned",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "asset-date",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "missing-baseline",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "foreign-account",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "investment-account",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "welcome",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "login",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "register",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "registration-closed",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "connect",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "password",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "sessions",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "onboarding",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "inbox",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "duplicate",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "unpaired",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "ai-input",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "ai-drafts",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "model",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "attachment",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "metadata",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "credit-prepaid",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "asset-archived",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "account-types",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "record-source",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "ledger-export",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "attachment-manage",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "ai-policy",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-discard",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-clear",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-permission",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "entry-income",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "entry-transfer",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "reimburse-entry",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "loan-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "goal-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "goal-contribute",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "connection-success",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "notifications-read",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "session-revoked",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "restore-record-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "cleanup-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "backup-error",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "login-error",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "model-error",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "unsaved",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "member-remove",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "debt-paid",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "import",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "mapping",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "import-errors",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "import-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "overview",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "transactions",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "record",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "entry",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "advanced-entry",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "split-entry",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "related-entry",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "filters",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "batch",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "calendar",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "network-delete",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "network-leave",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-inbox",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-review",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-settings",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "payment-recovery",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "reminder-diagnostics",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "budgets",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "budget-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "recurring",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "recurring-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "subscriptions",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "debts",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "debt-payment",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "goals",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "finance-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "notifications",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "backup",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "restore",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "backup-progress",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "categories",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "category-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "preferences",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "theme",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "privacy",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "trash",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "deleted-record",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "attachment-cleanup",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "empty",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "offline",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "readonly",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "loading",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "error",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "delete-confirm",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "confirmed",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "entry-saved",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "deleted",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "archive-confirm",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "restore-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "backup-done",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "backup-cancelled",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "night",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "wallet-accounts",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "tools",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "books",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "book-edit",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "sync",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "sync-conflict",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "network",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "invite",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "invite-ready",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "join-book",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "members",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "member-role",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "ownership",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "activity",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "open-tokens",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "token-created",
+      "mode": "mobile",
+      "issues": []
+    },
+    {
+      "id": "assets",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "account-detail",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "account-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "calibration",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "account-history",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "rates",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "reports",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "report-range",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "net-worth",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "extended-reports",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "bank-detail",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "liability-detail",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "liability-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "card-repayment",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "card-repayment-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "calibration-difference",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "calibration-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "account-records",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "asset-unassigned",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "asset-date",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "missing-baseline",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "foreign-account",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "investment-account",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "welcome",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "login",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "register",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "registration-closed",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "password",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "sessions",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "unlock",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "vault-setup",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "onboarding",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "inbox",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "duplicate",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "unpaired",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "ai-input",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "ai-drafts",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "model",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "attachment",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "metadata",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "credit-prepaid",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "asset-archived",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "account-types",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "record-source",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "ledger-export",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "attachment-manage",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "ai-policy",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "entry-income",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "entry-transfer",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "reimburse-entry",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "loan-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "goal-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "goal-contribute",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "connection-success",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "notifications-read",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "session-revoked",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "restore-record-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "cleanup-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "backup-error",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "login-error",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "model-error",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "unsaved",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "member-remove",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "debt-paid",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "import",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "mapping",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "import-errors",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "import-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "overview",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "transactions",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "record",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "entry",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "advanced-entry",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "split-entry",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "related-entry",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "filters",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "batch",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "calendar",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "network-delete",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "network-leave",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "budgets",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "budget-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "recurring",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "recurring-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "subscriptions",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "debts",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "debt-payment",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "goals",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "finance-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "notifications",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "backup",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "restore",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "backup-progress",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "categories",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "category-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "preferences",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "theme",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "privacy",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "trash",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "deleted-record",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "attachment-cleanup",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "empty",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "offline",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "readonly",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "loading",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "error",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "delete-confirm",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "confirmed",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "entry-saved",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "deleted",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "archive-confirm",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "restore-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "backup-done",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "backup-cancelled",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "night",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "wallet-accounts",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "tools",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "books",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "book-edit",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "sync",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "sync-conflict",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "network",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "invite",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "invite-ready",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "join-book",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "members",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "member-role",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "ownership",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "activity",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "open-tokens",
+      "mode": "desktop",
+      "issues": []
+    },
+    {
+      "id": "token-created",
+      "mode": "desktop",
+      "issues": []
+    }
+  ]
+}

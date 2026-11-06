@@ -1,0 +1,228 @@
+.asset-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  margin-bottom: 20px;
+}
+.asset-heading h1 {
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: -1.2px;
+}
+.asset-heading p,
+.asset-heading .text-action {
+  font-size: 11px !important;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.asset-add {
+  min-height: 34px;
+  padding: 7px 11px !important;
+  background: var(--soft) !important;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.asset-net > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.asset-net > strong {
+  font-size: 40px;
+  line-height: 1.2;
+  letter-spacing: -1.6px;
+  font-weight: 720;
+  white-space: nowrap;
+}
+.asset-net {
+  margin-bottom: 17px;
+}
+.asset-composition {
+  display: flex;
+  gap: 20px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.asset-composition > div {
+  flex: 1;
+}
+.asset-composition > div > span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.asset-composition b {
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+.composition-minus {
+  font-size: 21px;
+  color: #aaa99a;
+  align-self: center;
+}
+.asset-period {
+  padding: 12px 0 !important;
+  display: flex !important;
+  width: 100%;
+  font-size: 11px;
+  border-bottom: 1px solid var(--line) !important;
+  justify-content: initial !important;
+  gap: 5px !important;
+}
+.asset-period > span {
+  flex: 1;
+  text-align: left;
+  color: var(--muted);
+}
+.asset-period b {
+  color: #626e3d;
+  font-size: 13px;
+  margin-left: 5px;
+}
+.account-group-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0 3px;
+}
+.account-group-title h2 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.account-group-title small {
+  font-size: 10px;
+}
+.asset-account-row {
+  width: 100%;
+  display: flex !important;
+  justify-content: initial !important;
+  text-align: left;
+  gap: 9px !important;
+  min-height: 52px;
+  padding: 7px 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+.account-symbol {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ecefdb;
+  border-radius: 8px;
+  color: #677047;
+  flex-shrink: 0;
+}
+.account-symbol.liability {
+  background: #f5e5da;
+  color: #a3684d;
+}
+.asset-account-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.asset-account-copy b {
+  font-size: 14px;
+  font-weight: 600;
+}
+.asset-account-copy small {
+  font-size: 11px;
+  line-height: 1.4;
+}
+.asset-account-row > strong {
+  font-size: 14px;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+.asset-unassigned {
+  width: 100%;
+  display: flex !important;
+  gap: 7px !important;
+  justify-content: initial !important;
+  font-size: 10px;
+  color: #80633d !important;
+  margin-top: 12px;
+}
+.asset-unassigned > span {
+  flex: 1;
+  text-align: left;
+}
+.assets-layout .scene-actions {
+  padding-top: 7px;
+}
+.asset-equation {
+  display: flex;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+  margin: 20px 0 16px;
+}
+.asset-equation > span {
+  font-size: 11px;
+  color: var(--muted);
+  flex: 1;
+}
+.asset-equation b {
+  display: block;
+  font-size: 18px;
+  color: var(--ink);
+  margin-top: 5px;
+  white-space: nowrap;
+  letter-spacing: -0.4px;
+}
+.asset-explanation {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 20px !important;
+}
+.asset-debt-dates {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0 18px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.asset-debt-dates b {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.desktop-main .asset-workspace,
+.desktop-main .asset-detail {
+  width: 100%;
+}
+.desktop-main .asset-heading {
+  padding-top: 0;
+  margin-bottom: 26px;
+}
+.desktop-main .asset-heading h1 {
+  font-size: 39px;
+}
+.desktop-main .asset-net > strong {
+  font-size: 57px;
+  letter-spacing: -2px;
+}
+.desktop-main .asset-net > span {
+  font-size: 13px;
+}
+.desktop-main .asset-composition {
+  gap: 45px;
+  padding-bottom: 22px;
+  max-width: 640px;
+}
+.desktop-main .asset-composition b {
+  font-size: 25px;
+}
