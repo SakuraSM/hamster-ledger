@@ -1,0 +1,418 @@
+{
+  "complete": true,
+  "results": [
+    {
+      "id": "assets-main",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "资产管理 / 总览、负债与余额依据"
+    },
+    {
+      "id": "assets-history",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "资产管理 / 历史、账户关联与估值边界"
+    },
+    {
+      "id": "assets-types",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "资产管理 / 账户类型与特殊余额"
+    },
+    {
+      "id": "mobile-01",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 01"
+    },
+    {
+      "id": "mobile-02",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 02"
+    },
+    {
+      "id": "mobile-03",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 03"
+    },
+    {
+      "id": "mobile-04",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 04"
+    },
+    {
+      "id": "mobile-05",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 05"
+    },
+    {
+      "id": "mobile-06",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 06"
+    },
+    {
+      "id": "mobile-07",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 07"
+    },
+    {
+      "id": "mobile-08",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 08"
+    },
+    {
+      "id": "mobile-09",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 09"
+    },
+    {
+      "id": "mobile-10",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 10"
+    },
+    {
+      "id": "mobile-11",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 11"
+    },
+    {
+      "id": "mobile-12",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 12"
+    },
+    {
+      "id": "mobile-13",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 13"
+    },
+    {
+      "id": "mobile-14",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 14"
+    },
+    {
+      "id": "mobile-15",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 15"
+    },
+    {
+      "id": "mobile-16",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 16"
+    },
+    {
+      "id": "mobile-17",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 17"
+    },
+    {
+      "id": "mobile-18",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 18"
+    },
+    {
+      "id": "mobile-19",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 19"
+    },
+    {
+      "id": "mobile-20",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 20"
+    },
+    {
+      "id": "mobile-21",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 21"
+    },
+    {
+      "id": "mobile-22",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 22"
+    },
+    {
+      "id": "mobile-23",
+      "width": 1270,
+      "height": 1921,
+      "images": 6,
+      "title": "手机视觉稿 / 23"
+    },
+    {
+      "id": "desktop-01",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 01"
+    },
+    {
+      "id": "desktop-02",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 02"
+    },
+    {
+      "id": "desktop-03",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 03"
+    },
+    {
+      "id": "desktop-04",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 04"
+    },
+    {
+      "id": "desktop-05",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 05"
+    },
+    {
+      "id": "desktop-06",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 06"
+    },
+    {
+      "id": "desktop-07",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 07"
+    },
+    {
+      "id": "desktop-08",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 08"
+    },
+    {
+      "id": "desktop-09",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 09"
+    },
+    {
+      "id": "desktop-10",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 10"
+    },
+    {
+      "id": "desktop-11",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 11"
+    },
+    {
+      "id": "desktop-12",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 12"
+    },
+    {
+      "id": "desktop-13",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 13"
+    },
+    {
+      "id": "desktop-14",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 14"
+    },
+    {
+      "id": "desktop-15",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 15"
+    },
+    {
+      "id": "desktop-16",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 16"
+    },
+    {
+      "id": "desktop-17",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 17"
+    },
+    {
+      "id": "desktop-18",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 18"
+    },
+    {
+      "id": "desktop-19",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 19"
+    },
+    {
+      "id": "desktop-20",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 20"
+    },
+    {
+      "id": "desktop-21",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 21"
+    },
+    {
+      "id": "desktop-22",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 22"
+    },
+    {
+      "id": "desktop-23",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 23"
+    },
+    {
+      "id": "desktop-24",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 24"
+    },
+    {
+      "id": "desktop-25",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 25"
+    },
+    {
+      "id": "desktop-26",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 26"
+    },
+    {
+      "id": "desktop-27",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 27"
+    },
+    {
+      "id": "desktop-28",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 28"
+    },
+    {
+      "id": "desktop-29",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 29"
+    },
+    {
+      "id": "desktop-30",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 30"
+    },
+    {
+      "id": "desktop-31",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 31"
+    },
+    {
+      "id": "desktop-32",
+      "width": 1520,
+      "height": 1257,
+      "images": 4,
+      "title": "桌面视觉稿 / 32"
+    },
+    {
+      "id": "desktop-33",
+      "width": 1520,
+      "height": 1257,
+      "images": 3,
+      "title": "桌面视觉稿 / 33"
+    }
+  ]
+}

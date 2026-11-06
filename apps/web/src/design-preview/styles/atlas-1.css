@@ -1,0 +1,227 @@
+.atlas {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 254px 1fr;
+  background: #eae8df;
+}
+.atlas-index {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #25281f;
+  color: #f6f3e9;
+  padding: 24px 17px;
+}
+.atlas-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 7px 20px;
+}
+.atlas-logo img {
+  width: 35px;
+}
+.atlas-logo b {
+  font-size: 16px;
+  display: block;
+}
+.atlas-logo small {
+  font-size: 10px;
+  color: #c2c5ad;
+  display: block;
+  margin-top: 3px;
+}
+.atlas-controls {
+  display: flex;
+  gap: 6px;
+  padding: 9px 0 16px;
+}
+.atlas-controls button {
+  border: 1px solid #4b5040;
+  background: transparent;
+  color: #c9ceb5;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.atlas-controls button.active {
+  background: #e1e6c4;
+  color: #2c3222;
+  border-color: #e1e6c4;
+}
+.atlas-search {
+  width: 100%;
+  background: #353a2c;
+  border: 1px solid #454b39;
+  border-radius: 8px;
+  color: white;
+  padding: 10px 12px;
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+.atlas-search::placeholder {
+  color: #b6bea0;
+}
+.atlas-groups {
+  overflow: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #657050 #25281f;
+}
+.atlas-group {
+  margin-bottom: 18px;
+}
+.atlas-group > h2 {
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  color: #a7b18b;
+  padding: 0 10px;
+  margin: 0 0 6px;
+  font-weight: 500;
+}
+.atlas-group button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  margin-bottom: 2px;
+  border: 0;
+  background: transparent;
+  color: #e1e4d3;
+  font-size: 12px;
+  line-height: 1.4;
+  border-radius: 6px;
+}
+.atlas-group button > span {
+  font-size: 9px;
+  color: #a8b58c;
+  min-width: 19px;
+}
+.atlas-group button.active {
+  background: #e1e6c4;
+  color: #29301d;
+}
+.atlas-group button.active > span {
+  color: #69754a;
+}
+.atlas-foot {
+  font-size: 10px;
+  color: #b5be9d;
+  border-top: 1px solid #414835;
+  margin-top: 14px;
+  padding: 15px 8px 0;
+  line-height: 1.8;
+}
+.atlas-work {
+  min-width: 0;
+}
+.atlas-toolbar {
+  min-height: 82px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 30px;
+  border-bottom: 1px solid #d8d6cc;
+  gap: 16px;
+  background: #f5f3eb;
+}
+.atlas-toolbar h1 {
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+.atlas-toolbar p {
+  font-size: 11px;
+  color: #62684f;
+  margin: 5px 0 0;
+}
+.atlas-toolbar-actions {
+  display: flex;
+  gap: 7px;
+}
+.atlas-toolbar-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #c9ceba;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: #fdfcf7;
+  font-size: 11px;
+  color: #586048;
+  white-space: nowrap;
+}
+.atlas-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 30px;
+  gap: 30px;
+  overflow: auto;
+  min-height: calc(100vh - 82px);
+}
+.atlas-stage > .design-scene {
+  box-shadow: 0 12px 50px #22251112;
+  flex-shrink: 0;
+}
+.atlas-stage:has(.desktop-scene) {
+  justify-content: flex-start;
+}
+.atlas-notes {
+  width: 255px;
+  flex-shrink: 0;
+  padding-top: 12px;
+  color: #5c634e;
+}
+.atlas-notes > span {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.atlas-notes h2 {
+  font-size: 23px;
+  line-height: 1.4;
+  margin: 10px 0 15px;
+  letter-spacing: -0.7px;
+}
+.atlas-notes p {
+  font-size: 12px;
+  line-height: 1.9;
+}
+.atlas-notes .note-label {
+  margin-top: 28px;
+  margin-bottom: 9px;
+  font-size: 10px;
+  color: #7c8765;
+}
+.atlas-notes a {
+  display: block;
+  font-size: 11px;
+  line-height: 1.8;
+  margin-bottom: 5px;
+  overflow-wrap: anywhere;
+}
+.atlas-notes button {
+  border: 1px solid #b6bea6;
+  background: #f5f5ec;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  color: #4e5d37;
+  margin-top: 8px;
+}
+.atlas-reference {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #deded2;
+}
+.atlas-export-note {
+  border-top: 1px solid #c8cdbb;
+  padding-top: 18px;
+  margin-top: 20px;
+  color: #7b826c;
+  font-size: 11px !important;
+}

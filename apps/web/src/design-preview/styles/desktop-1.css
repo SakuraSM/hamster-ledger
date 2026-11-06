@@ -1,0 +1,227 @@
+.desktop-scene {
+  width: 1440px;
+  height: 1024px;
+  display: grid;
+  grid-template-columns: 222px 1fr;
+}
+.desktop-sidebar {
+  border-right: 1px solid var(--line);
+  background: #eeece3;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 18px 24px;
+}
+.desktop-brand {
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  text-align: left;
+  padding: 0 5px !important;
+  margin-bottom: 32px;
+}
+.desktop-brand img {
+  width: 38px;
+  height: 38px;
+}
+.desktop-brand > span {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.desktop-brand small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-top: 3px;
+}
+.design-scene .book-switch {
+  display: flex;
+  min-height: 50px;
+  padding: 10px 14px;
+  margin-bottom: 28px;
+  border-radius: 11px;
+  background: #faf9f1;
+  justify-content: initial;
+  font-size: 14px;
+  font-weight: 600;
+}
+.book-switch small {
+  margin-left: auto;
+  font-size: 10px;
+  color: #666f58;
+}
+.desktop-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.desktop-sidebar nav > button,
+.sidebar-bottom > button {
+  min-height: 50px;
+  width: 100%;
+  justify-content: flex-start !important;
+  font-size: 14px;
+  padding: 13px 17px !important;
+  gap: 12px !important;
+}
+.desktop-sidebar nav > button.active {
+  background: #e0e4c2;
+  border-radius: 11px;
+  font-weight: 650;
+}
+.desktop-sidebar nav > button > small {
+  margin-left: auto;
+  background: #fafaf2;
+  min-width: 22px;
+  padding: 1px 5px;
+  border-radius: 20px;
+  text-align: center;
+  color: #626e3d;
+}
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.sidebar-bottom > p {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 22px;
+  padding-left: 10px;
+}
+.desktop-workspace {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.desktop-toolbar {
+  height: 88px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.desktop-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.toolbar-slash {
+  color: #aeac9f;
+  margin: 0 12px;
+}
+.search-shortcut {
+  color: #666b5d !important;
+  border-radius: 10px !important;
+  gap: 10px !important;
+  font-size: 12px;
+}
+.search-shortcut > span {
+  color: #666b5d;
+  border: 1px solid #dfded4;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 10px;
+}
+.design-scene .small-primary {
+  background: var(--orange);
+  color: #38291e;
+  padding: 9px 16px;
+  min-height: 38px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.desktop-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  flex: 1;
+  min-height: 0;
+}
+.desktop-main {
+  padding: 34px 48px 30px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.desktop-main .scene-heading {
+  padding-top: 0;
+  margin-bottom: 29px;
+}
+.desktop-main .scene-heading h1 {
+  font-size: 35px;
+  letter-spacing: -1.2px;
+  line-height: 1.3;
+}
+.desktop-main .scene-heading p {
+  font-size: 13px;
+  margin-top: 10px;
+}
+.desktop-main .heading-counter {
+  font-size: 64px;
+}
+.context-rail {
+  border-left: 1px solid var(--line);
+  padding: 42px 30px;
+  background: #f0eee6;
+  display: flex;
+  flex-direction: column;
+}
+.rail-eyebrow {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+}
+.context-rail h2 {
+  font-size: 22px;
+  line-height: 1.5;
+  margin-top: 15px;
+  margin-bottom: 45px;
+  letter-spacing: -0.8px;
+  max-width: 180px;
+}
+.rail-total small {
+  font-size: 12px;
+}
+.rail-total strong {
+  display: block;
+  font-size: 31px;
+  letter-spacing: -1px;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+.context-rail dl {
+  margin-top: 28px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.context-rail dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.context-rail dt {
+  color: var(--muted);
+}
+.context-rail dd {
+  font-weight: 600;
+  margin: 0;
+}
+.rail-note {
+  padding-top: 20px;
+  color: #62684f;
+}
+.rail-note p {
+  font-size: 12px;
+  line-height: 1.9;
+  margin-top: 12px;
+}

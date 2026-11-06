@@ -1,0 +1,150 @@
+{
+  "passed": true,
+  "evidence": [
+    {
+      "flow": "offline gallery default asset page",
+      "result": {
+        "title": "钱在哪里，一眼清楚",
+        "source": "screens/mobile/assets.png",
+        "continuedHidden": true,
+        "continuedDisplay": "none"
+      }
+    },
+    {
+      "flow": "desktop mode -> credit account -> mobile mode -> continuation",
+      "result": {
+        "title": "信用卡",
+        "source": "screens/mobile/liability-detail--continued.png"
+      }
+    },
+    {
+      "flow": "required confirmation checkbox",
+      "beforeDisabled": true,
+      "afterDisabled": false,
+      "status": "已勾选"
+    },
+    {
+      "flow": "assets -> cash -> edit actual balance -> difference preview -> baseline confirmation result",
+      "scene": "calibration-done",
+      "amount": "3180.00",
+      "difference": "-20.00"
+    },
+    {
+      "flow": "pre-auth privacy surfaces",
+      "states": [
+        {
+          "id": "welcome",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "login",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "register",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "registration-closed",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "connect",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "password",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "onboarding",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "login-error",
+          "mode": "mobile",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "welcome",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "login",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "register",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "registration-closed",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "password",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "unlock",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "onboarding",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        },
+        {
+          "id": "login-error",
+          "mode": "desktop",
+          "sidebar": false,
+          "summary": false,
+          "navigation": false
+        }
+      ]
+    }
+  ]
+}

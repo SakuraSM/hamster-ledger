@@ -1,0 +1,79 @@
+.night-theme {
+  --canvas: #1c211c;
+  --ink: #f2f0e7;
+  --muted: #aaa99b;
+  --line: #373d32;
+  --orange: #ec986b;
+  --accent: #f2a178;
+  --olive: #d4dfab;
+  --surface: #272d24;
+  --soft: #30372b;
+}
+.night-theme .chip.is-selected {
+  color: #303c1b;
+}
+.night-theme .notice {
+  color: #e3e8c8;
+  background: #303829;
+}
+.night-theme .notice p {
+  color: #c0c6b1;
+}
+.night-theme .sheet-background {
+  display: none;
+}
+.night-theme .receipt-sheet {
+  background: #2a3026;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px #0002;
+}
+.night-theme .receipt-origin,
+.night-theme .receipt-date {
+  color: #c1c4b4 !important;
+}
+.night-theme .receipt-fields button {
+  border-color: #46503a !important;
+}
+.night-theme .receipt-undo {
+  background: #303a24;
+  color: #d4ddb3;
+}
+.night-theme .receipt-undo > span {
+  color: #c3cbaa;
+}
+.night-theme .receipt-undo button {
+  color: #e3e8cb;
+}
+.night-theme .row-icon,
+.night-theme .secondary-action {
+  color: #cdd0bf;
+}
+.night-theme .context-rail {
+  background: #21271d;
+}
+.night-theme .desktop-sidebar {
+  background: #171c16;
+}
+.night-theme .desktop-toolbar {
+  background: #1c211c;
+}
+
+.night-theme .receipt-source {
+  color: #343a29;
+}
+.night-theme .book-switch {
+  background: var(--soft);
+}
+.night-theme .desktop-sidebar nav > button.active {
+  color: #303b22;
+}
+.night-theme .search-shortcut,
+.night-theme .search-shortcut > span {
+  color: var(--muted) !important;
+}
+
+.night-theme .receipt-pager span,
+.night-theme .book-switch small,
+.night-theme .rail-note p {
+  color: #c2cbb1;
+}
