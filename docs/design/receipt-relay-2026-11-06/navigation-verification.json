@@ -1,14 +1,17 @@
 {
   "method": "Vitest navigation policy and scene catalog assertions",
   "testSource": "tests/design-navigation.test.ts",
+  "componentTestSource": "tests/design-navigation-ui.test.tsx",
   "before": {
     "reviewedCommit": "b65a846fae130e81aeca9df0c30b10c746ee6d55",
     "incorrectSceneTargetFailures": 3,
-    "unscopedNavigationPolicyFailures": 3
+    "unscopedNavigationPolicyFailures": 3,
+    "componentReturnFailures": 3,
+    "paymentContextFailures": 1
   },
   "after": {
-    "tests": 7,
-    "passed": 7,
+    "tests": 12,
+    "passed": 12,
     "failed": 0,
     "coverage": [
       "Reimbursement targets keep the 200-yuan purchase and 80-yuan repayment context",
@@ -16,7 +19,9 @@
       "Category and book archive require confirmation within their own scope",
       "Unexpanded account branches explicitly stay static",
       "Taxi entries do not open the fixed lunch detail",
-      "Cash calibration and credit repayment remain navigable"
+      "Cash calibration and credit repayment remain navigable",
+      "Undo, restore and detail return actions preserve the same record",
+      "Recovered 18-yuan coffee does not open the 32-yuan lunch detail"
     ]
   },
   "initialRenderedFields": "equal to previously browser-captured scene definitions after excluding navigation targets",

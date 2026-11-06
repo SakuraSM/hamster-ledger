@@ -18,6 +18,7 @@ const STATIC_ACCOUNT_BRANCHES: Record<string, readonly string[]> = {
   "investment-account": ["account-history", "calibration"],
   "credit-prepaid": ["account-history", "calibration"],
   "missing-baseline": ["account-edit", "account-history"],
+  "payment-recovery": ["record"],
 };
 
 export function planPreviewNavigation({

@@ -83,7 +83,7 @@ export function SceneActions({
             className={action.secondary ? "secondary-action" : "primary-action"}
             key={action.label}
             disabled={!action.secondary && !canProceed}
-            onClick={() => onNavigate(action.target, action.label)}
+            onClick={() => onNavigate(action.target)}
           >
             {action.label}
           </button>
