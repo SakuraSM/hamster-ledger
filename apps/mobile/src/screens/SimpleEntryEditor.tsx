@@ -1,3 +1,4 @@
+import { ReceiptAction } from "./ReceiptAction";
 import type { EntryDraft } from "@hamster-ledger/ledger-react";
 import { CENTS_PER_YUAN } from "../constants";
 import { useMemo, useState } from "react";
@@ -282,14 +283,13 @@ export function SimpleEntryEditor({
       {record?.status === "pending" ? (
         <Text>这笔账单仍需重复核对，保存不会自动计入收支。</Text>
       ) : null}
-      <Button
-        mode="contained"
+      <ReceiptAction
         loading={isBusy}
         disabled={isBusy}
         onPress={() => void save()}
       >
         保存账单
-      </Button>
+      </ReceiptAction>
     </FormSheet>
   );
 }

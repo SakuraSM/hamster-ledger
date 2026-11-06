@@ -69,7 +69,7 @@ export function PreferencesPanel({
             <option value="night">深夜账本</option>
           </Choice>
           <Checkbox
-            label={<>隐藏首页金额</>}
+            label={<>隐藏金额</>}
             className="checkbox-label"
 
             checked={draft.hideAmounts}

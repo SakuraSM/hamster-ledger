@@ -36,6 +36,15 @@ export function reimbursementState(
     .reduce((total, item) => addMinor(total, item.amount), 0);
   return receivedState(record, received);
 }
+function matchesReimbursementState(
+  state: Exclude<ReimbursementState, "">,
+  filter: ReimbursementState | undefined,
+): boolean {
+  // Keep the persisted "pending" value while including all outstanding amounts.
+  return (
+    !filter || state === filter || (filter === "pending" && state === "partial")
+  );
+}
 function matchesAccountAndMember(
   record: BillRecord,
   filter: FinanceFilter,
@@ -65,7 +74,10 @@ export function matchesFinanceFilters(
   return (
     matchesAccountAndMember(record, filter) &&
     (!filter.reimbursement ||
-      reimbursementState(ledger, record) === filter.reimbursement)
+      matchesReimbursementState(
+        reimbursementState(ledger, record),
+        filter.reimbursement,
+      ))
   );
 }
 
@@ -104,7 +116,7 @@ export function createFinanceFilter(
               0,
             ),
           );
-    return state === filter.reimbursement;
+    return matchesReimbursementState(state, filter.reimbursement);
   };
 }
 export function batchRecords(

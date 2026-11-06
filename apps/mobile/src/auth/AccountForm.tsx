@@ -1,5 +1,5 @@
 const DEFAULT_MIN_PASSWORD_LENGTH = 15;
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   Button,
   Checkbox,
@@ -10,16 +10,28 @@ import {
 import { useNativeAccount } from "./NativeAccount";
 import { PasswordInput } from "./PasswordInput";
 import { ErrorMessage, Section } from "../ui/Screen";
+import { ReceiptAction } from "../screens/ReceiptAction";
 export function AccountForm(): React.JSX.Element {
   const account = useNativeAccount();
   const [server, setServer] = useState(account.server);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [mode, setMode] = useState("login");
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [remember, setRemember] = useState(false);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const previousServer = useRef(account.server);
+  useLayoutEffect(() => {
+    if (previousServer.current === account.server) return;
+    previousServer.current = account.server;
+    setServer(account.server);
+    setUsername("");
+    setPassword("");
+    setConfirmation("");
+    setRemember(false);
+    setMode("login");
+  }, [account.server]);
   async function run(action: () => Promise<void>): Promise<void> {
     if (isBusy) return;
     setBusy(true);
@@ -37,9 +49,11 @@ export function AccountForm(): React.JSX.Element {
     account.policy &&
     server.trim().replace(/\/$/, "") === account.server,
   );
+  const isRegistrationClosed =
+    mode === "register" && !account.policy?.allowRegistration;
   return (
     <>
-      <Section title="连接记账服务">
+      <Section title="连接你的服务">
         <Text>
           填写你部署的服务地址。账号只用于同步，本机记账可以离线使用。
         </Text>
@@ -55,20 +69,33 @@ export function AccountForm(): React.JSX.Element {
           keyboardType="url"
           disabled={isBusy}
         />
-        <Button
-          mode="outlined"
-          loading={isBusy}
-          disabled={isBusy || !server.trim()}
-          onPress={() => void run(() => account.connect(server))}
-        >
-          {connected ? "重新连接服务" : "连接服务"}
-        </Button>
+        {connected ? (
+          <Button
+            mode="outlined"
+            contentStyle={{ minHeight: 48 }}
+            loading={isBusy}
+            disabled={isBusy || !server.trim()}
+            onPress={() => void run(() => account.connect(server))}
+          >
+            重新连接服务
+          </Button>
+        ) : (
+          <ReceiptAction
+            loading={isBusy}
+            disabled={isBusy || !server.trim()}
+            onPress={() => void run(() => account.connect(server))}
+          >
+            连接服务
+          </ReceiptAction>
+        )}
       </Section>
       {connected ? (
-        <Section title="登录账号">
+        <Section title={mode === "register" ? "创建账号" : "接着记下生活"}>
           <SegmentedButtons
             value={mode}
-            onValueChange={setMode}
+            onValueChange={(value) =>
+              setMode(value === "register" ? "register" : "login")
+            }
             buttons={[
               { value: "login", label: "登录", disabled: isBusy },
               {
@@ -93,6 +120,7 @@ export function AccountForm(): React.JSX.Element {
             disabled={isBusy}
           />
           <PasswordInput
+            key={`${account.server}:${mode}:password`}
             label="密码"
             value={password}
             onChangeText={setPassword}
@@ -108,6 +136,7 @@ export function AccountForm(): React.JSX.Element {
                 位，可使用便于记忆的长短语。
               </Text>
               <PasswordInput
+                key={`${account.server}:${mode}:confirmation`}
                 label="确认密码"
                 value={confirmation}
                 onChangeText={setConfirmation}
@@ -122,12 +151,15 @@ export function AccountForm(): React.JSX.Element {
             onPress={() => setRemember(!remember)}
             disabled={isBusy}
           />
-          <Button
-            mode="contained"
-            disabled={isBusy || !username.trim() || !password}
+          <ReceiptAction
+            disabled={
+              isBusy || !username.trim() || !password || isRegistrationClosed
+            }
             loading={isBusy}
             onPress={() =>
               void run(async () => {
+                if (mode === "register" && !account.policy?.allowRegistration)
+                  throw new Error("此服务已关闭注册，请联系管理员。");
                 if (mode === "register" && password !== confirmation)
                   throw new Error("两次密码不一致。");
                 await account.authenticate({
@@ -142,7 +174,7 @@ export function AccountForm(): React.JSX.Element {
             }
           >
             {mode === "register" ? "注册并登录" : "登录"}
-          </Button>
+          </ReceiptAction>
           <Text>
             忘记密码时，请联系服务管理员重置。临时密码登录后需要先设置新密码。
           </Text>

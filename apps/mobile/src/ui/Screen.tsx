@@ -10,8 +10,10 @@ import { Text, HelperText } from "react-native-paper";
 import { useSystemFontScale } from "../hooks/useSystemFontScale";
 export function Screen({
   children,
+  bottomPadding,
 }: {
   children: ReactNode;
+  bottomPadding?: number;
 }): React.JSX.Element {
   const fontScale = useSystemFontScale();
   return (
@@ -21,7 +23,12 @@ export function Screen({
     >
       <ScrollView
         key={fontScale}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          bottomPadding === undefined
+            ? undefined
+            : { paddingBottom: bottomPadding },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         {children}

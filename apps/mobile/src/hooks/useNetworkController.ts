@@ -13,6 +13,7 @@ export function useNetworkController(
     local,
     client: account.client,
     userId: account.credentials?.user.id ?? null,
+    identityLoading: account.isLoading,
     server: account.server,
     repository: ledgerRepository,
     newId: newEntityId,

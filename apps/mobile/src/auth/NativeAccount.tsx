@@ -51,7 +51,7 @@ export function NativeAccountProvider({
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [policy, setPolicy] = useState<AuthPolicy | null>(null);
   const [isLoading, setLoading] = useState(true);
-  const [needsEntry, setNeedsEntry] = useState(false);
+  const [needsEntry, setNeedsEntry] = useState(true);
   const [error, setError] = useState("");
   const current = useRef<Credentials | null>(null);
   const currentServer = useRef("");

@@ -7,9 +7,11 @@ import { Choice } from "../../ui/Choice";
 export function EntrySplitFields({
   form,
   members,
+  hideAmounts = false,
 }: {
   form: AdvancedEntryController;
   members: SplitMember[];
+  hideAmounts?: boolean;
 }): React.JSX.Element | null {
   const { draft, change } = form;
   if (draft.type !== "expense") return null;
@@ -74,6 +76,11 @@ export function EntrySplitFields({
                     draft.splitMode === "weighted"
                       ? "比例（正整数）"
                       : "承担金额（人民币元）"
+                  }
+                  type={
+                    hideAmounts && draft.splitMode === "fixed"
+                      ? "password"
+                      : "text"
                   }
                   inputMode="decimal"
                   value={split.value}

@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Alert } from "react-native";
 import { Button, List, Text, TextInput } from "react-native-paper";
+import type { Book } from "@hamster-ledger/core";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { Screen, Section, ErrorMessage } from "../ui/Screen";
 interface BooksScreenProps {
@@ -11,6 +13,10 @@ export function BooksScreen({
   const [name, setName] = useState("");
   const [rename, setRename] = useState("");
   const [error, setError] = useState("");
+  const latestController = useRef(controller);
+  latestController.current = controller;
+  const archivePromptOpen = useRef(false);
+  const archiveInFlight = useRef(false);
   async function create(): Promise<void> {
     try {
       await controller.createBook(name);
@@ -26,8 +32,9 @@ export function BooksScreen({
     isArchived?: boolean;
   }): Promise<void> {
     try {
-      await controller.updateBooks(
-        controller.books.map((book) =>
+      const current = latestController.current;
+      await current.updateBooks(
+        current.books.map((book) =>
           book.id === input.id ? { ...book, ...input } : book,
         ),
       );
@@ -36,6 +43,58 @@ export function BooksScreen({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "更新失败");
     }
+  }
+  function requestArchive(book: Book): void {
+    if (archivePromptOpen.current || archiveInFlight.current) return;
+    archivePromptOpen.current = true;
+    let handled = false;
+    function finish(): boolean {
+      if (handled) return false;
+      handled = true;
+      archivePromptOpen.current = false;
+      return true;
+    }
+    Alert.alert(
+      `归档“${book.name}”账本？`,
+      `归档后，历史账单会保留，恢复“${book.name}”后可再次切换使用。`,
+      [
+        {
+          text: "取消",
+          style: "cancel",
+          onPress: () => {
+            finish();
+          },
+        },
+        {
+          text: "确认归档",
+          onPress: () => {
+            if (!finish()) return;
+            const latest = latestController.current;
+            const current = latest.books.find((item) => item.id === book.id);
+            if (
+              latest.isSaving ||
+              !current ||
+              current.isArchived ||
+              current.name !== book.name ||
+              current.id === latest.mode
+            ) {
+              setError("账本状态已变化，请重新确认。");
+              return;
+            }
+            archiveInFlight.current = true;
+            void change({ id: current.id, isArchived: true }).finally(() => {
+              archiveInFlight.current = false;
+            });
+          },
+        },
+      ],
+      {
+        cancelable: true,
+        onDismiss: () => {
+          finish();
+        },
+      },
+    );
   }
   return (
     <Screen>
@@ -71,9 +130,11 @@ export function BooksScreen({
             book.id.startsWith("book:") ? (
               <Button
                 disabled={book.id === controller.mode || controller.isSaving}
-                onPress={() =>
-                  void change({ id: book.id, isArchived: !book.isArchived })
-                }
+                onPress={() => {
+                  if (book.isArchived)
+                    void change({ id: book.id, isArchived: false });
+                  else requestArchive(book);
+                }}
               >
                 {book.isArchived ? "恢复" : "归档"}
               </Button>

@@ -2,7 +2,7 @@ const DECIMAL_BASE = 10;
 import { TextInput, Textarea, Button } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
 import { DateField } from "../../ui/DateField";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CURRENCIES,
   CURRENCY_DIGITS,
@@ -12,53 +12,122 @@ import {
   LIABILITY_TYPES,
   type AssetAccount,
   type AccountKind,
+  type LedgerMode,
 } from "@hamster-ledger/core";
 import { localNow, newEntityId } from "../../platform/browser/runtime";
 import { Dialog } from "../Dialog";
+export interface AssetBookContext {
+  mode: LedgerMode;
+  cloud: { id: string; userId: string; server: string } | null;
+  isNetwork: boolean;
+  revision?: number;
+}
+export function snapshotAssetBook(
+  context?: AssetBookContext,
+): AssetBookContext | undefined {
+  return context
+    ? { ...context, cloud: context.cloud ? { ...context.cloud } : null }
+    : undefined;
+}
+export function isSameAssetBook(
+  first?: AssetBookContext,
+  second?: AssetBookContext,
+): boolean {
+  if (!first || !second) return first === second;
+  return (
+    first.mode === second.mode &&
+    first.isNetwork === second.isNetwork &&
+    first.cloud?.id === second.cloud?.id &&
+    first.cloud?.userId === second.cloud?.userId &&
+    first.cloud?.server === second.cloud?.server
+  );
+}
 export interface AccountSave {
   account: AssetAccount;
   note: string;
+  expectedAccount?: AssetAccount | null;
+  expectedBook?: AssetBookContext;
+  previewGuard?: AssetBookContext;
 }
 interface AccountEditorProps {
   account?: AssetAccount;
+  bookContext?: AssetBookContext;
+  isHidden?: boolean;
   onSave: (input: AccountSave) => Promise<void>;
   onClose: () => void;
 }
 const MINUTE_PRECISION_LENGTH = 16;
+
+function snapshotAccount(account: AssetAccount): AssetAccount {
+  return {
+    ...account,
+    aliases: [...account.aliases],
+    checkpoints: account.checkpoints.map((checkpoint) => ({ ...checkpoint })),
+    ...(account.archiveHistory
+      ? {
+          archiveHistory: account.archiveHistory.map((event) => ({ ...event })),
+        }
+      : {}),
+  };
+}
+
 export function AccountEditor({
   account,
+  bookContext,
+  isHidden = false,
   onSave,
   onClose,
 }: AccountEditorProps): React.JSX.Element {
-  const [name, setName] = useState(account?.name ?? "");
-  const [kind, setKind] = useState<AccountKind>(account?.kind ?? "asset");
+  const [expectedAccount] = useState(() =>
+    account ? snapshotAccount(account) : null,
+  );
+  const [expectedBook] = useState(() => snapshotAssetBook(bookContext));
+  const [hasBookChanged, setHasBookChanged] = useState(false);
+  const isBookMismatch = !isSameAssetBook(expectedBook, bookContext);
+  useEffect(() => {
+    if (isBookMismatch) setHasBookChanged(true);
+  }, [isBookMismatch]);
+  const isDifferentBook = hasBookChanged || isBookMismatch;
+  const isDifferentAccount =
+    (account?.id ?? null) !== (expectedAccount?.id ?? null);
+  const [name, setName] = useState(expectedAccount?.name ?? "");
+  const [kind, setKind] = useState<AccountKind>(
+    expectedAccount?.kind ?? "asset",
+  );
   const [type, setType] = useState<AssetAccount["type"]>(
-    account?.type ?? "银行卡",
+    expectedAccount?.type ?? "银行卡",
   );
   const [currency, setCurrency] = useState<Currency>(
-    account?.currency ?? "CNY",
+    expectedAccount?.currency ?? "CNY",
   );
   const [creditLimit, setCreditLimit] = useState(
-    account?.creditLimit === undefined
+    expectedAccount?.creditLimit === undefined
       ? ""
-      : String(account.creditLimit / DECIMAL_BASE ** CURRENCY_DIGITS[currency]),
+      : String(
+          expectedAccount.creditLimit /
+            DECIMAL_BASE ** CURRENCY_DIGITS[currency],
+        ),
   );
   const [statementDay, setStatementDay] = useState(
-    String(account?.statementDay ?? ""),
+    String(expectedAccount?.statementDay ?? ""),
   );
   const [paymentDay, setPaymentDay] = useState(
-    String(account?.paymentDay ?? ""),
+    String(expectedAccount?.paymentDay ?? ""),
   );
   const [balance, setBalance] = useState(
-    String(
-      (account?.openingBalance ?? 0) /
-        DECIMAL_BASE ** CURRENCY_DIGITS[currency],
-    ),
+    expectedAccount
+      ? String(
+          expectedAccount.openingBalance /
+            DECIMAL_BASE ** CURRENCY_DIGITS[currency],
+        )
+      : "",
   );
   const [balanceAt, setBalanceAt] = useState(
-    (account?.balanceAt ?? localNow()).replace(" ", "T"),
+    (expectedAccount?.balanceAt ?? localNow()).replace(" ", "T"),
   );
-  const [aliases, setAliases] = useState(account?.aliases.join("\n") ?? "");
+  const [aliases, setAliases] = useState(
+    expectedAccount?.aliases.join("\n") ?? "",
+  );
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -66,6 +135,7 @@ export function AccountEditor({
     event: React.SubmitEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
+    if (isDifferentAccount || isDifferentBook) return;
     setError("");
     setIsSaving(true);
     try {
@@ -77,7 +147,7 @@ export function AccountEditor({
           : timestamp;
       await onSave({
         account: {
-          id: account?.id ?? newEntityId(),
+          id: expectedAccount?.id ?? newEntityId(),
           name,
           kind,
           type,
@@ -98,10 +168,18 @@ export function AccountEditor({
             .split(/[\n，,]/)
             .map((alias) => alias.trim())
             .filter(Boolean),
-          isArchived: account?.isArchived ?? false,
-          checkpoints: account?.checkpoints ?? [],
+          isArchived: expectedAccount?.isArchived ?? false,
+          archiveHistory: expectedAccount?.archiveHistory?.map((event) => ({
+            ...event,
+          })),
+          checkpoints:
+            expectedAccount?.checkpoints.map((checkpoint) => ({
+              ...checkpoint,
+            })) ?? [],
         },
         note,
+        expectedAccount,
+        ...(expectedBook ? { expectedBook } : {}),
       });
       onClose();
     } catch (cause) {
@@ -112,7 +190,10 @@ export function AccountEditor({
   }
   const types = kind === "asset" ? ASSET_TYPES : LIABILITY_TYPES;
   return (
-    <Dialog title={account ? "编辑资产账户" : "添加资产账户"} onClose={onClose}>
+    <Dialog
+      title={expectedAccount ? "编辑资产账户" : "添加资产账户"}
+      onClose={onClose}
+    >
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
           <TextInput
@@ -127,7 +208,7 @@ export function AccountEditor({
           <Choice
             label={<>账户性质</>}
             value={kind}
-            disabled={!!account}
+            disabled={Boolean(expectedAccount)}
             onChange={(value) => {
               const next = value as AccountKind;
               setKind(next);
@@ -149,7 +230,7 @@ export function AccountEditor({
           <Choice
             label="账户币种"
             value={currency}
-            disabled={Boolean(account)}
+            disabled={Boolean(expectedAccount)}
             onChange={(value) => setCurrency(value as Currency)}
           >
             {CURRENCIES.map((value) => (
@@ -160,6 +241,7 @@ export function AccountEditor({
             <>
               <TextInput
                 label={`信用额度（${currency}）`}
+                type={isHidden ? "password" : "text"}
                 value={creditLimit}
                 onChange={(event) => setCreditLimit(event.currentTarget.value)}
                 inputMode="decimal"
@@ -187,6 +269,7 @@ export function AccountEditor({
               </>
             }
             required
+            type={isHidden ? "password" : "text"}
             inputMode="decimal"
             value={balance}
             onChange={(event) => setBalance(event.target.value)}
@@ -219,9 +302,13 @@ export function AccountEditor({
         <p className="account-form-help">
           只累计余额确认时间之后的已确认流水。过去的工资、支出不会再次叠加到你填写的当前余额中。负债按正数填写，信用卡预存余额可填负数。
         </p>
-        {error ? (
+        {isDifferentAccount || isDifferentBook || error ? (
           <p className="error-message" role="alert">
-            {error}
+            {isDifferentBook
+              ? "账本或绑定身份已变化，请关闭编辑器并重新打开；当前草稿尚未保存。"
+              : isDifferentAccount
+                ? "账户已切换，请关闭编辑器并重新打开；当前草稿尚未保存。"
+                : error}
           </p>
         ) : null}
         <div className="dialog-actions">
@@ -236,7 +323,7 @@ export function AccountEditor({
           <Button
             variant="filled"
             className="primary-button"
-            disabled={isSaving}
+            disabled={isSaving || isDifferentAccount || isDifferentBook}
             type="submit"
           >
             {isSaving ? "保存中…" : "保存账户"}

@@ -141,6 +141,7 @@ export function PaymentReceiptReview({
         record={existing}
         receipt={receipt}
         inbox={inbox}
+        isAmountHidden={Boolean(controller.ledger.preferences?.hideAmounts)}
         onClose={onClose}
       />
     );

@@ -136,6 +136,7 @@ for (const board of boards) {
   assert.equal(bytes.readUInt32BE(20), captured.height);
 }
 const requiredRoutes = {
+  inbox: "inbox",
   overview: "overview",
   transactions: "transactions",
   import: "import",
@@ -166,12 +167,23 @@ const requiredTools = {
   preferences: "preferences",
 };
 const androidMainRoutes = {
-  overview: "overview",
+  overview: "inbox",
   records: "transactions",
   assets: "assets",
-  reports: "reports",
-  tools: "tools",
 };
+const androidAuxiliaryRoutes = {
+  "overview-home": "overview",
+  "reports-home": "reports",
+  "tools-home": "tools",
+};
+const auxiliarySource = await readFile(
+  path.join(repository, "apps/mobile/src/ui/AuxiliaryPages.tsx"),
+  "utf8",
+);
+for (const [route, id] of Object.entries(androidAuxiliaryRoutes)) {
+  assert.ok(auxiliarySource.includes(`tool === "${route}"`));
+  assert.ok(ids.has(id));
+}
 const androidMainSource = await readFile(
   path.join(repository, "apps/mobile/src/ui/AppNavigation.tsx"),
   "utf8",
@@ -232,6 +244,7 @@ const result = {
   wcagViolations: 0,
   webRoutes: requiredRoutes,
   androidMainRoutes,
+  androidAuxiliaryRoutes,
   androidToolRoutes: requiredTools,
   assetPriorityScenes: assetIds,
 };

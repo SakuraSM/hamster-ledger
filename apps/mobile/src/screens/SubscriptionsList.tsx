@@ -27,6 +27,7 @@ export function SubscriptionsList({
   panel: PlanningPanelController;
 }): React.JSX.Element {
   const today = localNow().slice(0, 10);
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   return (
     <>
       <Button
@@ -45,17 +46,32 @@ export function SubscriptionsList({
         return (
           <Section
             key={item.id}
-            title={`${item.name} · ${item.isArchived ? "已归档" : STATUS[item.status]}`}
+            title={`${isAmountHidden ? "订阅" : item.name} · ${item.isArchived ? "已归档" : STATUS[item.status]}`}
           >
             <Text>
-              {formatCurrency({ minor: item.amount, currency: item.currency })}{" "}
+              {isAmountHidden
+                ? "••••"
+                : formatCurrency({
+                    minor: item.amount,
+                    currency: item.currency,
+                  })}{" "}
               / 期 · 下次 {item.nextDate}
             </Text>
             <Text>
               月均{" "}
-              {formatCurrency({ minor: cost.monthly, currency: item.currency })}{" "}
+              {isAmountHidden
+                ? "••••"
+                : formatCurrency({
+                    minor: cost.monthly,
+                    currency: item.currency,
+                  })}{" "}
               · 年化{" "}
-              {formatCurrency({ minor: cost.annual, currency: item.currency })}{" "}
+              {isAmountHidden
+                ? "••••"
+                : formatCurrency({
+                    minor: cost.annual,
+                    currency: item.currency,
+                  })}{" "}
               · {item.autoPost ? "自动记账" : "仅提醒"}
             </Text>
             <Button
@@ -131,7 +147,7 @@ export function SubscriptionsList({
                 .map((record) => (
                   <List.Item
                     key={record.id}
-                    title={`${record.date.slice(0, 10)} · ${formatCurrency(record.detail!.original)}`}
+                    title={`${record.date.slice(0, 10)} · ${isAmountHidden ? "金额已隐藏" : formatCurrency(record.detail!.original)}`}
                     description={record.isDeleted ? "已移入回收站" : undefined}
                   />
                 ))}

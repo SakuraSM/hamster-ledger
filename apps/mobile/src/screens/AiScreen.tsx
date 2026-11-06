@@ -1,3 +1,4 @@
+import { ReceiptAction } from "./ReceiptAction";
 const LIST_PAGE_SIZE = 30;
 import { DraftAttachments } from "./DraftAttachments";
 import { useMemo, useState } from "react";
@@ -45,6 +46,7 @@ export function AiScreen({
     hash: (value) =>
       Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, value),
   });
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const [editing, setEditing] = useState<AiDraft | null>(null),
     [imageError, setImageError] = useState("");
   async function select(camera: boolean): Promise<void> {
@@ -98,7 +100,7 @@ export function AiScreen({
           icon="close"
           onPress={() => ai.removeImage(image.id)}
         >
-          {image.name}
+          {isAmountHidden ? "已选图片" : image.name}
         </Button>
       ))}
       <Text>
@@ -115,15 +117,20 @@ export function AiScreen({
       <Text variant="bodySmall">
         只自动保存字段完整、账户明确且无重复疑点的普通收支。
       </Text>
-      <Button
-        mode="contained"
+      <ReceiptAction
         loading={ai.isBusy}
         disabled={ai.isBusy || controller.isSaving || model.isLoading}
         onPress={() => void ai.recognize()}
       >
         识别并生成草稿
-      </Button>
-      <ErrorMessage message={ai.error || imageError} />
+      </ReceiptAction>
+      <ErrorMessage
+        message={
+          isAmountHidden && (ai.error || imageError)
+            ? "操作失败，请核对输入或网络。"
+            : ai.error || imageError
+        }
+      />
       <Text variant="titleMedium">待确认草稿（{pending.length}）</Text>
       {pending.length > visibleCount && (
         <Button
@@ -137,40 +144,48 @@ export function AiScreen({
         <Card key={draft.id} mode="outlined">
           <Card.Content style={{ gap: 8 }}>
             <Text variant="titleMedium">
-              {draft.candidate.merchant || "交易对象待确认"}
+              {isAmountHidden
+                ? "待确认草稿"
+                : draft.candidate.merchant || "交易对象待确认"}
             </Text>
             <Text>
               {TRANSACTION_LABELS[draft.candidate.type]} ·{" "}
-              {draft.candidate.currency}{" "}
-              {draft.candidate.amount || "金额待确认"} ·{" "}
-              {draft.candidate.date || "日期待确认"}
+              {isAmountHidden
+                ? "金额已隐藏"
+                : `${draft.candidate.currency} ${draft.candidate.amount || "金额待确认"}`}{" "}
+              · {draft.candidate.date || "日期待确认"}
             </Text>
-            <Text>
-              分类：{draft.candidate.category} · 账户：
-              {controller.ledger.accounts.find(
-                (item) => item.id === draft.candidate.accountId,
-              )?.name ?? "待选择"}
-            </Text>
-            <Text variant="bodySmall">
-              来源：{draft.sourceLabel} · {draft.attachmentIds.length} 张凭证
-            </Text>
-            <DraftAttachments
-              store={bookId ? remote : nativeAttachments}
-              bookId={bookId ?? controller.mode}
-              ids={draft.attachmentIds}
-            />
-            {candidateIssues(controller.ledger, draft.candidate).map(
-              (issue) => (
-                <Text key={issue}>• {issue}</Text>
-              ),
-            )}
-            <Button
-              mode="contained"
+            {!isAmountHidden ? (
+              <Text>
+                分类：{draft.candidate.category} · 账户：
+                {controller.ledger.accounts.find(
+                  (item) => item.id === draft.candidate.accountId,
+                )?.name ?? "待选择"}
+              </Text>
+            ) : null}
+            {!isAmountHidden ? (
+              <Text variant="bodySmall">
+                来源：{draft.sourceLabel} · {draft.attachmentIds.length} 张凭证
+              </Text>
+            ) : null}
+            {!isAmountHidden ? (
+              <DraftAttachments
+                store={bookId ? remote : nativeAttachments}
+                bookId={bookId ?? controller.mode}
+                ids={draft.attachmentIds}
+              />
+            ) : null}
+            {!isAmountHidden
+              ? candidateIssues(controller.ledger, draft.candidate).map(
+                  (issue) => <Text key={issue}>• {issue}</Text>,
+                )
+              : null}
+            <ReceiptAction
               disabled={ai.isBusy}
               onPress={() => setEditing(draft)}
             >
               核对并入账
-            </Button>
+            </ReceiptAction>
             <Button
               disabled={ai.isBusy}
               onPress={() => void ai.discard(draft.id)}

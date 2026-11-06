@@ -14,6 +14,7 @@ import { useNativeAccount } from "../auth/NativeAccount";
 import { nativeStore } from "../platform/storage";
 import { Screen, Section, ErrorMessage } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
+import { ReceiptAction } from "./ReceiptAction";
 const ROLES = [
   { value: "viewer", label: "只读" },
   { value: "member", label: "成员" },
@@ -25,6 +26,7 @@ export function NetworkScreen({
   controller: LedgerController;
 }): React.JSX.Element {
   const account = useNativeAccount();
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const [hasConfirmed, setConfirmed] = useState(false),
     [code, setCode] = useState(""),
     [role, setRole] = useState<BookRole>("member");
@@ -68,7 +70,13 @@ export function NetworkScreen({
     canManage = currentRole === "owner" || currentRole === "admin";
   return (
     <Screen>
-      <Text variant="headlineSmall">家庭与联网账本</Text>
+      <Text
+        variant="headlineLarge"
+        accessibilityRole="header"
+        style={{ fontWeight: "700" }}
+      >
+        家庭与联网账本
+      </Text>
       <ErrorMessage message={manager.error} />
       {manager.message ? (
         <Text accessibilityLiveRegion="polite">{manager.message}</Text>
@@ -85,15 +93,14 @@ export function NetworkScreen({
                 status={hasConfirmed ? "checked" : "unchecked"}
                 onPress={() => setConfirmed(!hasConfirmed)}
               />
-              <Button
-                mode="contained"
+              <ReceiptAction
                 disabled={
                   !hasConfirmed || manager.isBusy || controller.mode === "demo"
                 }
                 onPress={() => void manager.run(manager.convert)}
               >
                 转换当前账本
-              </Button>
+              </ReceiptAction>
             </Section>
           ) : (
             <Section
@@ -124,13 +131,13 @@ export function NetworkScreen({
             >
               加入
             </Button>
-            {manager.books.map((book) => (
+            {manager.books.map((book, index) => (
               <Button
                 key={book.id}
                 mode="outlined"
                 onPress={() => void manager.run(() => manager.open(book))}
               >
-                {book.name}
+                {isAmountHidden ? `联网账本 ${index + 1}` : book.name}
               </Button>
             ))}
           </Section>
@@ -182,8 +189,11 @@ export function NetworkScreen({
           ) : null}
           {manager.members.length ? (
             <Section title="账本成员">
-              {manager.members.map((member) => (
-                <Section key={member.id} title={member.username}>
+              {manager.members.map((member, index) => (
+                <Section
+                  key={member.id}
+                  title={isAmountHidden ? `成员 ${index + 1}` : member.username}
+                >
                   <Text>
                     {member.role === "owner"
                       ? "所有者"
@@ -247,8 +257,9 @@ export function NetworkScreen({
             <Section title="操作历史">
               {manager.history.map((item) => (
                 <Text key={item.id}>
-                  {new Date(item.createdAt).toLocaleString()} · {item.username}{" "}
-                  · {item.source} · {item.summary}
+                  {new Date(item.createdAt).toLocaleString()} ·{" "}
+                  {isAmountHidden ? "成员" : item.username} · {item.source} ·{" "}
+                  {isAmountHidden ? "内容已隐藏" : item.summary}
                 </Text>
               ))}
             </Section>

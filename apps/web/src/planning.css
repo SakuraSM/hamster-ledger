@@ -278,6 +278,7 @@
   --muted: #c7b59f;
   --line: #514337;
   --success: #b1c49d;
+  --positive: #b1c49d;
 }
 :root[data-theme="night"] .form-grid label,
 :root[data-theme="night"] .filter-bar > select,
@@ -452,4 +453,119 @@
 .report-distribution-heading .report-controls {
   flex: 1;
   justify-content: flex-end;
+}
+
+/* Planning, reports and calendar remain data-driven and share the receipt palette. */
+.planning-page .page-heading h1 {
+  color: var(--ink);
+  font-size: 34px;
+  letter-spacing: -0.8px;
+}
+.planning-page .page-heading p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.planning-page .panel {
+  background: transparent;
+  border-color: var(--line);
+  border-radius: 10px;
+}
+.planning-page .budget-card > strong,
+.planning-page .large-amount {
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 650;
+}
+.planning-page .budget-card progress {
+  accent-color: var(--action);
+}
+.planning-page .calendar-grid {
+  gap: 5px;
+}
+.planning-page .calendar-day {
+  min-height: 76px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+}
+.planning-page .calendar-day:hover {
+  background: var(--sidebar);
+}
+.planning-page .calendar-day[data-heat="1"] {
+  background: #edf0e0;
+}
+.planning-page .calendar-day[data-heat="2"] {
+  background: #e1e8cc;
+}
+.planning-page .calendar-day[data-heat="3"] {
+  background: #d4dfb5;
+}
+.planning-page .calendar-day[data-heat="4"] {
+  background: #bfce95;
+}
+.planning-page .calendar-day.selected {
+  background: var(--action);
+  color: var(--action-ink);
+  border-color: var(--action);
+}
+.planning-page .calendar-day.selected small {
+  color: var(--action-ink);
+}
+.planning-page .report-summary {
+  border-bottom: 1px solid var(--line);
+}
+.planning-page .report-summary strong {
+  color: var(--ink);
+  font-size: 26px;
+  font-weight: 650;
+}
+.planning-page .report-summary > div:first-child strong {
+  font-size: 36px;
+}
+.planning-page .report-grid {
+  margin-top: 20px;
+}
+.planning-page .stat-row {
+  border-color: var(--line);
+}
+@media (max-width: 700px) {
+  .planning-page .page-heading h1 {
+    font-size: 29px;
+  }
+  .planning-page .calendar-day {
+    min-height: 54px;
+    padding: 5px;
+  }
+  .planning-page .report-summary > div:first-child strong {
+    font-size: 28px;
+  }
+}
+:root[data-theme="night"] .planning-page .calendar-day[data-heat="1"] {
+  background: #30372a;
+}
+:root[data-theme="night"] .planning-page .calendar-day[data-heat="2"] {
+  background: #3a4930;
+}
+:root[data-theme="night"] .planning-page .calendar-day[data-heat="3"] {
+  background: #495b39;
+}
+:root[data-theme="night"] .planning-page .calendar-day[data-heat="4"] {
+  background: #596c43;
+}
+:root[data-theme="night"] .planning-page .calendar-day.selected {
+  background: var(--action);
+  color: var(--action-ink);
+}
+.planning-page .budget-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+.planning-page .budget-grid > .panel {
+  padding: 20px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 }

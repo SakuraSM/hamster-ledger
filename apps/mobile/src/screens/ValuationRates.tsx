@@ -15,6 +15,9 @@ export function ValuationRates({
   return (
     <Section title="估值汇率">
       <ErrorMessage message={controller.error} />
+      {controller.isLoading ? (
+        <Text accessibilityLiveRegion="polite">正在查询参考汇率…</Text>
+      ) : null}
       {[...new Set(currencies)]
         .filter((currency) => currency !== "CNY")
         .map((currency) => {
@@ -30,6 +33,7 @@ export function ValuationRates({
               </Text>
               <TextInput
                 label={`1 ${currency} 折合人民币`}
+                accessibilityLabel={`1 ${currency} 折合人民币`}
                 value={manual[currency] ?? ""}
                 onChangeText={(value) =>
                   setManual({ ...manual, [currency]: value })
@@ -38,6 +42,7 @@ export function ValuationRates({
               />
               <Button
                 disabled={!manual[currency]}
+                contentStyle={{ minHeight: 48 }}
                 onPress={() => controller.setManual(currency, manual[currency])}
               >
                 使用手动汇率
@@ -45,7 +50,9 @@ export function ValuationRates({
             </Section>
           );
         })}
-      <Text>估值不改写历史收支。参考汇率不代表银行结算价格。</Text>
+      <Text>
+        手动汇率仅用于本次估值查看，不改写历史收支。参考汇率不代表银行结算价格。
+      </Text>
     </Section>
   );
 }

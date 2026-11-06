@@ -1,31 +1,38 @@
 import { DATE_KEY_LENGTH } from "../constants";
-import { useState } from "react";
-import { Alert } from "react-native";
-import { Button, Card, Text, List } from "react-native-paper";
+import { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet } from "react-native";
+import { Button, Text, useTheme } from "react-native-paper";
 import {
-  archiveAssetAccount,
   accountActiveAt,
   assetTrendStart,
-  money,
   type AssetAccount,
   type BillRecord,
 } from "@hamster-ledger/core";
 import {
   useAssetSummary,
   type LedgerController,
-  type EntryDraft,
+  type AccountHistoryMode,
 } from "@hamster-ledger/ledger-react";
 import { useNativeAccount } from "../auth/NativeAccount";
-import { DateField } from "../ui/DateField";
+import { FormSheet } from "../ui/FormSheet";
 import { Screen, ErrorMessage } from "../ui/Screen";
 import { AccountEditor } from "./AccountEditor";
 import { BalanceCalibration } from "./BalanceCalibration";
 import { AssetAccountDetail } from "./AssetAccountDetail";
 import { AssetAccountList } from "./AssetAccountList";
-import { AdvancedEntryEditor } from "./AdvancedEntryEditor";
+import { AssetSummary } from "./AssetSummary";
+import { AssetUnassigned } from "./AssetUnassigned";
+import { unassignedAssetRecords } from "./asset-actions";
+import {
+  promptAssetArchive,
+  commitAssetArchive,
+  type AssetArchiveRequest,
+} from "./asset-archive";
+import { AssetTransfer } from "./AssetTransfer";
 import { NetWorthReport } from "./NetWorthReport";
-import { ValuationRates } from "./ValuationRates";
+import { AssetValuationDialog } from "./AssetValuationDialog";
 import { localNow } from "../platform/runtime";
+
 interface AssetsScreenProps {
   controller: LedgerController;
   onRecord: (record: BillRecord) => void;
@@ -34,15 +41,38 @@ export function AssetsScreen({
   controller,
   onRecord,
 }: AssetsScreenProps): React.JSX.Element {
+  const theme = useTheme();
+  const currentController = useRef(controller);
+  currentController.current = controller;
+  const isMounted = useRef(false);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   const [editor, setEditor] = useState<AssetAccount | "new" | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [initialHistoryMode, setInitialHistoryMode] =
+    useState<AccountHistoryMode>("changes");
   const [calibration, setCalibration] = useState<string | null>(null);
-  const [transfer, setTransfer] = useState<Partial<EntryDraft> | null>(null);
+  const [transfer, setTransfer] = useState<AssetAccount | "new" | null>(null);
+  const [transferOrigin, setTransferOrigin] = useState<string | null>(null);
+  const [isValuationOpen, setValuationOpen] = useState(false);
+  const [valuationOrigin, setValuationOrigin] = useState<string | null>(null);
+  const [isTrendOpen, setTrendOpen] = useState(false);
+  const [isUnassignedOpen, setUnassignedOpen] = useState(false);
   const [error, setError] = useState("");
   const [valuationDate, setValuationDate] = useState(
     localNow().slice(0, DATE_KEY_LENGTH),
   );
   const ledger = controller.ledger;
+  const [isAmountHidden, setAmountHidden] = useState(
+    Boolean(ledger.preferences?.hideAmounts),
+  );
+  useEffect(() => {
+    setAmountHidden(Boolean(ledger.preferences?.hideAmounts));
+  }, [controller.mode, ledger.preferences?.hideAmounts]);
   const currencies = ledger.accounts
     .filter((account) => accountActiveAt(account, valuationDate + " 23:59:59"))
     .map((account) => account.currency ?? "CNY");
@@ -57,95 +87,87 @@ export function AssetsScreen({
   const calibrationAccount = ledger.accounts.find(
     (item) => item.id === calibration,
   );
-  async function archive(item: AssetAccount): Promise<void> {
+  const unassigned = unassignedAssetRecords(ledger);
+  async function archive(request: AssetArchiveRequest): Promise<void> {
     try {
-      await controller.commit(
-        archiveAssetAccount({
-          ledger,
-          accountId: item.id,
-          isArchived: !item.isArchived,
-          at: localNow(),
-        }),
-      );
-      setSelected(null);
-      setError("");
+      await commitAssetArchive({
+        controller: currentController.current,
+        request,
+        isMounted: isMounted.current,
+        at: localNow(),
+      });
+      if (isMounted.current) {
+        setSelected(null);
+        setError("");
+      }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "归档失败");
+      const message = cause instanceof Error ? cause.message : "归档失败";
+      if (isMounted.current) setError(message);
+      Alert.alert("账户操作失败", message);
     }
+  }
+  function startTransfer(item?: AssetAccount): void {
+    setSelected(null);
+    setTransferOrigin(item?.id ?? null);
+    setTransfer(item ?? "new");
+  }
+  function closeTransfer(): void {
+    setTransfer(null);
+    if (transferOrigin) setSelected(transferOrigin);
+    setTransferOrigin(null);
   }
   return (
     <>
       <Screen>
-        <Text variant="headlineSmall" accessibilityRole="header">
-          资产管理
-        </Text>
-        <Text>看清账户余额与每一笔变化</Text>
-        <Card mode="contained">
-          <Card.Content style={{ gap: 12 }}>
-            <Text>
-              {totals.missingCurrencies.length || totals.missingBaselines.length
-                ? "已估值净资产"
-                : "净资产"}{" "}
-              · 截至 {valuationDate}
-            </Text>
-            <Text variant="displaySmall">¥{money(totals.netAssets)}</Text>
-            <Text>
-              总资产 ¥{money(totals.assets)} · 总负债 ¥
-              {money(totals.liabilities)}
-            </Text>
-            <Text variant="titleMedium">
-              本月变化{" "}
-              {comparison.netChange === null
-                ? "暂无可比数据"
-                : `${comparison.netChange >= 0 ? "+" : ""}¥${money(comparison.netChange)}`}
-            </Text>
-            <Text variant="bodySmall">
-              相比 {comparison.previousDate} · 含校准与汇率变化
-            </Text>
-          </Card.Content>
-        </Card>
-        {totals.missingCurrencies.length ? (
-          <Text accessibilityRole="alert">
-            {totals.missingCurrencies.join("、")} 缺少汇率；合计仅含已估值账户。
-          </Text>
-        ) : null}
-        {totals.missingBaselines.length ? (
-          <Text>
-            {totals.missingBaselines.join("、")} 在此日期尚无基准，未计入合计。
-          </Text>
-        ) : null}
-        {comparison.unavailableAccounts.length ? (
-          <Text>
-            {comparison.unavailableAccounts.join("、")} 缺少月初以前的余额基准。
-          </Text>
-        ) : null}
-        <List.Accordion title="估值日与汇率">
-          <DateField
-            label="资产估值日"
-            value={valuationDate}
-            onChange={setValuationDate}
-          />
-          <ValuationRates controller={rates} currencies={currencies} />
-        </List.Accordion>
-        <Button icon="plus" mode="contained" onPress={() => setEditor("new")}>
-          添加账户
-        </Button>
+        <AssetSummary
+          valuationDate={valuationDate}
+          totals={totals}
+          comparison={comparison}
+          isAmountHidden={isAmountHidden}
+          onShowValuation={() => {
+            setValuationOrigin(null);
+            setValuationOpen(true);
+          }}
+          onToggleAmounts={() => setAmountHidden(!isAmountHidden)}
+          onAdd={() => setEditor("new")}
+        />
         <ErrorMessage message={error} />
         <AssetAccountList
           ledger={ledger}
           through={through}
           changes={comparison.accountChanges}
-          onSelect={setSelected}
+          isAmountHidden={isAmountHidden}
+          onSelect={(id) => {
+            setInitialHistoryMode("changes");
+            setSelected(id);
+          }}
         />
-        {totals.balances.length && trendStart <= valuationDate ? (
-          <NetWorthReport
-            ledger={ledger}
-            start={trendStart}
-            end={valuationDate}
-          />
+        {unassigned.length ? (
+          <Button
+            icon="link-variant"
+            mode="text"
+            contentStyle={styles.touch}
+            onPress={() => setUnassignedOpen(true)}
+          >
+            {unassigned.length} 条已确认账单尚未关联账户
+          </Button>
         ) : null}
-        <Text variant="bodySmall">
-          余额由你维护基准，之后的已确认流水自动累计。账户间转账不计入收支，归档账户不计入净资产。
+        <Button
+          mode="contained"
+          icon="swap-horizontal"
+          contentStyle={styles.touch}
+          onPress={() => startTransfer()}
+        >
+          账户间转账
+        </Button>
+        <Button contentStyle={styles.touch} onPress={() => setTrendOpen(true)}>
+          查看净资产趋势
+        </Button>
+        <Text
+          variant="bodySmall"
+          style={{ color: theme.colors.onSurfaceVariant }}
+        >
+          余额由你维护基准，之后的已确认流水自动累计。账户间转账不计入收支。
         </Text>
       </Screen>
       {account ? (
@@ -153,7 +175,13 @@ export function AssetsScreen({
           account={account}
           ledger={ledger}
           through={through}
+          rate={rates.rates.find(
+            (item) => item.currency === (account.currency ?? "CNY"),
+          )}
           isSaving={controller.isSaving}
+          initialHistoryMode={initialHistoryMode}
+          isAmountHidden={isAmountHidden}
+          onReveal={() => setAmountHidden(false)}
           onClose={() => setSelected(null)}
           onEdit={() => {
             setSelected(null);
@@ -163,35 +191,19 @@ export function AssetsScreen({
             setSelected(null);
             setCalibration(account.id);
           }}
-          onTransfer={() => {
+          onTransfer={() => startTransfer(account)}
+          onManageRates={() => {
             setSelected(null);
-            setTransfer(
-              account.kind === "liability"
-                ? {
-                    type: "transfer",
-                    destinationId: account.id,
-                    accountId:
-                      ledger.accounts.find(
-                        (item) => !item.isArchived && item.kind === "asset",
-                      )?.id ?? "",
-                    merchant: "信用卡还款",
-                  }
-                : {
-                    type: "transfer",
-                    accountId: account.id,
-                    merchant: "账户转账",
-                  },
-            );
+            setValuationOrigin(account.id);
+            setValuationOpen(true);
           }}
           onArchive={() =>
-            Alert.alert(
-              account.isArchived ? "恢复账户" : "归档账户",
-              "历史流水与账户关联会保留。",
-              [
-                { text: "取消", style: "cancel" },
-                { text: "确认", onPress: () => void archive(account) },
-              ],
-            )
+            promptAssetArchive({
+              controller,
+              account,
+              show: Alert.alert,
+              onConfirm: (request) => void archive(request),
+            })
           }
           onRecord={(record) => {
             setSelected(null);
@@ -203,7 +215,10 @@ export function AssetsScreen({
         <AccountEditor
           account={editor === "new" ? undefined : editor}
           controller={controller}
-          onClose={() => setEditor(null)}
+          onClose={() => {
+            if (editor !== "new") setSelected(editor.id);
+            setEditor(null);
+          }}
         />
       ) : null}
       {calibrationAccount ? (
@@ -213,21 +228,73 @@ export function AssetsScreen({
           date={valuationDate}
           onClose={() => {
             setCalibration(null);
+            setInitialHistoryMode("changes");
+            setSelected(calibrationAccount.id);
+          }}
+          onFindRecords={() => {
+            setCalibration(null);
+            setInitialHistoryMode("records");
             setSelected(calibrationAccount.id);
           }}
         />
       ) : null}
       {transfer ? (
-        <AdvancedEntryEditor
+        <AssetTransfer
           ledger={ledger}
-          initialDraft={transfer}
+          account={transfer === "new" ? undefined : transfer}
+          isAmountHidden={isAmountHidden}
           onSave={async (next) => {
             await controller.commit(next);
-            setTransfer(null);
           }}
-          onClose={() => setTransfer(null)}
+          onClose={closeTransfer}
+        />
+      ) : null}
+      {isValuationOpen ? (
+        <AssetValuationDialog
+          value={valuationDate}
+          currencies={currencies}
+          rates={rates}
+          onChange={setValuationDate}
+          onClose={() => {
+            setValuationOpen(false);
+            if (valuationOrigin) setSelected(valuationOrigin);
+            setValuationOrigin(null);
+          }}
+        />
+      ) : null}
+      {isTrendOpen ? (
+        <FormSheet title="净资产趋势" onClose={() => setTrendOpen(false)}>
+          {isAmountHidden ? (
+            <Button
+              contentStyle={styles.touch}
+              onPress={() => setAmountHidden(false)}
+            >
+              显示资产金额后查看趋势
+            </Button>
+          ) : ledger.accounts.length > 0 && trendStart <= valuationDate ? (
+            <NetWorthReport
+              ledger={ledger}
+              start={trendStart}
+              end={valuationDate}
+            />
+          ) : (
+            <Text>添加账户并设置余额后，即可查看净资产趋势。</Text>
+          )}
+        </FormSheet>
+      ) : null}
+      {isUnassignedOpen ? (
+        <AssetUnassigned
+          records={unassigned}
+          isAmountHidden={isAmountHidden}
+          onReveal={() => setAmountHidden(false)}
+          onClose={() => setUnassignedOpen(false)}
+          onRecord={(record) => {
+            setUnassignedOpen(false);
+            onRecord(record);
+          }}
         />
       ) : null}
     </>
   );
 }
+const styles = StyleSheet.create({ touch: { minHeight: 48 } });

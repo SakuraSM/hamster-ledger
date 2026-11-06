@@ -1,6 +1,6 @@
 import { Button } from "@mantine/core";
+import { useEffect, useRef } from "react";
 import {
-  formatCurrency,
   type AssetAccount,
   type BillRecord,
   type Ledger,
@@ -8,26 +8,49 @@ import {
 import { useAccountHistory } from "@hamster-ledger/ledger-react";
 import { Choice } from "../../ui/Choice";
 import { TransactionTable } from "../TransactionTable";
+import { accountAmount } from "./asset-format";
 
 interface AccountHistoryProps {
   ledger: Ledger;
   account: AssetAccount;
   through: string;
+  isHidden: boolean;
+  recordRequest: number;
+  traceRequest: number;
   onRecord: (record: BillRecord) => void;
 }
 export function AccountHistory({
   ledger,
   account,
   through,
+  isHidden,
+  recordRequest,
+  traceRequest,
   onRecord,
 }: AccountHistoryProps): React.JSX.Element {
   const history = useAccountHistory({ ledger, account, through });
+  const handledRequest = useRef(recordRequest);
+  const handledTrace = useRef(traceRequest);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (handledRequest.current !== recordRequest) {
+      handledRequest.current = recordRequest;
+      history.setMode("records");
+      headingRef.current?.focus();
+    } else if (handledTrace.current !== traceRequest) {
+      handledTrace.current = traceRequest;
+      history.setMode("changes");
+      headingRef.current?.focus();
+    }
+  }, [history, recordRequest, traceRequest]);
   const amount = (minor: number): string =>
-    formatCurrency({ minor, currency: account.currency ?? "CNY" });
+    accountAmount({ minor, currency: account.currency ?? "CNY", isHidden });
   return (
     <section className="account-transactions">
       <div className="section-heading">
-        <h2>账户明细</h2>
+        <h2 ref={headingRef} tabIndex={-1}>
+          账户明细
+        </h2>
         <Choice
           aria-label="账户账期"
           value={history.month}
@@ -61,33 +84,67 @@ export function AccountHistory({
           : "包含待确认及基准之前的账单；这些记录不会再次叠加到当前余额。重复与已删除账单不展示。"}
       </p>
       {history.mode === "records" ? (
-        <TransactionTable
-          accounts={ledger.accounts}
-          records={history.records}
-          onSelect={onRecord}
-          showStatus
-        />
+        isHidden ? (
+          <div className="account-activity-list">
+            {history.records.map((record) => (
+              <div className="account-activity-row" key={record.id}>
+                <div>
+                  <strong>已关联账单</strong>
+                  <small>
+                    {record.date} ·{" "}
+                    {record.status === "confirmed" ? "已确认" : "待确认"}
+                  </small>
+                </div>
+                <strong>••••</strong>
+                <Button
+                  variant="subtle"
+                  aria-label="查看账单详情"
+                  onClick={() => onRecord(record)}
+                >
+                  详情
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <TransactionTable
+            accounts={ledger.accounts}
+            records={history.records}
+            onSelect={onRecord}
+            showStatus
+          />
+        )
       ) : (
         <div className="account-activity-list">
           {history.activities.map((row) => (
             <div className="account-activity-row" key={row.id}>
               <div>
                 <span className="activity-kind">{row.label}</span>
-                <strong>{row.description}</strong>
+                <strong>
+                  {isHidden
+                    ? row.record
+                      ? "账单记录"
+                      : "余额基准"
+                    : row.description}
+                </strong>
                 <small>{row.at}</small>
               </div>
               <div className="activity-amount">
                 <strong>
                   {row.change === null
                     ? "初始余额"
-                    : `${row.change >= 0 ? "+" : ""}${amount(row.change)}`}
+                    : `${!isHidden && row.change >= 0 ? "+" : ""}${amount(row.change)}`}
                 </strong>
                 <small>变动后 {amount(row.balance)}</small>
               </div>
               {row.record ? (
                 <Button
                   variant="subtle"
-                  aria-label={`查看${row.record.merchant}账单详情`}
+                  aria-label={
+                    isHidden
+                      ? "查看账单详情"
+                      : `查看${row.record.merchant}账单详情`
+                  }
                   onClick={() => row.record && onRecord(row.record)}
                 >
                   详情

@@ -3,6 +3,7 @@ import { Button, Checkbox, Text } from "react-native-paper";
 import {
   categoryNames,
   KINDS,
+  resolveAssetAccount,
   type BillRecord,
   type Kind,
 } from "@hamster-ledger/core";
@@ -23,7 +24,10 @@ export function RecordMetadataEditor({
   const [baseline] = useState(record);
   const [kind, setKind] = useState<Kind>(record.kind);
   const [category, setCategory] = useState(record.category);
-  const [accountId, setAccountId] = useState(record.accountId ?? "");
+  const [accountId, setAccountId] = useState(
+    () => resolveAssetAccount(record, controller.ledger.accounts)?.id ?? "",
+  );
+  const [hasAccountChanged, setAccountChanged] = useState(false);
   const [destination, setDestination] = useState(
     record.transferToAccountId ?? "",
   );
@@ -45,7 +49,7 @@ export function RecordMetadataEditor({
         kind,
         category,
         account: baseline.account,
-        accountId: accountId || null,
+        accountId: hasAccountChanged ? accountId || null : baseline.accountId,
         transferToAccountId: kind === "转账" ? destination || null : null,
         remember: shouldRemember,
       });
@@ -77,7 +81,10 @@ export function RecordMetadataEditor({
       <ChoiceField
         label="关联资产账户"
         value={accountId}
-        onChange={setAccountId}
+        onChange={(value) => {
+          setAccountId(value);
+          setAccountChanged(true);
+        }}
         options={[{ value: "", label: "不关联资产" }, ...accounts]}
       />
       {kind === "转账" ? (

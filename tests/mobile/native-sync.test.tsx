@@ -111,7 +111,14 @@ async function setup() {
 it("pulls a remote-only change while foregrounded without opening the sync screen", async () => {
   const { value, hook } = await setup();
   await waitFor(
-    () => expect(value.commit).toHaveBeenCalledWith(remoteLedger, "personal"),
+    () =>
+      expect(value.commit).toHaveBeenCalledWith(
+        remoteLedger,
+        expect.objectContaining({
+          mode: "personal",
+          assertCurrent: expect.any(Function),
+        }),
+      ),
     { timeout: 3000 },
   );
   expect(value.updateBooks).toHaveBeenCalledWith([
@@ -131,7 +138,13 @@ it("does not pull while backgrounded and checks immediately on foreground", asyn
   await act(async () => {
     fixture.listeners.forEach((listener) => listener());
   });
-  expect(value.commit).toHaveBeenCalledWith(remoteLedger, "personal");
+  expect(value.commit).toHaveBeenCalledWith(
+    remoteLedger,
+    expect.objectContaining({
+      mode: "personal",
+      assertCurrent: expect.any(Function),
+    }),
+  );
 });
 it("retains both versions on conflict and pauses automatic retries", async () => {
   const { value, hook } = await setup();

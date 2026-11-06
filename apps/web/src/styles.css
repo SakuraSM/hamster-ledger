@@ -4,20 +4,17 @@
 @import "./workflow.css";
 @import "./planning.css";
 @import "./auth.css";
+@import "./inbox.css";
 :root {
   font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "PingFang SC",
-    "Microsoft YaHei",
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
     sans-serif;
   color: var(--ink);
   background: var(--bg);
   font-synthesis: none;
   font-size: 15px;
   line-height: 1.5;
-  --sidebar-width: 246px;
+  --sidebar-width: 222px;
 }
 * {
   box-sizing: border-box;
@@ -135,7 +132,9 @@ main:focus {
   background: var(--sidebar);
   display: flex;
   flex-direction: column;
-  padding: 24px 12px;
+  padding: 24px 18px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
   z-index: 20;
 }
 .brand {
@@ -145,62 +144,86 @@ main:focus {
   padding: 0 12px;
 }
 .brand img {
-  width: 49px;
-  height: 49px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 .brand strong {
   display: block;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.6px;
   white-space: nowrap;
 }
 .brand span {
   display: block;
-  font-size: 12px;
-  color: #776253;
+  font-size: 10px;
+  color: var(--muted);
   white-space: nowrap;
   margin-top: 1px;
+}
+.sidebar-book {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 9px 12px;
+  background: var(--bg);
+  text-align: left;
+}
+.sidebar-book strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-book small {
+  margin-left: auto;
+  color: var(--muted);
+}
+.nav-mobile-label {
+  display: none;
 }
 .main-nav {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 31px;
+  margin-top: 25px;
 }
 .nav-item {
   height: 50px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 0 21px;
+  gap: 14px;
+  padding: 0 16px;
   text-align: left;
-  font-size: 18px;
+  font-size: 14px;
   border-radius: 9px;
 }
 .nav-item:hover {
-  background: #f0e4d5;
+  background: color-mix(in srgb, var(--apricot) 55%, transparent);
 }
 .nav-item.active {
   background: var(--apricot);
-  color: #7e3b1b;
+  color: var(--ink);
 }
 .count-badge {
   margin-left: auto;
   border-radius: 50%;
-  min-width: 26px;
-  height: 26px;
-  background: #f4c16e;
-  color: #50340e;
+  min-width: 22px;
+  height: 22px;
+  background: var(--bg);
+  color: var(--positive);
   display: grid;
   place-items: center;
-  font-size: 15px;
+  font-size: 12px;
 }
 .source-nav {
-  border-top: 1px solid #e7d9ca;
-  margin: 26px 12px 0;
-  padding-top: 22px;
+  border-top: 1px solid var(--line);
+  margin: 18px 12px 0;
+  padding-top: 16px;
 }
 .source-nav > p {
   font-size: 14px;
@@ -210,11 +233,11 @@ main:focus {
 .source-nav button {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   width: 100%;
   padding: 12px 5px;
   text-align: left;
-  font-size: 18px;
+  font-size: 14px;
 }
 .source-nav button:hover {
   color: var(--primary);
@@ -241,14 +264,14 @@ main:focus {
 .sidebar-footer {
   margin: auto 12px 0;
   padding-top: 22px;
-  border-top: 1px solid #e6d8c8;
+  border-top: 1px solid var(--line);
 }
 .sidebar-footer > button {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 20px;
-  font-size: 18px;
+  gap: 14px;
+  font-size: 14px;
   padding: 0 7px;
 }
 .sidebar-footer > button > svg:last-child {
@@ -261,22 +284,24 @@ main:focus {
 }
 .main-content {
   margin-left: var(--sidebar-width);
-  padding: 14px 32px 28px 36px;
+  padding: 0 40px 32px;
   min-height: 100vh;
 }
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 49px;
+  min-height: 88px;
   gap: 12px;
-  margin-bottom: 29px;
+  margin: 0 -40px 36px;
+  padding: 0 40px;
+  border-bottom: 1px solid var(--line);
 }
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 16px;
+  font-size: 14px;
 }
 .breadcrumb > span {
   color: #796251;
@@ -288,6 +313,10 @@ main:focus {
   display: flex;
   align-items: center;
   gap: 22px;
+}
+.mobile-brand,
+.mobile-tools {
+  display: none;
 }
 .month-picker {
   display: flex;
@@ -323,12 +352,12 @@ main:focus {
   white-space: nowrap;
 }
 .primary-button {
-  background: var(--primary);
-  color: #fffaf5;
-  border: 1px solid var(--primary);
+  background: var(--action);
+  color: var(--action-ink);
+  border: 1px solid var(--action);
 }
 .primary-button:hover:not(:disabled) {
-  background: var(--primary-hover);
+  background: #df7548;
 }
 .secondary-button {
   border: 1px solid #dfcdbb;
@@ -754,8 +783,8 @@ main:focus {
   .main-content {
     max-width: 1580px;
     margin-right: auto;
-    padding-left: 52px;
-    padding-right: 52px;
+    padding-left: 40px;
+    padding-right: 40px;
   }
   .analytics {
     grid-template-columns: 1.6fr 1fr;
@@ -789,6 +818,16 @@ main:focus {
   .main-content {
     padding-left: 27px;
     padding-right: 27px;
+  }
+  .topbar {
+    margin-left: -27px;
+    margin-right: -27px;
+    padding-left: 27px;
+    padding-right: 27px;
+  }
+  .inbox-workspace {
+    margin-left: -27px;
+    margin-right: -27px;
   }
   .page-heading h1 {
     font-size: 36px;
@@ -859,6 +898,7 @@ main:focus {
     padding: 0;
   }
   .brand > div,
+  .sidebar-book,
   .nav-item > span,
   .source-nav,
   .sidebar-footer span,
@@ -885,6 +925,16 @@ main:focus {
   }
   .main-content {
     padding: 16px 26px;
+  }
+  .topbar {
+    margin-left: -26px;
+    margin-right: -26px;
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+  .inbox-workspace {
+    margin-left: -26px;
+    margin-right: -26px;
   }
   .top-actions {
     gap: 12px;
@@ -931,7 +981,7 @@ main:focus {
   .main-nav {
     margin: 0;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 4px;
   }
   .nav-item {
@@ -943,6 +993,12 @@ main:focus {
     font-size: 11px;
   }
   .nav-item > span:not(.count-badge) {
+    display: block;
+  }
+  .nav-item.has-mobile-label > .nav-label {
+    display: none;
+  }
+  .nav-item > .nav-mobile-label {
     display: block;
   }
   .nav-item > svg {
@@ -957,12 +1013,53 @@ main:focus {
     margin-left: 0;
   }
   .topbar {
-    margin-bottom: 26px;
-    gap: 6px;
+    margin: -15px -20px 26px;
+    padding: 10px 20px;
+    min-height: 76px;
+    gap: 8px;
+  }
+  .inbox-workspace {
+    margin-left: -20px;
+    margin-right: -20px;
   }
   .breadcrumb {
-    font-size: 12px;
-    gap: 6px;
+    display: none;
+  }
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    text-align: left;
+  }
+  .mobile-brand img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+  }
+  .mobile-brand span {
+    display: grid;
+    min-width: 0;
+  }
+  .mobile-brand b {
+    font-size: 17px;
+  }
+  .mobile-brand small {
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mobile-tools {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+  }
+  .header-account > span,
+  .top-actions > .primary-button .primary-label,
+  .mode-label {
+    display: none;
   }
   .top-actions {
     gap: 8px;
@@ -970,7 +1067,7 @@ main:focus {
   .top-actions > .primary-button {
     padding: 8px 10px;
     font-size: 12px;
-    min-height: 37px;
+    min-height: 44px;
   }
   .top-actions > .primary-button svg {
     width: 17px;
@@ -1155,13 +1252,13 @@ main:focus {
 /* Align the selected desktop composition while retaining the mobile adaptations. */
 @media (min-width: 1251px) {
   :root {
-    --sidebar-width: 255px;
+    --sidebar-width: 222px;
   }
   .main-content {
-    padding-left: 37px;
+    padding-left: 40px;
   }
   .brand strong {
-    font-size: 25px;
+    font-size: 19px;
   }
   .page-heading h1 {
     font-size: 46px;

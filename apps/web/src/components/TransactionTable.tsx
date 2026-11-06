@@ -13,6 +13,7 @@ interface TransactionTableProps {
   records: BillRecord[];
   onSelect: (record: BillRecord) => void;
   showStatus?: boolean;
+  hideAmounts?: boolean;
   accounts?: AssetAccount[];
   selected?: string[];
   onToggle?: (record: BillRecord) => void;
@@ -26,6 +27,7 @@ export function TransactionTable({
   records,
   onSelect,
   showStatus = false,
+  hideAmounts = false,
   accounts = [],
   selected = [],
   onToggle,
@@ -122,7 +124,7 @@ export function TransactionTable({
                 <td
                   className={`amount-cell ${record.kind === "收入" || record.kind === "退款" ? "positive" : ""}`}
                 >
-                  {signedMoney(record)}
+                  {hideAmounts ? "••••" : signedMoney(record)}
                 </td>
                 <td className="detail-cell">
                   <Button

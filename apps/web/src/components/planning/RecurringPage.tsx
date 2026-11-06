@@ -11,14 +11,18 @@ import {
 } from "@hamster-ledger/core";
 import { localNow, newEntityId } from "../../platform/browser/runtime";
 import { RecurringEditor } from "./RecurringEditor";
+import { Dialog } from "../Dialog";
 import { FREQUENCIES } from "./recurring-config";
 interface Props {
   ledger: Ledger;
   onCommit: (ledger: Ledger) => Promise<void>;
 }
 export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
   const [editing, setEditing] = useState<RecurringRule | null>(null);
   const [error, setError] = useState("");
+  const [deletingRule, setDeletingRule] = useState<RecurringRule | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   function add(): void {
     setEditing({
       id: newEntityId(),
@@ -44,6 +48,23 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "保存失败");
+    }
+  }
+  async function remove(rule: RecurringRule): Promise<void> {
+    setIsDeleting(true);
+    setError("");
+    try {
+      await onCommit({
+        ...ledger,
+        recurringRules: ledger.recurringRules?.filter(
+          (item) => item.id !== rule.id,
+        ),
+      });
+      setDeletingRule(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "删除规则失败。");
+    } finally {
+      setIsDeleting(false);
     }
   }
   return (
@@ -74,7 +95,9 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
         {(ledger.recurringRules ?? []).map((rule) => (
           <article className="panel" key={rule.id}>
             <h2>{rule.name}</h2>
-            <p className="large-amount">¥ {money(rule.amount)}</p>
+            <p className="large-amount">
+              {isHidden ? "••••" : `¥${money(rule.amount)}`}
+            </p>
             <p>
               {FREQUENCIES[rule.frequency]} · {rule.kind} ·{" "}
               {rule.isPaused ? "已暂停" : "进行中"}
@@ -110,14 +133,10 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
                 variant="subtle"
                 type="submit"
                 className="text-button"
-                onClick={() =>
-                  void commit({
-                    ...ledger,
-                    recurringRules: ledger.recurringRules?.filter(
-                      (item) => item.id !== rule.id,
-                    ),
-                  })
-                }
+                onClick={() => {
+                  setError("");
+                  setDeletingRule(rule);
+                }}
               >
                 删除规则
               </Button>
@@ -129,6 +148,34 @@ export function RecurringPage({ ledger, onCommit }: Props): React.JSX.Element {
         <div className="empty-panel">
           房租、工资、订阅会员，都可以设为周期账单。
         </div>
+      ) : null}
+      {deletingRule ? (
+        <Dialog title="删除周期规则" onClose={() => setDeletingRule(null)}>
+          <p>
+            删除“{deletingRule.name}”后不再按此规则补记，已经生成的账单会保留。
+          </p>
+          {error ? (
+            <p role="alert" className="error-message">
+              {error}
+            </p>
+          ) : null}
+          <div className="dialog-actions">
+            <Button
+              variant="outline"
+              disabled={isDeleting}
+              onClick={() => setDeletingRule(null)}
+            >
+              取消
+            </Button>
+            <Button
+              className="primary-button"
+              loading={isDeleting}
+              onClick={() => void remove(deletingRule)}
+            >
+              确认删除
+            </Button>
+          </div>
+        </Dialog>
       ) : null}
       {editing ? (
         <RecurringEditor

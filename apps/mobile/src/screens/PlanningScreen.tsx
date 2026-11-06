@@ -23,12 +23,19 @@ export function PlanningScreen({
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
   const panel = usePlanningPanel(controller, initialTab),
     ledger = controller.ledger;
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const unread =
     ledger.notifications?.filter((item) => !item.isRead).length ?? 0;
   return (
     <>
       <Screen>
-        <Text variant="headlineSmall">生活计划与提醒</Text>
+        <Text
+          variant="headlineLarge"
+          accessibilityRole="header"
+          style={{ fontWeight: "700" }}
+        >
+          生活计划与提醒
+        </Text>
         <ChoiceField
           label="查看内容"
           value={panel.tab}
@@ -78,9 +85,9 @@ export function PlanningScreen({
               .map((item) => (
                 <Section
                   key={item.id}
-                  title={`${item.title}${item.isRead ? " · 已读" : ""}`}
+                  title={`${isAmountHidden ? "提醒" : item.title}${item.isRead ? " · 已读" : ""}`}
                 >
-                  <Text>{item.body}</Text>
+                  <Text>{isAmountHidden ? "通知内容已隐藏。" : item.body}</Text>
                   <Text>{item.date}</Text>
                   {!item.isRead ? (
                     <Button

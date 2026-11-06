@@ -316,3 +316,183 @@
     font-size: 19px;
   }
 }
+
+/* Receipt Relay surfaces for summaries, transaction lists, and editable receipts. */
+.overview-page .page-heading h1,
+.transactions-page .page-heading h1 {
+  color: var(--ink);
+  font-size: 34px;
+  letter-spacing: -0.8px;
+}
+.overview-page .page-heading p,
+.transactions-page .page-heading p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.overview-page .summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 34px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.overview-page .summary .summary-primary {
+  grid-column: 1 / -1;
+}
+.overview-page .summary > div + div {
+  padding-left: 0;
+  border-left: 0;
+}
+.overview-page .summary .metric-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+.overview-page .summary .summary-primary strong {
+  color: var(--ink);
+  font-size: clamp(38px, 4vw, 56px);
+  line-height: 1.1;
+}
+.overview-page .summary strong {
+  color: var(--ink);
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+}
+.overview-page .summary strong > span {
+  font-size: inherit;
+  margin-right: 0;
+}
+.overview-page .summary-caption {
+  margin: 12px 0 22px;
+  font-size: 12px;
+}
+.overview-page .review-callout,
+.overview-page .review-clear {
+  width: 100%;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+.overview-page .review-callout {
+  color: var(--ink);
+}
+.overview-page .review-callout svg,
+.overview-page .review-clear svg {
+  color: #57642e;
+}
+.overview-page .analytics {
+  margin-top: 30px;
+  border-top: 0;
+}
+.overview-page .analytics h2,
+.overview-page .recent-section h2 {
+  font-size: 17px;
+}
+.overview-page .trend-section,
+.overview-page .category-section {
+  background: transparent;
+}
+.overview-page .category-row:hover {
+  background: var(--sidebar);
+}
+.overview-page .category-circle {
+  background: #e8ecd8;
+  color: #57642e;
+}
+.overview-page .category-row progress {
+  accent-color: var(--action);
+}
+.overview-page .recent-section {
+  margin-top: 32px;
+}
+.transactions-page .filter-bar {
+  gap: 9px;
+  margin-top: 24px;
+}
+.transactions-page .search-field {
+  min-height: 44px;
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+.transactions-page .filter-bar .mantine-Select-input,
+.transactions-page .report-controls .mantine-Select-input {
+  border-color: var(--line);
+  background: var(--sidebar);
+  border-radius: 999px;
+  color: var(--ink);
+}
+.transactions-page .filter-summary {
+  padding: 16px 0;
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+.transactions-page .transaction-table td {
+  border-color: var(--line);
+}
+.transactions-page .list-caption {
+  margin-top: 28px;
+}
+.ledger-modal .detail-hero {
+  padding: 8px 0 22px;
+  border-bottom: 1px solid var(--line);
+}
+.ledger-modal .detail-hero > strong {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  color: var(--ink);
+}
+.ledger-modal .detail-meta > div,
+.ledger-modal .raw-details dl > div {
+  padding: 13px 0;
+  border-color: var(--line);
+}
+.ledger-modal .form-grid label,
+.ledger-modal .field-map-grid label {
+  color: var(--muted);
+}
+.ledger-modal .form-grid input,
+.ledger-modal .form-grid select {
+  border-color: var(--line);
+  color: var(--ink);
+}
+.ledger-modal .raw-details {
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 700px) {
+  .overview-page .page-heading h1,
+  .transactions-page .page-heading h1 {
+    font-size: 29px;
+  }
+  .overview-page .summary {
+    gap: 18px 12px;
+  }
+  .overview-page .summary .summary-primary strong {
+    font-size: 39px;
+  }
+  .overview-page .summary strong {
+    font-size: 22px;
+  }
+  .transactions-page .filter-bar .mantine-Select-root {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+  .ledger-modal .detail-hero > strong {
+    flex-basis: 100%;
+    margin: 6px 0 0;
+  }
+}
+:root[data-theme="night"] .overview-page .category-circle {
+  background: #424d32;
+  color: #dce9be;
+}
+:root[data-theme="night"] .overview-page .review-callout svg,
+:root[data-theme="night"] .overview-page .review-clear svg {
+  color: #bacb8f;
+}

@@ -20,10 +20,12 @@ const FIRST_DATA_ROW_OFFSET = 2;
 const PREVIEW_CELL_LENGTH = 48;
 interface FieldMappingProps {
   file: StatementFile;
+  hideAmounts?: boolean;
   onChange: (file: StatementFile) => void;
 }
 export function FieldMapping({
   file,
+  hideAmounts = false,
   onChange,
 }: FieldMappingProps): React.JSX.Element {
   const [headerRow, setHeaderRow] = useState<string | number>(
@@ -145,7 +147,9 @@ export function FieldMapping({
             <option value="">未设置</option>
             {columns.map((column) => (
               <option key={column.index} value={column.index}>
-                {column.label}
+                {hideAmounts
+                  ? `第 ${column.index + 1} 列 · ${column.header}`
+                  : column.label}
               </option>
             ))}
           </Choice>
@@ -177,8 +181,14 @@ export function FieldMapping({
                     {file.headerIndex + index + FIRST_DATA_ROW_OFFSET}
                   </Table.Td>
                   {columns.map((column) => (
-                    <Table.Td key={column.index} title={row[column.index]}>
-                      {row[column.index]?.slice(0, PREVIEW_CELL_LENGTH) || "—"}
+                    <Table.Td
+                      key={column.index}
+                      title={hideAmounts ? undefined : row[column.index]}
+                    >
+                      {hideAmounts
+                        ? "••••"
+                        : row[column.index]?.slice(0, PREVIEW_CELL_LENGTH) ||
+                          "—"}
                     </Table.Td>
                   ))}
                 </Table.Tr>

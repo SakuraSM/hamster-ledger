@@ -1,6 +1,6 @@
 import { TextInput, Button } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CATEGORY_TEMPLATES,
   applyCategoryTemplate,
@@ -11,6 +11,7 @@ import {
   type CategoryDefinition,
 } from "@hamster-ledger/core";
 import { newEntityId } from "../../platform/browser/runtime";
+import { Dialog } from "../Dialog";
 interface Props {
   ledger: Ledger;
   onCommit: (ledger: Ledger) => Promise<void>;
@@ -26,7 +27,42 @@ export function CategoriesPanel({
   const [template, setTemplate] =
     useState<keyof typeof CATEGORY_TEMPLATES>("daily");
   const [error, setError] = useState("");
+  const [archiveTarget, setArchiveTarget] = useState<CategoryDefinition | null>(
+    null,
+  );
+  const [isArchiving, setArchiving] = useState(false);
+  const archiveLock = useRef(false);
+  useEffect(() => {
+    if (!archiveTarget && !isArchiving) archiveLock.current = false;
+  }, [archiveTarget, isArchiving]);
   const categories = categoryDefinitions(ledger);
+  async function archiveCategory(): Promise<void> {
+    if (!archiveTarget || archiveLock.current) return;
+    archiveLock.current = true;
+    setArchiving(true);
+    let succeeded = false;
+    try {
+      const current = categoryDefinitions(ledger).find(
+        (item) => item.id === archiveTarget.id,
+      );
+      if (
+        !current ||
+        current.isArchived ||
+        current.name !== archiveTarget.name ||
+        current.kind !== archiveTarget.kind
+      )
+        throw new Error("分类已变化，请关闭后重新确认。");
+      await onCommit(saveCategory(ledger, { ...current, isArchived: true }));
+      succeeded = true;
+      setArchiveTarget(null);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "归档分类失败");
+    } finally {
+      if (!succeeded) archiveLock.current = false;
+      setArchiving(false);
+    }
+  }
   async function commit(next: Ledger): Promise<void> {
     try {
       await onCommit(next);
@@ -188,14 +224,19 @@ export function CategoriesPanel({
                   variant="subtle"
                   type="submit"
                   className="text-button"
-                  onClick={() =>
-                    void commit(
-                      saveCategory(ledger, {
-                        ...category,
-                        isArchived: !category.isArchived,
-                      }),
-                    )
-                  }
+                  onClick={() => {
+                    if (category.isArchived)
+                      void commit(
+                        saveCategory(ledger, {
+                          ...category,
+                          isArchived: false,
+                        }),
+                      );
+                    else if (!archiveLock.current) {
+                      setError("");
+                      setArchiveTarget(category);
+                    }
+                  }}
                 >
                   {category.isArchived ? "恢复" : "归档"}
                 </Button>
@@ -211,6 +252,34 @@ export function CategoriesPanel({
         <p className="error-message" role="alert">
           {error}
         </p>
+      ) : null}
+      {archiveTarget ? (
+        <Dialog title="归档分类？" onClose={() => setArchiveTarget(null)}>
+          <p>
+            归档“{archiveTarget.name}
+            ”后，历史账单仍保留此分类，新账单不再使用它；已有子分类也不再用于新账单。
+          </p>
+          {error ? (
+            <p role="alert" className="error-message">
+              {error}
+            </p>
+          ) : null}
+          <div className="dialog-actions">
+            <Button
+              variant="outline"
+              disabled={isArchiving}
+              onClick={() => setArchiveTarget(null)}
+            >
+              取消
+            </Button>
+            <Button
+              loading={isArchiving}
+              onClick={() => void archiveCategory()}
+            >
+              确认归档
+            </Button>
+          </div>
+        </Dialog>
       ) : null}
     </section>
   );

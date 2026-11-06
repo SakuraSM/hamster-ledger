@@ -31,6 +31,7 @@ function FactsContent({
   members,
 }: Props & { members: SplitMember[] }): React.JSX.Element {
   const detail = record.detail!;
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
   const memberName = (id: string): string =>
     members.find((item) => item.id === id)?.username ?? id;
   return (
@@ -51,7 +52,7 @@ function FactsContent({
       </div>
       <div>
         <dt>原币金额</dt>
-        <dd>{formatCurrency(detail.original)}</dd>
+        <dd>{isHidden ? "••••" : formatCurrency(detail.original)}</dd>
       </div>
       {detail.original.currency !== "CNY" ? (
         <div>
@@ -66,7 +67,7 @@ function FactsContent({
       {detail.destination ? (
         <div>
           <dt>实际转入</dt>
-          <dd>{formatCurrency(detail.destination)}</dd>
+          <dd>{isHidden ? "••••" : formatCurrency(detail.destination)}</dd>
         </div>
       ) : null}
       {detail.relatedId ? (
@@ -96,7 +97,8 @@ function FactsContent({
           <dd>
             {detail.splits.map((split) => (
               <p key={split.memberId}>
-                {memberName(split.memberId)} · ¥{money(split.amount)}
+                {memberName(split.memberId)} ·{" "}
+                {isHidden ? "••••" : `¥${money(split.amount)}`}
               </p>
             ))}
           </dd>

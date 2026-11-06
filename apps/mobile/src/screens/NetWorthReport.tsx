@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Card, Text, useTheme } from "react-native-paper";
-import { money, type Ledger } from "@hamster-ledger/core";
+import {
+  accountActiveAt,
+  accountBaselines,
+  money,
+  type Ledger,
+} from "@hamster-ledger/core";
 import { useReportData } from "@hamster-ledger/ledger-react";
 import { useNativeAccount } from "../auth/NativeAccount";
 import { AmountText } from "../ui/AmountText";
@@ -31,6 +36,14 @@ export function NetWorthReport({
     report.rows.find((row) => row.date === selectedDate) ??
     report.rows[report.rows.length - 1];
   const hasValues = report.rows.some((row) => row.amount !== null);
+  const hasAccountAtReportDate = report.rows.some((row) => {
+    const through = row.date + " 23:59:59";
+    return ledger.accounts.some(
+      (account) =>
+        accountActiveAt(account, through) &&
+        accountBaselines(account).some((baseline) => baseline.at <= through),
+    );
+  });
   const selectedIndex = report.rows.findIndex((row) => row === selected);
   function selectPrevious(): void {
     setSelectedDate(report.rows[selectedIndex - 1].date);
@@ -73,8 +86,8 @@ export function NetWorthReport({
         {report.isLoading ? (
           <Text accessibilityLiveRegion="polite">正在查询参考汇率…</Text>
         ) : null}
-        {!ledger.accounts.some((account) => !account.isArchived) ? (
-          <Text>添加资产账户并设置余额后，即可查看净资产趋势。</Text>
+        {!hasAccountAtReportDate ? (
+          <Text>此范围内没有可用的账户余额基准，请调整日期或添加账户。</Text>
         ) : (
           <>
             <View accessibilityLiveRegion="polite" style={styles.value}>
@@ -149,7 +162,7 @@ export function NetWorthReport({
           variant="bodySmall"
           style={{ color: theme.colors.onSurfaceVariant }}
         >
-          按月末及起止日估值，不含归档账户；缺汇率留空。
+          按月末及起止日估值，并按各日账户状态统计；缺汇率留空。
         </Text>
       </Card.Content>
     </Card>

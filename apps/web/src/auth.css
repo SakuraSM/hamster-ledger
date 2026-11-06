@@ -387,3 +387,61 @@
     min-height: 36px;
   }
 }
+
+/* Authentication remains an independent entrance, with editable, labelled fields. */
+.auth-story {
+  background: #e9edda;
+}
+.auth-story-copy {
+  width: 100%;
+  max-width: 500px;
+}
+.auth-story-copy > img {
+  display: none;
+}
+.auth-story-copy h2 {
+  color: var(--ink);
+  font-size: clamp(38px, 4vw, 54px);
+}
+.auth-benefits svg {
+  color: #57642e;
+}
+.auth-form-wrap {
+  max-width: 550px;
+}
+.auth-heading h1 {
+  font-size: 36px;
+  color: var(--ink);
+}
+.auth-field input {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+}
+.auth-field input[aria-invalid="true"] {
+  border-bottom: 2px solid #a63f25;
+}
+.auth-submit {
+  background: var(--action);
+  color: var(--action-ink);
+  border-color: var(--action);
+}
+.auth-local {
+  border-color: var(--line);
+}
+@media (max-width: 700px) {
+  .auth-story {
+    background: var(--bg);
+  }
+  .auth-heading h1 {
+    font-size: 29px;
+  }
+}
+:root[data-theme="night"] .auth-story {
+  background: var(--sidebar);
+}
+:root[data-theme="night"] .auth-benefits svg {
+  color: #bacb8f;
+}
