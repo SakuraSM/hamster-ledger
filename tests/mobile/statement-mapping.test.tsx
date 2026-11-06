@@ -45,6 +45,7 @@ vi.mock("../../apps/mobile/src/ui/ChoiceField", () => ({
   ),
 }));
 vi.mock("react-native-paper", () => ({
+  useTheme: () => ({ dark: false, colors: {} }),
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   HelperText: ({ children }: { children: ReactNode }) => (
     <span role="alert">{children}</span>

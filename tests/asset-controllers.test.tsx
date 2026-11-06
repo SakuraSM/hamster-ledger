@@ -82,11 +82,12 @@ describe("shared asset interaction controllers", () => {
         openingBalance: 10500,
         balanceAt: "2026-09-05 12:00:00",
       },
+      expectedAccount: account,
       note: "核对余额",
     });
     expect(onClose).toHaveBeenCalledOnce();
   });
-  it("preserves account metadata changed while a calibration draft is open", async () => {
+  it("passes the opening snapshot alongside later account metadata", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     const { result, rerender } = renderHook(
       ({ book }) =>
@@ -108,6 +109,7 @@ describe("shared asset interaction controllers", () => {
       },
     });
     await act(() => result.current.save());
+    expect(onSave.mock.calls[0][0].expectedAccount).toEqual(account);
     expect(onSave.mock.calls[0][0].account).toMatchObject({
       name: "新账户名称",
       aliases: ["保留别名"],

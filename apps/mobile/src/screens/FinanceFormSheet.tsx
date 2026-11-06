@@ -1,3 +1,4 @@
+import { ReceiptAction } from "./ReceiptAction";
 import { View } from "react-native";
 import { Button, Checkbox, TextInput, Text } from "react-native-paper";
 import { useFinanceForm, type FinanceForm } from "@hamster-ledger/ledger-react";
@@ -89,14 +90,13 @@ export function FinanceFormSheet({
         </Button>
       ) : null}
       <ErrorMessage message={controller.error} />
-      <Button
-        mode="contained"
+      <ReceiptAction
         loading={controller.isBusy}
         disabled={controller.isBusy}
         onPress={() => void controller.save()}
       >
         保存
-      </Button>
+      </ReceiptAction>
     </FormSheet>
   );
 }

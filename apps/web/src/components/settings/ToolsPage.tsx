@@ -65,6 +65,8 @@ export function ToolsPage({
       <div className="tools-shortcuts">
         {(
           [
+            ["overview", "总览"],
+            ["reports", "收支报表"],
             ["calendar", "账单日历"],
             ["budgets", "预算管理"],
             ["recurring", "周期记账"],

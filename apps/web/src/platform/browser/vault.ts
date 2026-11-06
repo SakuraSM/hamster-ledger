@@ -9,6 +9,7 @@ const MIN_PASSWORD_LENGTH = 8;
 const SALT_BYTES = 16;
 import { STORAGE_PREFIX, type KeyValueStore } from "@hamster-ledger/core";
 const VAULT_KEY = "hamster-ledger.vault.v1";
+const NETWORK_CACHE_PREFIX = STORAGE_PREFIX + "network-cache.v1.";
 const ITERATIONS = 310000;
 interface Envelope {
   version: 1;
@@ -23,6 +24,11 @@ let envelopeSnapshot: string | null = null;
 const plainSnapshots = new Map<string, string | null>();
 const CONCURRENT_CHANGE =
   "另一个页面已修改账本，请刷新后重试；当前修改尚未保存。";
+function concurrentChange(): Error & { code: string } {
+  return Object.assign(new Error(CONCURRENT_CHANGE), {
+    code: "LEDGER_STORAGE_CONFLICT",
+  });
+}
 let queue: Promise<void> = Promise.resolve();
 function encode(bytes: Uint8Array): string {
   let text = "";
@@ -108,7 +114,16 @@ export async function unlockVault(password: string): Promise<void> {
   }
 }
 async function exclusive(write: () => Promise<void>): Promise<void> {
-  const operation = queue.then(() => withStorageLock(write));
+  const operation = queue
+    .then(() => withStorageLock(write))
+    .catch((cause: unknown) => {
+      if (
+        cause instanceof Error &&
+        cause.message === "另一个页面已修改账本，请刷新后重试。"
+      )
+        throw Object.assign(cause, { code: "LEDGER_STORAGE_CONFLICT" });
+      throw cause;
+    });
   queue = operation.catch(() => undefined);
   return operation;
 }
@@ -132,7 +147,7 @@ export async function enableVault(password: string): Promise<void> {
         key.startsWith(STORAGE_PREFIX) &&
         (await readStoredValue(key)) !== value
       )
-        throw new Error(CONCURRENT_CHANGE);
+        throw concurrentChange();
     }
     const entries = await readPlainEntries();
     const newSalt = encode(crypto.getRandomValues(new Uint8Array(SALT_BYTES)));
@@ -144,7 +159,7 @@ export async function enableVault(password: string): Promise<void> {
       Object.keys(entries).length !== Object.keys(latest).length ||
       Object.entries(entries).some(([key, value]) => latest[key] !== value)
     )
-      throw new Error(CONCURRENT_CHANGE);
+      throw concurrentChange();
     await writeStoredValue(VAULT_KEY, encrypted);
     envelopeSnapshot = encrypted;
     unlockedKey = key;
@@ -171,6 +186,17 @@ export const protectedStore: KeyValueStore = {
       return value;
     }
     if (!unlockedEntries) throw new Error("账本已锁定。");
+    if (key.startsWith(NETWORK_CACHE_PREFIX)) {
+      let current: string | null;
+      try {
+        current = await readStoredValue(VAULT_KEY);
+      } catch {
+        throw Object.assign(new Error("无法核验本机联网缓存状态。"), {
+          code: "LEDGER_STORAGE_UNVERIFIED",
+        });
+      }
+      if (current !== envelopeSnapshot) throw concurrentChange();
+    }
     return unlockedEntries[key] ?? null;
   },
   async setItem(key, value): Promise<void> {
@@ -182,16 +208,16 @@ export const protectedStore: KeyValueStore = {
           localStorage.getItem(key) !== previous ||
           (plainSnapshots.has(key) && current !== plainSnapshots.get(key))
         )
-          throw new Error(CONCURRENT_CHANGE);
+          throw concurrentChange();
         await writeStoredValue(key, value, previous);
         plainSnapshots.set(key, value);
         return;
       }
       if (!unlockedEntries || !unlockedKey) throw new Error("账本已锁定。");
       requireStorageLock();
-      if (unlockedEntries[key] === value) return;
       const previous = await readStoredValue(VAULT_KEY);
-      if (previous !== envelopeSnapshot) throw new Error(CONCURRENT_CHANGE);
+      if (previous !== envelopeSnapshot) throw concurrentChange();
+      if (unlockedEntries[key] === value) return;
       const next = { ...unlockedEntries, [key]: value };
       const encrypted = await encrypt({
         entries: next,
@@ -199,7 +225,7 @@ export const protectedStore: KeyValueStore = {
         saltValue: salt,
       });
       if ((await readStoredValue(VAULT_KEY)) !== previous)
-        throw new Error(CONCURRENT_CHANGE);
+        throw concurrentChange();
       await writeStoredValue(VAULT_KEY, encrypted);
       envelopeSnapshot = encrypted;
       unlockedEntries = next;

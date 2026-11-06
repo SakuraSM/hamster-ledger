@@ -29,6 +29,7 @@ export function PasswordInput({
       right={
         <TextInput.Icon
           icon={visible ? "eye-off" : "eye"}
+          disabled={disabled}
           accessibilityLabel={(visible ? "隐藏" : "显示") + label}
           onPress={() => setVisible(!visible)}
         />

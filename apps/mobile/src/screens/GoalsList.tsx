@@ -14,6 +14,7 @@ export function GoalsList({
   ledger: Ledger;
   panel: PlanningPanelController;
 }): React.JSX.Element {
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   return (
     <>
       <Button
@@ -31,13 +32,16 @@ export function GoalsList({
         return (
           <Section
             key={item.id}
-            title={`${item.name}${item.isArchived ? " · 已归档" : ""}`}
+            title={`${isAmountHidden ? "储蓄目标" : item.name}${item.isArchived ? " · 已归档" : ""}`}
           >
             <Text>
-              已分配 ¥{money(allocated)} / ¥{money(item.target)}
+              已分配 {isAmountHidden ? "••••" : `¥${money(allocated)}`} /{" "}
+              {isAmountHidden ? "••••" : `¥${money(item.target)}`}
               {item.dueDate ? ` · ${item.dueDate} 截止` : ""}
             </Text>
-            <ProgressBar progress={Math.min(1, allocated / item.target)} />
+            {!isAmountHidden ? (
+              <ProgressBar progress={Math.min(1, allocated / item.target)} />
+            ) : null}
             <Button
               onPress={() => panel.setForm(goalForm(ledger, item.id, item))}
             >
@@ -77,7 +81,7 @@ export function GoalsList({
               {item.allocations.map((allocation) => (
                 <List.Item
                   key={allocation.id}
-                  title={`${allocation.date} · ¥${money(allocation.amount)}`}
+                  title={`${allocation.date} · ${isAmountHidden ? "金额已隐藏" : `¥${money(allocation.amount)}`}`}
                   description={allocation.recordId ? "已关联转账" : undefined}
                 />
               ))}

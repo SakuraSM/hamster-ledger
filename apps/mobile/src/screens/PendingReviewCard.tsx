@@ -1,4 +1,5 @@
 import { View } from "react-native";
+import { ReceiptAction } from "./ReceiptAction";
 import { Button, Card, Text } from "react-native-paper";
 import { signedMoney, type BillRecord } from "@hamster-ledger/core";
 import {
@@ -19,6 +20,7 @@ export function PendingReviewCard({
   const review = usePendingReview(controller);
   const record = review.record;
   const candidate = review.candidate;
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   if (!record) return null;
   const index = review.records.indexOf(record);
   return (
@@ -46,13 +48,17 @@ export function PendingReviewCard({
           </Button>
         </View>
         <Text variant="titleMedium">
-          {record.merchant} · {signedMoney(record)}
+          {isAmountHidden
+            ? "待确认账单 · 金额已隐藏"
+            : `${record.merchant} · ${signedMoney(record)}`}
         </Text>
         <Text>
           {record.source} · {record.date}
         </Text>
-        <Text>{record.account || "未提供账户"}</Text>
-        <Text>{record.reason || "尚未计入收支。"}</Text>
+        {!isAmountHidden ? <Text>{record.account || "未提供账户"}</Text> : null}
+        {!isAmountHidden ? (
+          <Text>{record.reason || "尚未计入收支。"}</Text>
+        ) : null}
         <Button onPress={() => onRecord(record)}>查看待确认原始流水</Button>
         {review.candidates.length ? (
           <ChoiceField
@@ -64,7 +70,9 @@ export function PendingReviewCard({
               { value: "", label: "请核对后选择" },
               ...review.candidates.map((candidate) => ({
                 value: candidate.id,
-                label: `${candidate.merchant} · ${candidate.source} · ${candidate.date} · ${signedMoney(candidate)}`,
+                label: isAmountHidden
+                  ? `${candidate.source} · ${candidate.date} · 金额已隐藏`
+                  : `${candidate.merchant} · ${candidate.source} · ${candidate.date} · ${signedMoney(candidate)}`,
               })),
             ]}
           />
@@ -79,13 +87,12 @@ export function PendingReviewCard({
         <Text>
           独立账单按当前收支类型计入汇总；关联后只计一次，原始流水均保留。
         </Text>
-        <Button
-          mode="contained"
+        <ReceiptAction
           disabled={review.isBusy || !review.candidate}
           onPress={() => void review.resolve("link")}
         >
           关联所选流水
-        </Button>
+        </ReceiptAction>
         <Button
           mode="outlined"
           disabled={review.isBusy}
@@ -93,7 +100,13 @@ export function PendingReviewCard({
         >
           确认为独立账单
         </Button>
-        <ErrorMessage message={review.error} />
+        <ErrorMessage
+          message={
+            isAmountHidden && review.error
+              ? "核对保存失败，请重新检查。"
+              : review.error
+          }
+        />
       </Card.Content>
     </Card>
   );

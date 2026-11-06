@@ -15,6 +15,7 @@ export function PendingReviewPanel({
   onSelect,
 }: PendingReviewPanelProps): React.JSX.Element | null {
   const review = usePendingReview(controller);
+  const isHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const record = review.record;
   const candidate = review.candidate;
   if (!record) return null;
@@ -45,12 +46,18 @@ export function PendingReviewPanel({
         </Button>
       </div>
       <h3>
-        {record.merchant} · {signedMoney(record)}
+        {isHidden ? "待确认账单" : record.merchant} ·{" "}
+        {isHidden ? "••••" : signedMoney(record)}
       </h3>
       <p>
-        {record.source} · {record.date} · {record.account || "未提供账户"}
+        {record.source} · {record.date} ·{" "}
+        {isHidden ? "账户已隐藏" : record.account || "未提供账户"}
       </p>
-      <p className="muted">{record.reason || "尚未计入收支。"}</p>
+      <p className="muted">
+        {isHidden
+          ? "尚未计入收支，请核对后处理。"
+          : record.reason || "尚未计入收支。"}
+      </p>
       <Button variant="subtle" onClick={() => onSelect(record)}>
         查看待确认原始流水
       </Button>
@@ -66,8 +73,9 @@ export function PendingReviewPanel({
             <option value="">请核对后选择，不会自动关联</option>
             {review.candidates.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
-                {candidate.merchant} · {candidate.source} · {candidate.date} ·{" "}
-                {signedMoney(candidate)}
+                {isHidden ? "候选账单" : candidate.merchant} ·{" "}
+                {candidate.source} · {candidate.date} ·{" "}
+                {isHidden ? "••••" : signedMoney(candidate)}
               </option>
             ))}
           </Choice>

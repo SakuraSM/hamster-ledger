@@ -1,5 +1,6 @@
 import { ChoiceField } from "../ui/ChoiceField";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Alert } from "react-native";
 import {
   Button,
   Text,
@@ -31,17 +32,22 @@ export function CategoriesScreen({
   const [template, setTemplate] =
     useState<keyof typeof CATEGORY_TEMPLATES>("daily");
   const [error, setError] = useState("");
+  const latestController = useRef(controller);
+  latestController.current = controller;
+  const archivePromptOpen = useRef(false);
+  const archiveInFlight = useRef(false);
   const categories = categoryDefinitions(controller.ledger);
   async function save(category?: CategoryDefinition): Promise<void> {
     try {
+      const current = latestController.current;
       const input = category ?? {
         id: editing?.id ?? newEntityId(),
         name,
         kind,
         parentId: parentId || null,
-        order: editing?.order ?? categories.length,
+        order: editing?.order ?? categoryDefinitions(current.ledger).length,
       };
-      await controller.commit(saveCategory(controller.ledger, input));
+      await current.commit(saveCategory(current.ledger, input));
       setName("");
       setParentId("");
       setEditing(null);
@@ -49,6 +55,60 @@ export function CategoriesScreen({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "保存分类失败");
     }
+  }
+  function requestArchive(category: CategoryDefinition): void {
+    if (archivePromptOpen.current || archiveInFlight.current) return;
+    archivePromptOpen.current = true;
+    let handled = false;
+    function finish(): boolean {
+      if (handled) return false;
+      handled = true;
+      archivePromptOpen.current = false;
+      return true;
+    }
+    Alert.alert(
+      `归档“${category.name}”分类？`,
+      `归档后，历史账单保留“${category.name}”，新账单不再使用此分类；已有子分类也不再用于新账单。`,
+      [
+        {
+          text: "取消",
+          style: "cancel",
+          onPress: () => {
+            finish();
+          },
+        },
+        {
+          text: "确认归档",
+          onPress: () => {
+            if (!finish()) return;
+            const latest = latestController.current;
+            const current = categoryDefinitions(latest.ledger).find(
+              (item) => item.id === category.id,
+            );
+            if (
+              latest.isSaving ||
+              !current ||
+              current.isArchived ||
+              current.name !== category.name ||
+              current.kind !== category.kind
+            ) {
+              setError("分类或账本状态已变化，请重新确认。");
+              return;
+            }
+            archiveInFlight.current = true;
+            void save({ ...current, isArchived: true }).finally(() => {
+              archiveInFlight.current = false;
+            });
+          },
+        },
+      ],
+      {
+        cancelable: true,
+        onDismiss: () => {
+          finish();
+        },
+      },
+    );
   }
   async function move(id: string): Promise<void> {
     try {
@@ -179,9 +239,11 @@ export function CategoriesScreen({
               </Button>
               <Button
                 disabled={controller.isSaving}
-                onPress={() =>
-                  void save({ ...category, isArchived: !category.isArchived })
-                }
+                onPress={() => {
+                  if (category.isArchived)
+                    void save({ ...category, isArchived: false });
+                  else requestArchive(category);
+                }}
               >
                 {category.isArchived ? "恢复分类" : "归档分类"}
               </Button>

@@ -26,6 +26,7 @@ import {
   reportGroups,
   reportTrend,
   summarize,
+  type BillRecord,
   type Ledger,
 } from "@hamster-ledger/core";
 const COLORS = [
@@ -40,12 +41,19 @@ interface Props {
   ledger: Ledger;
   month: string;
   bookId?: string;
+  onRecord?: (record: BillRecord) => void;
+  onReimburse?: (record: BillRecord) => void;
 }
 export function ReportsPage({
   ledger,
   month,
   bookId,
+  onRecord,
+  onReimburse,
 }: Props): React.JSX.Element {
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
+  const amountLabel = (minor: number): string =>
+    isHidden ? "••••" : `¥${money(minor)}`;
   const initial = cycleRange(month, ledger.preferences?.cycleStartDay ?? 1);
   const [start, setStart] = useState(initial.start);
   const [end, setEnd] = useState(
@@ -111,15 +119,15 @@ export function ReportsPage({
       <div className="report-summary">
         <div>
           <span>净支出</span>
-          <strong>¥{money(totals.expense)}</strong>
+          <strong>{amountLabel(totals.expense)}</strong>
         </div>
         <div>
           <span>收入</span>
-          <strong>¥{money(totals.income)}</strong>
+          <strong>{amountLabel(totals.income)}</strong>
         </div>
         <div>
           <span>结余</span>
-          <strong>¥{money(totals.net)}</strong>
+          <strong>{amountLabel(totals.net)}</strong>
         </div>
       </div>
       <div className="report-grid">
@@ -149,94 +157,108 @@ export function ReportsPage({
               </Choice>
             </div>
           </div>
-          <div
-            className="report-chart"
-            role="group"
-            aria-label="收支占比图，详细金额见下方列表"
-          >
-            {chart.length ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    isAnimationActive={false}
-                    data={chart.map((group) => ({
-                      ...group,
-                      value: group.amount / CENTS_PER_YUAN,
-                    }))}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={65}
-                    outerRadius={95}
-                  >
-                    {chart.map((group, index) => (
-                      <Cell
-                        key={group.name}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) =>
-                      `¥${Number(value).toFixed(MONEY_DIGITS)}`
-                    }
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="empty-panel">这个时间段暂无数据</p>
-            )}
-          </div>
+          {isHidden ? (
+            <p className="empty-panel">金额已隐藏，图表暂不展示。</p>
+          ) : (
+            <div
+              className="report-chart"
+              role="group"
+              aria-label="收支占比图，详细金额见下方列表"
+            >
+              {chart.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      isAnimationActive={false}
+                      data={chart.map((group) => ({
+                        ...group,
+                        value: group.amount / CENTS_PER_YUAN,
+                      }))}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={65}
+                      outerRadius={95}
+                    >
+                      {chart.map((group, index) => (
+                        <Cell
+                          key={group.name}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) =>
+                        `¥${Number(value).toFixed(MONEY_DIGITS)}`
+                      }
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="empty-panel">这个时间段暂无数据</p>
+              )}
+            </div>
+          )}
           {dimension === "tag" ? (
             <p className="muted">
               一笔账单可有多个标签，各标签分别统计。饼图仅显示正净支出。
             </p>
           ) : null}
-          {groups.map((group) => (
+          {groups.map((group, index) => (
             <div className="stat-row" key={group.name}>
-              <span>{group.name}</span>
-              <strong>¥{money(group.amount)}</strong>
+              <span>
+                {isHidden
+                  ? `${dimension === "category" ? "分类" : "标签"} ${index + 1}`
+                  : group.name}
+              </span>
+              <strong>{amountLabel(group.amount)}</strong>
             </div>
           ))}
         </section>
         <section className="panel">
           <h2>每日收支趋势</h2>
-          <div className="report-chart trend">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend}>
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(value) =>
-                    String(value).slice(MONTH_DAY_START)
-                  }
-                />
-                <YAxis width={55} />
-                <Tooltip />
-                <Line
-                  isAnimationActive={false}
-                  dataKey="expense"
-                  name="支出（元）"
-                  stroke="#a96140"
-                  strokeWidth={MONEY_DIGITS}
-                />
-                <Line
-                  isAnimationActive={false}
-                  dataKey="income"
-                  name="收入（元）"
-                  stroke="#668366"
-                  strokeWidth={MONEY_DIGITS}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <details>
-            <summary>查看趋势明细</summary>
-            {trend.map((item) => (
-              <p key={item.date}>
-                {item.date} · 支出 {item.expense.toFixed(MONEY_DIGITS)} · 收入{" "}
-                {item.income.toFixed(MONEY_DIGITS)}
-              </p>
-            ))}
-          </details>
+          {isHidden ? (
+            <p className="empty-panel">金额已隐藏，趋势图与明细暂不展示。</p>
+          ) : (
+            <>
+              <div className="report-chart trend">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trend}>
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(value) =>
+                        String(value).slice(MONTH_DAY_START)
+                      }
+                    />
+                    <YAxis width={55} />
+                    <Tooltip />
+                    <Line
+                      isAnimationActive={false}
+                      dataKey="expense"
+                      name="支出（元）"
+                      stroke="#a96140"
+                      strokeWidth={MONEY_DIGITS}
+                    />
+                    <Line
+                      isAnimationActive={false}
+                      dataKey="income"
+                      name="收入（元）"
+                      stroke="#668366"
+                      strokeWidth={MONEY_DIGITS}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <details>
+                <summary>查看趋势明细</summary>
+                {trend.map((item) => (
+                  <p key={item.date}>
+                    {item.date} · 支出 {item.expense.toFixed(MONEY_DIGITS)} ·
+                    收入 {item.income.toFixed(MONEY_DIGITS)}
+                  </p>
+                ))}
+              </details>
+            </>
+          )}
         </section>
       </div>
       <ExtendedReports
@@ -246,6 +268,8 @@ export function ReportsPage({
         end={end}
         kind={kind}
         bookId={bookId}
+        onRecord={onRecord}
+        onReimburse={onReimburse}
       />
     </section>
   );

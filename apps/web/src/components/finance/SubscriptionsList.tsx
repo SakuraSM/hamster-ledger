@@ -1,10 +1,14 @@
 import { Button, Group, Text, Stack, Badge } from "@mantine/core";
+import { useState } from "react";
+import { PlanningActionConfirm } from "./PlanningActionConfirm";
 import {
   saveSubscription,
   skipSubscription,
   subscriptionCost,
   formatCurrency,
   type Ledger,
+  type Currency,
+  type Subscription,
 } from "@hamster-ledger/core";
 import {
   subscriptionForm,
@@ -18,6 +22,8 @@ const STATUS = {
   paused: "已暂停",
   canceled: "已取消",
 };
+const DATE_KEY_LENGTH = 10;
+
 export function SubscriptionsList({
   ledger,
   panel,
@@ -25,7 +31,14 @@ export function SubscriptionsList({
   ledger: Ledger;
   panel: PlanningPanelController;
 }): React.JSX.Element {
-  const today = localNow().slice(0, 10);
+  const today = localNow().slice(0, DATE_KEY_LENGTH);
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
+  const [confirmation, setConfirmation] = useState<{
+    item: Subscription;
+    action: "skip" | "cancel" | "archive";
+  } | null>(null);
+  const amount = (minor: number, currency: Currency): string =>
+    isHidden ? "••••" : formatCurrency({ minor, currency });
   return (
     <Stack>
       <Button
@@ -47,15 +60,12 @@ export function SubscriptionsList({
               <Badge>{item.isArchived ? "已归档" : STATUS[item.status]}</Badge>
             </Group>
             <Text>
-              {formatCurrency({ minor: item.amount, currency: item.currency })}{" "}
-              / 期 · 下次 {item.nextDate}
+              {amount(item.amount, item.currency)} / 期 · 下次 {item.nextDate}
             </Text>
             <Text size="sm">
-              月均{" "}
-              {formatCurrency({ minor: cost.monthly, currency: item.currency })}{" "}
-              · 年化{" "}
-              {formatCurrency({ minor: cost.annual, currency: item.currency })}{" "}
-              · {item.autoPost ? "自动记账" : "仅提醒"}
+              月均 {amount(cost.monthly, item.currency)} · 年化{" "}
+              {amount(cost.annual, item.currency)} ·{" "}
+              {item.autoPost ? "自动记账" : "仅提醒"}
             </Text>
             <Group mt="sm">
               <Button
@@ -77,11 +87,7 @@ export function SubscriptionsList({
                   </Button>
                   <Button
                     variant="subtle"
-                    onClick={() =>
-                      void panel.commit((current) =>
-                        skipSubscription(current, item.id),
-                      )
-                    }
+                    onClick={() => setConfirmation({ item, action: "skip" })}
                   >
                     跳过本期
                   </Button>
@@ -110,28 +116,14 @@ export function SubscriptionsList({
                 <Button
                   variant="subtle"
                   color="red"
-                  onClick={() =>
-                    void panel.commit((current) =>
-                      saveSubscription(current, {
-                        ...item,
-                        status: "canceled",
-                      }),
-                    )
-                  }
+                  onClick={() => setConfirmation({ item, action: "cancel" })}
                 >
                   取消订阅
                 </Button>
               ) : null}
               <Button
                 variant="subtle"
-                onClick={() =>
-                  void panel.commit((current) =>
-                    saveSubscription(current, {
-                      ...item,
-                      isArchived: !item.isArchived,
-                    }),
-                  )
-                }
+                onClick={() => setConfirmation({ item, action: "archive" })}
               >
                 {item.isArchived ? "恢复展示" : "归档"}
               </Button>
@@ -142,15 +134,67 @@ export function SubscriptionsList({
                 .filter((record) => record.detail?.subscriptionId === item.id)
                 .map((record) => (
                   <p key={record.id}>
-                    {record.date.slice(0, 10)} ·{" "}
+                    {record.date.slice(0, DATE_KEY_LENGTH)} ·{" "}
                     {record.isDeleted ? "已移入回收站 · " : ""}
-                    {formatCurrency(record.detail!.original)}
+                    {isHidden
+                      ? "••••"
+                      : formatCurrency(record.detail!.original)}
                   </p>
                 ))}
             </details>
           </article>
         );
       })}
+      {confirmation ? (
+        <PlanningActionConfirm
+          title={
+            confirmation.action === "skip"
+              ? "跳过本期"
+              : confirmation.action === "cancel"
+                ? "取消订阅"
+                : confirmation.item.isArchived
+                  ? "恢复订阅展示"
+                  : "归档订阅"
+          }
+          description={
+            confirmation.action === "skip"
+              ? `跳过“${confirmation.item.name}”的 ${confirmation.item.nextDate} 这一期，不会删除历史扣费。`
+              : confirmation.action === "cancel"
+                ? `取消“${confirmation.item.name}”后不再按此订阅自动记账，历史扣费会保留。`
+                : confirmation.item.isArchived
+                  ? `恢复“${confirmation.item.name}”的展示。`
+                  : `归档“${confirmation.item.name}”后停止展示，历史扣费会保留，可随时恢复。`
+          }
+          confirmLabel={
+            confirmation.action === "skip"
+              ? "确认跳过"
+              : confirmation.action === "cancel"
+                ? "确认取消订阅"
+                : confirmation.item.isArchived
+                  ? "确认恢复"
+                  : "确认归档"
+          }
+          isBusy={panel.isBusy}
+          onClose={() => setConfirmation(null)}
+          onConfirm={async () => {
+            await panel.commit((current) => {
+              if (confirmation.action === "skip")
+                return skipSubscription(current, confirmation.item.id);
+              const latest = current.subscriptions?.find(
+                (item) => item.id === confirmation.item.id,
+              );
+              if (!latest) throw new Error("订阅已不存在，请刷新后重试。");
+              return saveSubscription(current, {
+                ...latest,
+                ...(confirmation.action === "cancel"
+                  ? { status: "canceled" as const }
+                  : { isArchived: !confirmation.item.isArchived }),
+              });
+            });
+            setConfirmation(null);
+          }}
+        />
+      ) : null}
     </Stack>
   );
 }

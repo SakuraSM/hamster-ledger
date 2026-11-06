@@ -20,6 +20,9 @@ export function ReviewPage({
   onSelect,
 }: ReviewPageProps): React.JSX.Element {
   const { ledger, decide: onDecide, canUndo, undo: onUndo } = controller;
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
+  const amount = (minor: number): string =>
+    isHidden ? "••••" : `¥${money(minor)}`;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const pending = useMemo(
     () => ledger.reviews.filter((review) => review.state === "pending"),
@@ -77,8 +80,8 @@ export function ReviewPage({
                   onClick={() => setSelectedId(review.id)}
                 >
                   <span>
-                    <strong>{record.merchant}</strong>
-                    <b>¥{money(record.amount)}</b>
+                    <strong>{isHidden ? "待核对账单" : record.merchant}</strong>
+                    <b>{amount(record.amount)}</b>
                   </span>
                   <small>{record.source} · 跨平台疑似重复</small>
                   <small>{record.date.slice(MONTH_START, MINUTE_END)}</small>
@@ -114,8 +117,8 @@ export function ReviewPage({
           <div className="review-detail">
             <span className="record-status pending">疑似同一笔消费</span>
             <div className="review-title">
-              <h2>{left.merchant}</h2>
-              <strong>¥{money(left.amount)}</strong>
+              <h2>{isHidden ? "待核对账单" : left.merchant}</h2>
+              <strong>{amount(left.amount)}</strong>
             </div>
             <div className="table-scroll">
               <table className="comparison-table">
@@ -135,8 +138,8 @@ export function ReviewPage({
                 <tbody>
                   <tr>
                     <th>金额</th>
-                    <td>¥{money(left.amount)}</td>
-                    <td>¥{money(right.amount)}</td>
+                    <td>{amount(left.amount)}</td>
+                    <td>{amount(right.amount)}</td>
                   </tr>
                   <tr>
                     <th>交易时间</th>
@@ -145,29 +148,35 @@ export function ReviewPage({
                   </tr>
                   <tr>
                     <th>商户</th>
-                    <td>{left.merchant}</td>
-                    <td>{right.merchant}</td>
+                    <td>{isHidden ? "已隐藏" : left.merchant}</td>
+                    <td>{isHidden ? "已隐藏" : right.merchant}</td>
                   </tr>
                   <tr>
                     <th>付款账户</th>
-                    <td>{left.account || "未提供"}</td>
-                    <td>{right.account || "未提供"}</td>
+                    <td>{isHidden ? "已隐藏" : left.account || "未提供"}</td>
+                    <td>{isHidden ? "已隐藏" : right.account || "未提供"}</td>
                   </tr>
                   <tr>
                     <th>交易状态</th>
-                    <td>{left.sourceStatus}</td>
-                    <td>{right.sourceStatus}</td>
+                    <td>{isHidden ? "已隐藏" : left.sourceStatus}</td>
+                    <td>{isHidden ? "已隐藏" : right.sourceStatus}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div className="match-evidence">
-              {selected.reasons.map((reason) => (
-                <span key={reason}>
-                  <Icons.Check size={18} />
-                  {reason}
+              {isHidden ? (
+                <span>
+                  <Icons.Check size={18} /> 匹配依据已隐藏
                 </span>
-              ))}
+              ) : (
+                selected.reasons.map((reason) => (
+                  <span key={reason}>
+                    <Icons.Check size={18} />
+                    {reason}
+                  </span>
+                ))
+              )}
               <p>相似信息仅用于提示。请核对原始记录后确认。</p>
             </div>
             <div className="merge-preview">
@@ -180,6 +189,14 @@ export function ReviewPage({
                 onClick={() => onSelect(left)}
               >
                 查看原始记录 <Icons.Arrow size={17} />
+              </Button>
+              <Button
+                variant="subtle"
+                type="button"
+                className="text-button"
+                onClick={() => onSelect(right)}
+              >
+                查看另一条原始记录 <Icons.Arrow size={17} />
               </Button>
             </div>
             <div className="review-actions">

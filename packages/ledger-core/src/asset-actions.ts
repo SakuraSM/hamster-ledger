@@ -14,6 +14,7 @@ import { accountBaselines } from "./account-baselines.js";
 export interface SaveAssetAccountInput {
   ledger: Ledger;
   account: AssetAccount;
+  expectedAccount?: AssetAccount | null;
   now: string;
   checkpointId: string;
   note: string;
@@ -32,6 +33,16 @@ export function saveAssetAccount(input: SaveAssetAccountInput): Ledger {
   if (!Number.isSafeInteger(account.openingBalance))
     throw new Error("余额超过安全金额范围。");
   const previous = input.ledger.accounts.find((item) => item.id === account.id);
+  if (input.expectedAccount !== undefined) {
+    const changed =
+      input.expectedAccount === null
+        ? Boolean(previous)
+        : !previous ||
+          JSON.stringify(assetAccountSchema.parse(previous)) !==
+            JSON.stringify(assetAccountSchema.parse(input.expectedAccount));
+    if (changed)
+      throw new Error("账户已发生变化，请重新打开账户；当前修改尚未保存。");
+  }
   if (previous && previous.kind !== account.kind)
     throw new Error("已有账户的资产/负债类型不能更改，请新增账户。");
   if (previous && (previous.currency ?? "CNY") !== (account.currency ?? "CNY"))

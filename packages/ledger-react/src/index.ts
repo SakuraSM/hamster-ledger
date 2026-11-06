@@ -1,5 +1,6 @@
 export {
   useLedger,
+  type CreateBookPreparation,
   type LedgerController,
   type LedgerEnvironment,
 } from "./useLedger.js";

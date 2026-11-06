@@ -16,24 +16,104 @@ import {
 } from "../platform/cloud-client";
 const fingerprint = (value: unknown): Promise<string> =>
   digestStringAsync(CryptoDigestAlgorithm.SHA256, serializeSnapshot(value));
+interface SyncState {
+  generation: number;
+  link: SyncLink | null;
+  books: CloudBook[];
+  preview: CloudSnapshot | null;
+  isBusy: boolean;
+  error: string;
+  message: string;
+}
+function emptyState(generation: number): SyncState {
+  return {
+    generation,
+    link: null,
+    books: [],
+    preview: null,
+    isBusy: false,
+    error: "",
+    message: "",
+  };
+}
 export function useNativeSync(
   controller: LedgerController,
 ): NativeSyncController {
   const account = useNativeAccount();
-  const identity = account.server + ":" + (account.credentials?.user.id ?? "");
-  const linkKey = "hamster.native.sync." + identity + ":" + controller.mode;
-  const [link, setLink] = useState<SyncLink | null>(null);
-  const [books, setBooks] = useState<CloudBook[]>([]);
-  const [preview, setPreview] = useState<CloudSnapshot | null>(null);
-  const [isBusy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const userId = account.credentials?.user.id ?? "";
   const session = account.credentials?.session.id;
-  const current = useRef({ controller, identity, session });
-  current.current = { controller, identity, session };
-  const lock = useRef(false);
+  const identity = account.server + ":" + userId;
+  const linkKey = "hamster.native.sync." + identity + ":" + controller.mode;
+  const cloud = controller.books.find(
+    (book) => book.id === controller.mode,
+  )?.cloud;
+  const accountKey = JSON.stringify([account.server, userId, session ?? null]);
+  const contextKey = JSON.stringify([
+    accountKey,
+    controller.mode,
+    cloud?.id ?? null,
+    cloud?.userId ?? null,
+    cloud?.server ?? null,
+  ]);
+  const context = useRef({ key: contextKey, generation: 0 });
+  const accountContext = useRef({ key: accountKey, generation: 0 });
+  if (context.current.key !== contextKey)
+    context.current = {
+      key: contextKey,
+      generation: context.current.generation + 1,
+    };
+  if (accountContext.current.key !== accountKey)
+    accountContext.current = {
+      key: accountKey,
+      generation: accountContext.current.generation + 1,
+    };
+  const generation = context.current.generation;
+  const accountGeneration = accountContext.current.generation;
+  const [state, setState] = useState<SyncState>(() => emptyState(generation));
+  if (state.generation !== generation) setState(emptyState(generation));
+  const visible =
+    state.generation === generation ? state : emptyState(generation);
+  const { link, books, preview, isBusy, error, message } = visible;
+  const current = useRef({ controller, account });
+  current.current = { controller, account };
+  const lock = useRef<number | null>(null);
   const conflict = useRef(false);
+  const conflictGeneration = useRef(generation);
+  if (conflictGeneration.current !== generation) {
+    conflict.current = false;
+    conflictGeneration.current = generation;
+  }
   const active = useRef(true);
+  function isCurrent(): boolean {
+    return (
+      active.current &&
+      context.current.key === contextKey &&
+      context.current.generation === generation
+    );
+  }
+  function assertCurrent(): void {
+    if (
+      !isCurrent() ||
+      !current.current.account.credentials ||
+      current.current.account.credentials.user.mustChangePassword ||
+      current.current.controller.isLoading ||
+      current.current.controller.network?.isConnected
+    )
+      throw new Error("当前账本或登录状态已变化，请重新打开同步页面。");
+  }
+  function patch(value: Partial<SyncState>): void {
+    if (!isCurrent()) return;
+    setState((previous) =>
+      previous.generation === generation ? { ...previous, ...value } : previous,
+    );
+  }
+  const setLink = (value: SyncLink | null): void => patch({ link: value });
+  const setBooks = (value: CloudBook[]): void => patch({ books: value });
+  const setPreview = (value: CloudSnapshot | null): void =>
+    patch({ preview: value });
+  const setBusy = (value: boolean): void => patch({ isBusy: value });
+  const setError = (value: string): void => patch({ error: value });
+  const setMessage = (value: string): void => patch({ message: value });
   useEffect(() => {
     active.current = true;
     return () => {
@@ -42,19 +122,14 @@ export function useNativeSync(
   }, []);
   useEffect(() => {
     let cancelled = false;
-    conflict.current = false;
-    setLink(null);
-    setBooks([]);
-    setPreview(null);
-    setError("");
-    setMessage("");
     if (account.credentials && !account.credentials.user.mustChangePassword)
       void (async () => {
         const raw = await nativeStore.getItem(linkKey);
-        if (!cancelled) setLink(raw ? (JSON.parse(raw) as SyncLink) : null);
+        if (cancelled || !isCurrent()) return;
+        setLink(raw ? (JSON.parse(raw) as SyncLink) : null);
         const result = await account.client.books();
         if (!cancelled) setBooks(result.books);
-      })().catch((cause) => {
+      })().catch((cause: unknown) => {
         if (!cancelled)
           setError(
             cause instanceof Error ? cause.message : "读取同步信息失败。",
@@ -63,44 +138,40 @@ export function useNativeSync(
     return () => {
       cancelled = true;
     };
-  }, [linkKey, account.credentials?.session.id]);
+  }, [contextKey, generation]);
   const name = (value: LedgerController): string =>
     value.books.find((book) => book.id === value.mode)?.name ?? "账本";
-  function assertCurrent(): void {
-    if (
-      !active.current ||
-      current.current.identity !== identity ||
-      current.current.session !== session ||
-      current.current.controller.mode !== controller.mode
-    )
-      throw new Error("当前账本或登录状态已变化，请重新打开同步页面。");
-  }
   async function run(action: () => Promise<void>): Promise<void> {
-    if (!account.credentials || account.credentials.user.mustChangePassword)
+    if (
+      !isCurrent() ||
+      !account.credentials ||
+      account.credentials.user.mustChangePassword
+    )
       return;
-    if (controller.network?.isConnected) {
+    if (current.current.controller.network?.isConnected) {
       setError("联网账本使用在线编辑，无需整本同步。");
       return;
     }
-    if (lock.current || controller.isLoading || controller.isSaving) return;
-    lock.current = true;
+    if (
+      lock.current === generation ||
+      current.current.controller.isLoading ||
+      current.current.controller.isSaving
+    )
+      return;
+    lock.current = generation;
     setBusy(true);
     setError("");
     setMessage("");
     try {
       await action();
     } catch (cause) {
-      if (
-        active.current &&
-        current.current.identity === identity &&
-        current.current.session === session
-      )
+      if (isCurrent())
         setError(
           cause instanceof Error ? cause.message : "同步失败，本机账本已保留。",
         );
     } finally {
-      lock.current = false;
-      if (active.current) setBusy(false);
+      if (lock.current === generation) lock.current = null;
+      setBusy(false);
     }
   }
   async function saveLink(value: SyncLink): Promise<void> {
@@ -112,17 +183,21 @@ export function useNativeSync(
   async function upload(): Promise<void> {
     await run(async () => {
       const original = controller;
+      assertCurrent();
       const saved = await account.client.save({
         name: name(original),
         ledger: original.ledger,
       });
+      assertCurrent();
+      const hash = await fingerprint({
+        name: name(original),
+        ledger: original.ledger,
+      });
+      assertCurrent();
       await saveLink({
         id: saved.id,
         revision: saved.revision,
-        fingerprint: await fingerprint({
-          name: name(original),
-          ledger: original.ledger,
-        }),
+        fingerprint: hash,
       });
       const refreshed = await account.client.books();
       assertCurrent();
@@ -138,6 +213,7 @@ export function useNativeSync(
         name: name(original),
         ledger: original.ledger,
       });
+      assertCurrent();
       const remote = await account.client.load(link.id);
       assertCurrent();
       const latest = current.current.controller;
@@ -170,14 +246,19 @@ export function useNativeSync(
           name(beforeCommit) !== name(original)
         )
           return;
-        await beforeCommit.commit(remote.ledger, original.mode);
+        await beforeCommit.commit(remote.ledger, {
+          mode: original.mode,
+          assertCurrent,
+        });
         assertCurrent();
-        if (name(original) !== remote.name)
+        if (name(original) !== remote.name) {
           await current.current.controller.updateBooks(
             current.current.controller.books.map((book) =>
               book.id === original.mode ? { ...book, name: remote.name } : book,
             ),
           );
+          assertCurrent();
+        }
         await saveLink({
           id: remote.id,
           revision: remote.revision,
@@ -193,12 +274,14 @@ export function useNativeSync(
         return;
       }
       try {
+        assertCurrent();
         const saved = await account.client.save({
           id: link.id,
           revision: link.revision,
           name: name(original),
           ledger: original.ledger,
         });
+        assertCurrent();
         await saveLink({
           id: link.id,
           revision: saved.revision,
@@ -210,7 +293,11 @@ export function useNativeSync(
         conflict.current = false;
         setMessage("本机修改已同步。");
       } catch (cause) {
-        if (cause instanceof CloudError && cause.status === CONFLICT_STATUS) {
+        if (
+          cause instanceof CloudError &&
+          cause.status === CONFLICT_STATUS &&
+          isCurrent()
+        ) {
           const latest = await account.client.load(link.id);
           assertCurrent();
           conflict.current = true;
@@ -224,7 +311,10 @@ export function useNativeSync(
     sync,
     controller,
     enabled: Boolean(
-      link && account.credentials && !controller.network?.isConnected,
+      link &&
+      account.credentials &&
+      !controller.network?.isConnected &&
+      !controller.isLoading,
     ),
     conflict,
   });
@@ -243,24 +333,65 @@ export function useNativeSync(
   const restore = (): Promise<void> =>
     run(async () => {
       if (!preview) return;
-      assertCurrent();
       const hash = await fingerprint({
         name: preview.name,
         ledger: preview.ledger,
       });
-      const mode = await controller.createBook(preview.name, preview.ledger);
-      await nativeStore.setItem(
-        "hamster.native.sync." + identity + ":" + mode,
-        JSON.stringify({
-          id: preview.id,
-          revision: preview.revision,
-          fingerprint: hash,
-        }),
+      assertCurrent();
+      const prepare = Object.assign(
+        async (): Promise<void> => {
+          assertCurrent();
+        },
+        { assertCurrent },
       );
+      const mode = await controller.createBook(
+        preview.name,
+        preview.ledger,
+        undefined,
+        prepare,
+      );
+      function assertRestored(): void {
+        if (
+          !active.current ||
+          accountContext.current.key !== accountKey ||
+          accountContext.current.generation !== accountGeneration ||
+          (current.current.controller.mode !== controller.mode &&
+            current.current.controller.mode !== mode) ||
+          current.current.controller.network?.isConnected ||
+          current.current.controller.isLoading
+        )
+          throw new Error("当前账本或登录状态已变化，请重新打开同步页面。");
+      }
+      assertRestored();
+      const next = {
+        id: preview.id,
+        revision: preview.revision,
+        fingerprint: hash,
+      };
+      try {
+        await nativeStore.setItem(
+          "hamster.native.sync." + identity + ":" + mode,
+          JSON.stringify(next),
+        );
+      } catch {
+        assertRestored();
+        const message =
+          "云端版本已恢复为新账本，但同步连接保存失败；请检查存储后重新连接。";
+        controller.notify(message);
+        throw new Error(message);
+      }
+      assertRestored();
+      if (current.current.controller.mode === mode)
+        setState((previous) =>
+          previous.generation === context.current.generation
+            ? { ...previous, link: next, preview: null }
+            : previous,
+        );
       controller.notify("云端版本已恢复为新账本，原账本保留。");
     });
   const disconnect = (): Promise<void> =>
     run(async () => {
+      assertCurrent();
       await nativeStore.setItem(linkKey, "");
       assertCurrent();
       conflict.current = false;

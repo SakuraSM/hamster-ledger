@@ -4,6 +4,7 @@ import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { money, type RecurringRule } from "@hamster-ledger/core";
 import { Screen, ErrorMessage } from "../ui/Screen";
 import { RecurringEditor } from "./RecurringEditor";
+import { ReceiptAction } from "./ReceiptAction";
 interface RecurringScreenProps {
   controller: LedgerController;
 }
@@ -16,6 +17,7 @@ const FREQUENCY_LABEL = {
 export function RecurringScreen({
   controller,
 }: RecurringScreenProps): React.JSX.Element {
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const [editor, setEditor] = useState<RecurringRule | "new" | null>(null);
   const [error, setError] = useState("");
   async function pause(rule: RecurringRule): Promise<void> {
@@ -34,25 +36,25 @@ export function RecurringScreen({
     <>
       <Screen>
         <Text variant="headlineSmall" accessibilityRole="header">
-          周期记账
+          固定收支
         </Text>
         <Text>
           在账本打开时补齐到期账单。同一次周期只生成一笔，暂停后保留历史账单。
         </Text>
-        <Button mode="contained" icon="plus" onPress={() => setEditor("new")}>
+        <ReceiptAction icon="plus" onPress={() => setEditor("new")}>
           新增周期规则
-        </Button>
+        </ReceiptAction>
         <ErrorMessage message={error} />
         {controller.ledger.recurringRules?.map((rule) => (
           <Card key={rule.id} mode="outlined">
             <Card.Content>
               <Text variant="titleMedium">
-                {rule.name}
+                {isAmountHidden ? "周期规则" : rule.name}
                 {rule.isPaused ? " · 已暂停" : ""}
               </Text>
               <Text>
-                {FREQUENCY_LABEL[rule.frequency]} · {rule.kind} ¥
-                {money(rule.amount)}
+                {FREQUENCY_LABEL[rule.frequency]} · {rule.kind}{" "}
+                {isAmountHidden ? "••••" : `¥${money(rule.amount)}`}
               </Text>
               <Text>
                 {rule.startDate} 至 {rule.endDate || "长期"}

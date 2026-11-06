@@ -22,6 +22,7 @@ import { Screen, ErrorMessage, Section } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
 import { DateField } from "../ui/DateField";
 import { localNow, newEntityId } from "../platform/runtime";
+import { ReceiptAction } from "./ReceiptAction";
 interface BudgetScreenProps {
   controller: LedgerController;
 }
@@ -36,7 +37,11 @@ export function BudgetScreen({
   const [rollover, setRollover] = useState(false);
   const [threshold, setThreshold] = useState("80");
   const [error, setError] = useState("");
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
+  const amountText = (minor: number): string =>
+    isAmountHidden ? "••••" : `¥${money(minor)}`;
   const budgets = budgetProgress(controller.ledger, month);
+  const totalBudget = budgets.find((budget) => budget.category === null);
   async function save(): Promise<void> {
     const cents = parseAmount(amount);
     if (cents === null || cents <= 0) {
@@ -76,36 +81,48 @@ export function BudgetScreen({
   return (
     <Screen>
       <Text variant="headlineSmall" accessibilityRole="header">
-        预算管理
+        花得有余量
       </Text>
       <DateField
         label="预算月份"
         value={month + "-01"}
         onChange={(value) => setMonth(value.slice(0, MONTH_KEY_LENGTH))}
       />
+      {totalBudget ? (
+        <>
+          <Text>本期{totalBudget.remaining >= 0 ? "还可支出" : "已超出"}</Text>
+          <Text variant="displaySmall" style={{ fontWeight: "700" }}>
+            {amountText(Math.abs(totalBudget.remaining))}
+          </Text>
+        </>
+      ) : null}
       {budgets.map((budget) => (
         <Card key={budget.id} mode="outlined">
           <Card.Content style={{ gap: 10 }}>
             <Text variant="titleMedium">
               {BUDGET_PERIODS[budget.period ?? "monthly"]} ·{" "}
-              {budget.category ?? "总预算"} · ¥{money(budget.available)}
+              {isAmountHidden ? "预算" : (budget.category ?? "总预算")} ·{" "}
+              {amountText(budget.available)}
             </Text>
             <Text>
-              {budget.start} 至 {budget.end}（不含结束日） · 结转 ¥
-              {money(budget.carried)}
+              {budget.start} 至 {budget.end}（不含结束日） · 结转{" "}
+              {amountText(budget.carried)}
             </Text>
             <Text>
-              本期预算 ¥{money(budget.amount)} + 上期结转 ¥
-              {money(budget.carried)} = 可用预算 ¥{money(budget.available)}
+              本期预算 {amountText(budget.amount)} + 上期结转{" "}
+              {amountText(budget.carried)} = 可用预算{" "}
+              {amountText(budget.available)}
             </Text>
-            <ProgressBar
-              progress={Math.min(1, budget.ratio)}
-              color={budget.remaining < 0 ? "#a43222" : undefined}
-            />
+            {!isAmountHidden ? (
+              <ProgressBar
+                progress={Math.min(1, budget.ratio)}
+                color={budget.remaining < 0 ? "#a43222" : undefined}
+              />
+            ) : null}
             <Text>
-              已用 ¥{money(budget.spent)} ·{" "}
-              {budget.remaining >= 0 ? "剩余" : "超出"} ¥
-              {money(Math.abs(budget.remaining))}
+              已用 {amountText(budget.spent)} ·{" "}
+              {budget.remaining >= 0 ? "剩余" : "超出"}{" "}
+              {amountText(Math.abs(budget.remaining))}
             </Text>
             <Button
               onPress={() => {
@@ -169,14 +186,13 @@ export function BudgetScreen({
           onChangeText={setAmount}
         />
         <ErrorMessage message={error} />
-        <Button
-          mode="contained"
+        <ReceiptAction
           loading={controller.isSaving}
           disabled={controller.isSaving}
           onPress={() => void save()}
         >
           保存预算
-        </Button>
+        </ReceiptAction>
       </Section>
     </Screen>
   );

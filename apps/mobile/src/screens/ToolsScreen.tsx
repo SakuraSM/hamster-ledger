@@ -105,11 +105,15 @@ export function ToolsScreen({
   ledger,
   storageDescription,
   onAssets,
+  onOverview,
+  onReports,
 }: {
   onSelect: (page: ToolPage) => void;
   ledger: Ledger;
   storageDescription: string;
   onAssets: () => void;
+  onOverview: () => void;
+  onReports: () => void;
 }): React.JSX.Element {
   return (
     <Screen>
@@ -117,6 +121,16 @@ export function ToolsScreen({
         更多功能
       </Text>
       <Text>{storageDescription}</Text>
+      <List.Item
+        title="收支总览"
+        onPress={onOverview}
+        left={(props) => <List.Icon {...props} icon="home-outline" />}
+      />
+      <List.Item
+        title="收支报表"
+        onPress={onReports}
+        left={(props) => <List.Icon {...props} icon="chart-pie" />}
+      />
       {!ledger.accounts.length && (
         <List.Item
           title="建立首个账户与余额基准"

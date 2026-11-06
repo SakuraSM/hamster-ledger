@@ -31,6 +31,7 @@ export function EntryMoneyFields({
       </Choice>
       <TextInput
         label={`原币金额（${currency}）`}
+        type={ledger.preferences?.hideAmounts ? "password" : "text"}
         required
         inputMode="decimal"
         value={draft.amount}
@@ -89,6 +90,7 @@ export function EntryMoneyFields({
           </Choice>
           <TextInput
             label={`实际转入金额（${destinationCurrency}）`}
+            type={ledger.preferences?.hideAmounts ? "password" : "text"}
             placeholder={
               currency === destinationCurrency
                 ? "留空时与转出金额一致"

@@ -229,6 +229,7 @@ export function ImportPage({
             </span>
           </div>
           <ImportFileList
+            hideAmounts={Boolean(targetLedger.preferences?.hideAmounts)}
             files={parsed}
             mappingHash={mappingHash}
             onToggle={(hash) =>
@@ -265,6 +266,7 @@ export function ImportPage({
             <span>最多展示前 5 条</span>
           </div>
           <TransactionTable
+            hideAmounts={Boolean(targetLedger.preferences?.hideAmounts)}
             accounts={targetLedger.accounts}
             records={allRecords.slice(0, RECORD_PREVIEW_LIMIT)}
             onSelect={onSelect}

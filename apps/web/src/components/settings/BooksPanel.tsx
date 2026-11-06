@@ -1,6 +1,8 @@
 import { UnstyledButton, Button, TextInput } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Book } from "@hamster-ledger/core";
 import type { LedgerController } from "../../hooks/useLedger";
+import { Dialog } from "../Dialog";
 export function BooksPanel({
   controller,
 }: {
@@ -10,6 +12,43 @@ export function BooksPanel({
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [rename, setRename] = useState("");
+  const [archiveTarget, setArchiveTarget] = useState<Book | null>(null);
+  const [isArchiving, setArchiving] = useState(false);
+  const archiveLock = useRef(false);
+  useEffect(() => {
+    if (!archiveTarget && !isArchiving) archiveLock.current = false;
+  }, [archiveTarget, isArchiving]);
+  async function archiveBook(): Promise<void> {
+    if (!archiveTarget || archiveLock.current) return;
+    archiveLock.current = true;
+    setArchiving(true);
+    let succeeded = false;
+    try {
+      const current = controller.books.find(
+        (book) => book.id === archiveTarget.id,
+      );
+      if (
+        !current ||
+        current.isArchived ||
+        current.name !== archiveTarget.name ||
+        current.id === controller.mode
+      )
+        throw new Error("账本已变化或已切换为当前账本，请关闭后重新确认。");
+      await controller.updateBooks(
+        controller.books.map((book) =>
+          book.id === current.id ? { ...book, isArchived: true } : book,
+        ),
+      );
+      succeeded = true;
+      setArchiveTarget(null);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "归档账本失败");
+    } finally {
+      if (!succeeded) archiveLock.current = false;
+      setArchiving(false);
+    }
+  }
   async function create(
     event: React.SubmitEvent<HTMLFormElement>,
   ): Promise<void> {
@@ -69,9 +108,14 @@ export function BooksPanel({
                 type="submit"
                 className="text-button"
                 disabled={book.id === controller.mode}
-                onClick={() =>
-                  void change({ id: book.id, isArchived: !book.isArchived })
-                }
+                onClick={() => {
+                  if (book.isArchived)
+                    void change({ id: book.id, isArchived: false });
+                  else if (!archiveLock.current) {
+                    setError("");
+                    setArchiveTarget(book);
+                  }
+                }}
               >
                 {book.isArchived ? "恢复" : "归档"}
               </Button>
@@ -119,6 +163,31 @@ export function BooksPanel({
         <p role="alert" className="error-message">
           {error}
         </p>
+      ) : null}
+      {archiveTarget ? (
+        <Dialog title="归档账本？" onClose={() => setArchiveTarget(null)}>
+          <p>
+            归档“{archiveTarget.name}
+            ”后，历史账单会保留，恢复账本后可再次切换使用。
+          </p>
+          {error ? (
+            <p role="alert" className="error-message">
+              {error}
+            </p>
+          ) : null}
+          <div className="dialog-actions">
+            <Button
+              variant="outline"
+              disabled={isArchiving}
+              onClick={() => setArchiveTarget(null)}
+            >
+              取消
+            </Button>
+            <Button loading={isArchiving} onClick={() => void archiveBook()}>
+              确认归档
+            </Button>
+          </div>
+        </Dialog>
       ) : null}
     </section>
   );

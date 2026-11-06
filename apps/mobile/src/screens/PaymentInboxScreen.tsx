@@ -100,6 +100,7 @@ export function PaymentInboxScreen({
             books={controller.books}
             mode={controller.mode}
             isBusy={inbox.isBusy}
+            hideAmounts={controller.ledger.preferences?.hideAmounts ?? false}
             isRecorded={
               controller.mode === item.bookId &&
               Boolean(
@@ -110,7 +111,7 @@ export function PaymentInboxScreen({
               )
             }
             onReview={review}
-            onDiscard={(receipt) => void inbox.discard(receipt)}
+            onDiscard={inbox.discard}
           />
         )}
       />

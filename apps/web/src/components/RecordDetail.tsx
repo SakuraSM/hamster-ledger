@@ -38,6 +38,7 @@ export function RecordDetail({
   ledger,
   onRelated,
 }: RecordDetailProps): React.JSX.Element {
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
   const [isDeleting, setIsDeleting] = useState(false);
   const [category, setCategory] = useState<Category>(record.category);
   const [kind, setKind] = useState<Kind>(record.kind);
@@ -100,7 +101,7 @@ export function RecordDetail({
             <h3>{record.merchant}</h3>
             <p>{record.date}</p>
           </div>
-          <strong>{signedMoney(record)}</strong>
+          <strong>{isHidden ? "••••" : signedMoney(record)}</strong>
         </div>
         {attachmentPanel}
         <TransactionFacts record={record} ledger={ledger} bookId={bookId} />
@@ -216,7 +217,8 @@ export function RecordDetail({
                   </small>
                 </span>
                 <span>
-                  {signedMoney(item)} <Icons.Caret size={16} />
+                  {isHidden ? "••••" : signedMoney(item)}{" "}
+                  <Icons.Caret size={16} />
                 </span>
               </UnstyledButton>
             ))}
@@ -224,14 +226,18 @@ export function RecordDetail({
         ) : null}
         <details className="raw-details">
           <summary>查看原始字段</summary>
-          <dl>
-            {Object.entries(record.raw).map(([key, value]) => (
-              <div key={key}>
-                <dt>{key}</dt>
-                <dd>{value || "—"}</dd>
-              </div>
-            ))}
-          </dl>
+          {isHidden ? (
+            <p>金额已隐藏，原始字段暂不展示。</p>
+          ) : (
+            <dl>
+              {Object.entries(record.raw).map(([key, value]) => (
+                <div key={key}>
+                  <dt>{key}</dt>
+                  <dd>{value || "—"}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </details>
         {error ? (
           <p role="alert" className="error-message">

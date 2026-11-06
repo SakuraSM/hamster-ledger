@@ -3,7 +3,16 @@ import { DATE_KEY_LENGTH } from "../constants";
 const IMPORT_PREVIEW_LIMIT = 5;
 const ERROR_PREVIEW_LIMIT = 10;
 import { useMemo, useState } from "react";
-import { Button, Card, Checkbox, Text, ProgressBar } from "react-native-paper";
+import {
+  Button,
+  Card,
+  Checkbox,
+  Text,
+  ProgressBar,
+  useTheme,
+} from "react-native-paper";
+import { View } from "react-native";
+import { ReceiptAction } from "./ReceiptAction";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { planImport, money } from "@hamster-ledger/core";
 import {
@@ -28,6 +37,8 @@ export function ImportScreen({
   controller,
   onReview,
 }: ImportScreenProps): React.JSX.Element {
+  const theme = useTheme();
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const [files, setFiles] = useState<StatementFile[]>([]);
   const [mapping, setMapping] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -120,16 +131,26 @@ export function ImportScreen({
     }
   }
   const mappingPreview = parsed.find((item) => item.file.hash === mapping);
+  const personalBook = controller.books.find(
+    (book) => book.id === "personal" && !book.isArchived,
+  );
   if (controller.mode === "demo")
     return (
       <Screen>
         <Text variant="headlineSmall" accessibilityRole="header">
-          导入账单
+          账单放进来
         </Text>
-        <Text>真实账单会保存在「我的账本」，与示例数据分开。</Text>
+        <Text>
+          {personalBook
+            ? "真实账单会保存在「我的账本」，与示例数据分开。"
+            : "当前身份无法使用个人账本，请在账本管理中切换到可用账本后再导入。"}
+        </Text>
         <Button
           mode="contained"
-          onPress={() => controller.switchMode("personal")}
+          disabled={!personalBook}
+          onPress={() => {
+            if (personalBook) controller.switchMode("personal");
+          }}
         >
           使用我的账本导入
         </Button>
@@ -139,7 +160,7 @@ export function ImportScreen({
     <>
       <Screen>
         <Text variant="headlineSmall" accessibilityRole="header">
-          导入账单
+          账单放进来
         </Text>
         <Text>
           支持支付宝、微信与银行 CSV / Excel。单文件最多 10 MB、15,000
@@ -149,21 +170,44 @@ export function ImportScreen({
           导入到：
           {controller.books.find((book) => book.id === controller.mode)?.name}
         </Text>
-        <Button
-          mode="contained"
-          icon="file-upload-outline"
-          loading={isReading}
-          disabled={isReading || controller.isSaving}
-          onPress={() => void choose()}
+        <View
+          style={{
+            borderWidth: 1,
+            borderStyle: "dashed",
+            borderColor: theme.colors.outlineVariant,
+            borderRadius: 16,
+            padding: 24,
+            alignItems: "center",
+            gap: 8,
+          }}
         >
-          选择账单文件
-        </Button>
+          <Text variant="titleLarge">选择 CSV / Excel</Text>
+          <Text>UTF-8 / GB18030 · 单文件 10 MB 内</Text>
+          <Button
+            mode="outlined"
+            icon="file-upload-outline"
+            contentStyle={{ minHeight: 48 }}
+            loading={isReading}
+            disabled={isReading || controller.isSaving}
+            onPress={() => void choose()}
+          >
+            选择账单文件
+          </Button>
+        </View>
         {isReading ? <ProgressBar indeterminate /> : null}
-        <ErrorMessage message={error} />
+        <ErrorMessage
+          message={
+            isAmountHidden && error
+              ? "读取或导入失败，请检查文件后重试。"
+              : error
+          }
+        />
         {parsed.map((item) => (
           <Card key={item.file.hash} mode="outlined">
             <Card.Content>
-              <Text variant="titleMedium">{item.file.name}</Text>
+              <Text variant="titleMedium">
+                {isAmountHidden ? "账单文件" : item.file.name}
+              </Text>
               <Text>
                 {item.file.source} · 表头第 {item.file.headerIndex + 1} 行 ·{" "}
                 {item.records.length} 条可识别流水
@@ -198,7 +242,11 @@ export function ImportScreen({
             >
               导出错误行与原始依据
             </Button>
-            <Text>{errors.slice(0, ERROR_PREVIEW_LIMIT).join("\n")}</Text>
+            <Text>
+              {isAmountHidden
+                ? "金额与错误行内容已隐藏。"
+                : errors.slice(0, ERROR_PREVIEW_LIMIT).join("\n")}
+            </Text>
             <Checkbox.Item
               label="跳过错误行，仅导入有效记录"
               status={shouldSkipErrors ? "checked" : "unchecked"}
@@ -214,12 +262,12 @@ export function ImportScreen({
             </Text>
             {records.slice(0, IMPORT_PREVIEW_LIMIT).map((record) => (
               <Text key={record.id}>
-                {record.date.slice(0, DATE_KEY_LENGTH)} · {record.merchant} · ¥
-                {money(record.amount)}
+                {isAmountHidden
+                  ? `${record.date.slice(0, DATE_KEY_LENGTH)} · 金额已隐藏`
+                  : `${record.date.slice(0, DATE_KEY_LENGTH)} · ${record.merchant} · ¥${money(record.amount)}`}
               </Text>
             ))}
-            <Button
-              mode="contained"
+            <ReceiptAction
               loading={controller.isSaving}
               disabled={
                 needsMappingReview ||
@@ -231,7 +279,7 @@ export function ImportScreen({
               onPress={() => void commit()}
             >
               确认导入
-            </Button>
+            </ReceiptAction>
           </Section>
         ) : null}
         {message ? (
@@ -245,6 +293,7 @@ export function ImportScreen({
         <StatementMapping
           file={mappingPreview.file}
           preview={mappingPreview}
+          isAmountHidden={isAmountHidden}
           onClose={() => setMapping(null)}
           onChange={(next) => {
             setFiles(

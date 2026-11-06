@@ -1,9 +1,12 @@
 import { useEffect } from "react";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { deliverPlanningNotifications } from "../platform/planning-notifications";
-export function usePlanningNotifications(controller: LedgerController): void {
+export function usePlanningNotifications(
+  controller: LedgerController,
+  isEnabled = true,
+): void {
   useEffect(() => {
-    if (!controller.ledger.preferences?.reminderEnabled) return;
+    if (!isEnabled || !controller.ledger.preferences?.reminderEnabled) return;
     void deliverPlanningNotifications(
       controller.mode,
       controller.ledger.notifications ?? [],
@@ -11,6 +14,7 @@ export function usePlanningNotifications(controller: LedgerController): void {
       // Notices remain in the notification center if OS delivery fails.
     });
   }, [
+    isEnabled,
     controller.mode,
     controller.ledger.notifications,
     controller.ledger.preferences?.reminderEnabled,

@@ -1,12 +1,14 @@
 /* Generated from tokens.json. Run npm run tokens:generate. */
 :root {
-  --bg: #fffcf7;
-  --sidebar: #f6f0e7;
-  --ink: #39291f;
-  --muted: #75685d;
-  --primary: #a9552b;
-  --primary-hover: #8d4420;
-  --line: #eadfd3;
-  --apricot: #f5e3cf;
-  --positive: #456445;
+  --bg: #f5f3ed;
+  --sidebar: #eeede4;
+  --ink: #24251f;
+  --muted: #666b5d;
+  --primary: #a94c2c;
+  --primary-hover: #863c24;
+  --action: #ec8051;
+  --action-ink: #38291e;
+  --line: #dedfd5;
+  --apricot: #e4e8c8;
+  --positive: #57642e;
 }

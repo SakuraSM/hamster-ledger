@@ -3,7 +3,6 @@ import { LedgerSnackbar } from "./ui/LedgerSnackbar";
 import { LedgerViewBoundary } from "./ui/LedgerViewBoundary";
 import { useNativeSync } from "./hooks/useNativeSync";
 import { usePlanningNotifications } from "./hooks/usePlanningNotifications";
-import { MONTH_KEY_LENGTH } from "./constants";
 const FLOATING_GAP = 16;
 const MIN_NOTICE_HEIGHT = 48;
 import { useEffect, useState, useCallback } from "react";
@@ -17,6 +16,12 @@ import {
 import { AppHeader } from "./ui/AppHeader";
 import { LedgerLoading } from "./ui/LedgerLoading";
 import { NavigationLayer } from "./ui/NavigationLayer";
+import { entryState } from "./ui/entry-state";
+import { navigationIdentity as identifyNavigation } from "./ui/navigation-identity";
+import { useToolHistory } from "./ui/tool-history";
+import { RetainedToolPages } from "./ui/RetainedToolPages";
+import { AppScenes } from "./ui/AppScenes";
+import { AppEditors, type MobileEditorState } from "./ui/AppEditors";
 import {
   AppNavigation,
   APP_ROUTES,
@@ -25,27 +30,16 @@ import {
 import { SystemBars } from "./ui/SystemBars";
 import { useReducedMotion } from "./hooks/useReducedMotion";
 import { useKeyboardVisibility } from "./hooks/useKeyboardVisibility";
-import { saveEntry, type BillRecord } from "@hamster-ledger/core";
+import type { BillRecord } from "@hamster-ledger/core";
 import { useLedger } from "./hooks/useLedger";
 import { useNetworkController } from "./hooks/useNetworkController";
 import { useAppTheme } from "./hooks/useAppTheme";
 import { LedgerProvider } from "./ui/LedgerProvider";
-import { OverviewScreen } from "./screens/OverviewScreen";
-import { TransactionsScreen } from "./screens/TransactionsScreen";
-import { AssetsScreen } from "./screens/AssetsScreen";
-import { ReportsScreen } from "./screens/ReportsScreen";
-import {
-  ToolsScreen,
-  TOOLS,
-  type ToolPage as ToolPageName,
-} from "./screens/ToolsScreen";
-import { ToolPage } from "./screens/ToolPage";
-import { EntryEditor } from "./screens/EntryEditor";
-import { RecordDetail } from "./screens/RecordDetail";
-import { RecordMetadataEditor } from "./screens/RecordMetadataEditor";
+import { AuxiliaryPages, auxiliaryPageTitle } from "./ui/AuxiliaryPages";
 import { useNativeAccount } from "./auth/NativeAccount";
 import { AccountScreen } from "./screens/AccountScreen";
 const ASSET_INDEX = APP_ROUTES.findIndex(({ key }) => key === "assets");
+const RECORDS_INDEX = APP_ROUTES.findIndex(({ key }) => key === "records");
 export function AppShell(): React.JSX.Element {
   const fontScale = useSystemFontScale();
   const local = useLedger();
@@ -56,24 +50,56 @@ export function AppShell(): React.JSX.Element {
   const isKeyboardVisible = useKeyboardVisibility();
   const [noticeHeight, setNoticeHeight] = useState(MIN_NOTICE_HEIGHT);
   const [index, setIndex] = useState(0);
-  const [tool, setTool] = useState<ToolPageName | null>(null);
+  const toolHistory = useToolHistory();
+  const {
+    current: tool,
+    open: openTool,
+    back: closeTool,
+    clear: clearTools,
+  } = toolHistory;
   const [month, setMonth] = useBookMonth(controller.mode);
-  const [editor, setEditor] = useState<{
-    record?: BillRecord;
-    date?: string;
-  } | null>(null);
+  const [editor, setEditor] = useState<MobileEditorState | null>(null);
   const [detail, setDetail] = useState<BillRecord | null>(null);
   const [metadata, setMetadata] = useState<BillRecord | null>(null);
   const hasReducedMotion = useReducedMotion();
-  usePlanningNotifications(controller);
+  const cloudBook = controller.books.find(
+    (book) => book.id === controller.mode,
+  )?.cloud;
+  const navigationIdentity = identifyNavigation({
+    mode: controller.mode,
+    server: account.server,
+    userId: account.credentials?.user.id,
+    cloud: cloudBook,
+  });
+  const [visibleIdentity, setVisibleIdentity] = useState(navigationIdentity);
+  const mustChangePassword = Boolean(
+    account.credentials?.user.mustChangePassword,
+  );
+  const currentEntryState = entryState({
+    isLedgerLoading: controller.isLoading,
+    isAccountLoading: account.isLoading,
+    isIdentityCurrent: visibleIdentity === navigationIdentity,
+    needsEntry: account.needsEntry,
+    mustChangePassword,
+  });
+  const canUseApp = currentEntryState === "ledger";
+  usePlanningNotifications(controller, canUseApp);
   const themeName = controller.ledger.preferences?.theme;
   const isDark = themeName === "night";
   const theme = useAppTheme({ themeName, hasReducedMotion });
-  const openReview = useCallback(() => setTool("review"), []);
+  const openReview = useCallback(() => openTool("review"), [openTool]);
+  useEffect(() => {
+    clearTools();
+    setIndex(0);
+    setEditor(null);
+    setDetail(null);
+    setMetadata(null);
+    setVisibleIdentity(navigationIdentity);
+  }, [navigationIdentity, clearTools]);
   useEffect(() => {
     const listener = BackHandler.addEventListener("hardwareBackPress", () => {
       if (tool) {
-        setTool(null);
+        closeTool();
         return true;
       }
       if (index !== 0) {
@@ -83,7 +109,7 @@ export function AppShell(): React.JSX.Element {
       return false;
     });
     return () => listener.remove();
-  }, [tool, index]);
+  }, [tool, index, closeTool]);
   function edit(record: BillRecord): void {
     setDetail(null);
     if (
@@ -93,91 +119,37 @@ export function AppShell(): React.JSX.Element {
       setMetadata(record);
     else setEditor({ record });
   }
-  function renderScene({
-    route,
-  }: {
-    route: { key: string };
-  }): React.JSX.Element {
-    const pages: Record<string, React.JSX.Element> = {
-      overview: (
-        <OverviewScreen
-          ledger={controller.ledger}
-          month={month}
-          onMonth={setMonth}
-          isDemo={controller.mode === "demo"}
-          onRecord={setDetail}
-          onReview={openReview}
-          onAssets={() => setIndex(ASSET_INDEX)}
-        />
-      ),
-      records: (
-        <TransactionsScreen
-          key={controller.mode}
-          controller={controller}
-          onRecord={setDetail}
-        />
-      ),
-      assets: (
-        <AssetsScreen
-          key={controller.mode}
-          controller={controller}
-          onRecord={setDetail}
-        />
-      ),
-      reports: (
-        <ReportsScreen
-          key={controller.mode}
-          ledger={controller.ledger}
-          bookId={
-            controller.books.find((book) => book.id === controller.mode)?.cloud
-              ?.id
-          }
-        />
-      ),
-      tools: (
-        <ToolsScreen
-          onSelect={setTool}
-          ledger={controller.ledger}
-          onAssets={() => setIndex(ASSET_INDEX)}
-          storageDescription={
-            controller.network?.isConnected
-              ? "家庭联网账本：修改保存在服务器；断网时仅可查看本机缓存。"
-              : sync.link
-                ? "个人同步账本：本机可离线编辑，应用在前台时尝试自动同步；冲突时保留双方版本。"
-                : "本机账本：数据保存在此设备，可离线编辑；尚未连接云端同步。"
-          }
-        />
-      ),
-    };
-    return pages[route.key];
+  function openAssets(): void {
+    clearTools();
+    setIndex(ASSET_INDEX);
   }
-  const hasNavigation = !controller.isLoading && !account.needsEntry && !tool;
-  const isReportPage = APP_ROUTES[index].key === "reports";
+  const hasNavigation = canUseApp && !tool;
+  const isReportPage = tool === "reports-home";
   function openEntry(): void {
     setEditor({});
   }
   const navigationHeight =
     insets.bottom + (hasNavigation ? NAVIGATION_BAR_HEIGHT : 0);
-  const pageTitle = tool
-    ? (TOOLS.find((item) => item.key === tool)?.title ?? "更多功能")
-    : APP_ROUTES[index].header;
+  const pageTitle = tool ? auxiliaryPageTitle(tool) : APP_ROUTES[index].header;
   return (
     <LedgerProvider theme={theme}>
       <SystemBars isDark={isDark} />
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader
           key={fontScale}
-          title={
-            controller.isLoading || account.needsEntry ? "仓鼠记账" : pageTitle
-          }
+          title={!canUseApp ? "仓鼠记账" : pageTitle}
           bookName={
-            controller.books.find((book) => book.id === controller.mode)?.name
+            canUseApp
+              ? controller.books.find((book) => book.id === controller.mode)
+                  ?.name
+              : undefined
           }
-          canUndo={controller.canUndo}
+          canUndo={hasNavigation && controller.canUndo}
           onUndo={controller.undo}
-          onBooks={() => setTool("books")}
-          onBack={tool ? () => setTool(null) : undefined}
-          onAdd={hasNavigation && isReportPage ? openEntry : undefined}
+          onBooks={hasNavigation ? () => openTool("books") : undefined}
+          onTools={hasNavigation ? () => openTool("tools-home") : undefined}
+          onBack={tool && canUseApp ? closeTool : undefined}
+          onAdd={isReportPage && canUseApp ? openEntry : undefined}
         />
         <SafeAreaView
           edges={
@@ -192,28 +164,51 @@ export function AppShell(): React.JSX.Element {
           >
             {controller.error}
           </Banner>
-          {controller.isLoading ? (
+          {controller.network?.isIdentityBlocked && !account.isLoading ? (
+            <AccountScreen />
+          ) : currentEntryState === "loading" ? (
             <LedgerLoading error={controller.error} />
-          ) : account.needsEntry ? (
-            <AccountScreen onLocal={() => undefined} />
+          ) : currentEntryState === "account" ? (
+            <AccountScreen
+              onLocal={mustChangePassword ? undefined : () => undefined}
+            />
           ) : (
             <LedgerViewBoundary
               resetKey={`${controller.mode}:${tool ?? index}`}
-              onRecovery={() => setTool("backup")}
+              onRecovery={() => openTool("backup")}
             >
               <NavigationLayer
                 hasReducedMotion={hasReducedMotion}
                 transitionKey={tool ? `${controller.mode}:${tool}` : undefined}
                 tool={
                   tool ? (
-                    <ToolPage
-                      key={`${controller.mode}:${tool}`}
-                      page={tool}
-                      sync={sync}
-                      controller={controller}
-                      onRecord={setDetail}
-                      onAdd={(date) => setEditor({ date })}
-                      onReview={openReview}
+                    <RetainedToolPages
+                      entries={toolHistory.entries}
+                      identity={navigationIdentity}
+                      renderPage={(page) => (
+                        <AuxiliaryPages
+                          tool={page}
+                          controller={controller}
+                          sync={sync}
+                          month={month}
+                          onMonth={setMonth}
+                          onRecord={setDetail}
+                          onReimburse={(record) =>
+                            setEditor({
+                              initialDraft: {
+                                type: "reimburse",
+                                relatedId: record.id,
+                                accountId: "",
+                                amount: "",
+                              },
+                            })
+                          }
+                          onReview={openReview}
+                          onAssets={openAssets}
+                          onAdd={(date) => setEditor({ date })}
+                          onOpen={openTool}
+                        />
+                      )}
                     />
                   ) : null
                 }
@@ -221,7 +216,15 @@ export function AppShell(): React.JSX.Element {
                 <AppNavigation
                   index={index}
                   onIndexChange={setIndex}
-                  renderScene={renderScene}
+                  renderScene={({ route }) => (
+                    <AppScenes
+                      route={route}
+                      controller={controller}
+                      onRecord={setDetail}
+                      onReview={openReview}
+                      onOpen={openTool}
+                    />
+                  )}
                   hasReducedMotion={hasReducedMotion}
                   bottomInset={insets.bottom}
                 />
@@ -229,10 +232,7 @@ export function AppShell(): React.JSX.Element {
             </LedgerViewBoundary>
           )}
         </SafeAreaView>
-        {hasNavigation &&
-        !isReportPage &&
-        index !== ASSET_INDEX &&
-        !isKeyboardVisible ? (
+        {hasNavigation && index === RECORDS_INDEX && !isKeyboardVisible ? (
           <FAB
             icon="plus"
             label="记一笔"
@@ -248,46 +248,24 @@ export function AppShell(): React.JSX.Element {
             }}
           />
         ) : null}
-        <LedgerSnackbar
-          controller={controller}
-          bottom={navigationHeight}
-          onHeight={setNoticeHeight}
-        />
-        {detail ? (
-          <RecordDetail
+        {canUseApp ? (
+          <LedgerSnackbar
             controller={controller}
-            record={detail}
-            onClose={() => setDetail(null)}
+            bottom={navigationHeight}
+            onHeight={setNoticeHeight}
+          />
+        ) : null}
+        {canUseApp ? (
+          <AppEditors
+            controller={controller}
+            detail={detail}
+            editor={editor}
+            metadata={metadata}
+            onCloseDetail={() => setDetail(null)}
             onEdit={edit}
-          />
-        ) : null}
-        {editor ? (
-          <EntryEditor
-            bookId={
-              controller.books.find((book) => book.id === controller.mode)
-                ?.cloud?.id
-            }
-            onCommit={async (next, date) => {
-              await controller.commit(next);
-              setMonth(date.slice(0, MONTH_KEY_LENGTH));
-              controller.notify("账单已保存。");
-            }}
-            ledger={controller.ledger}
-            record={editor.record}
-            date={editor.date}
-            onClose={() => setEditor(null)}
-            onSave={async (input) => {
-              await controller.commit(saveEntry(controller.ledger, input));
-              setMonth(input.date.slice(0, MONTH_KEY_LENGTH));
-              controller.notify("账单已保存");
-            }}
-          />
-        ) : null}
-        {metadata ? (
-          <RecordMetadataEditor
-            record={metadata}
-            controller={controller}
-            onClose={() => setMetadata(null)}
+            onCloseEditor={() => setEditor(null)}
+            onCloseMetadata={() => setMetadata(null)}
+            onMonth={setMonth}
           />
         ) : null}
       </View>

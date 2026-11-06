@@ -6,11 +6,15 @@ import { AdvancedEntryEditor } from "./finance/AdvancedEntryEditor";
 export function EntryEditor(
   props: EntryEditorProps & {
     bookId?: string;
+    initialDraft?: Partial<EntryDraft>;
     onCommit: (ledger: Ledger, date: string) => Promise<void>;
   },
 ): React.JSX.Element {
   const [advanced, setAdvanced] = useState<Partial<EntryDraft> | null>(
-    props.record?.detail && props.record.detail.origin !== "legacy" ? {} : null,
+    props.initialDraft ??
+      (props.record?.detail && props.record.detail.origin !== "legacy"
+        ? {}
+        : null),
   );
   return advanced ? (
     <AdvancedEntryEditor
