@@ -27,7 +27,7 @@ final result: passed
 
 这些修正都有后续截图或命令结果，没有把编译成功当作视觉通过。
 
-合并前独立审查另发现三类P2导航问题：分类/账本归档误连现金账户，部分账户入口误连现金示例，报销入口误连咖啡退款。已分别加入对象范围内的确认、对未展开分支明确提示静态示意，并改正报销和钱包目标。7项导航测试保留了修复前失败与修复后通过的命令证据。修正只改变关联和确认策略，导出目录与当前定义的初始视觉字段逐项一致；没有把这些新增分支写成已完成的浏览器验收。
+合并前独立审查另发现三类P2导航问题：分类/账本归档误连现金账户，部分账户入口误连现金示例，报销入口误连咖啡退款。已分别加入对象范围内的确认、对未展开分支明确提示静态示意，并改正报销和钱包目标。随后通过实际组件点击补查并修正返回/撤销按钮被误拦的问题。12项导航与组件点击测试保留了修复前失败与修复后通过的命令证据。修正只改变关联和确认策略，导出目录与当前定义的初始视觉字段逐项一致；没有把这些新增分支写成已完成的浏览器验收。
 
 修正记录见[navigation-verification.json](docs/design/receipt-relay-2026-11-06/navigation-verification.json)。
 
@@ -72,7 +72,7 @@ final result: passed
 
 ## 最终命令与结果
 
-- `npm run check`：325项Vitest、67项PostgreSQL、4项Sites测试通过，另含依赖兼容、类型、格式、ESLint、边界和构建检查。
+- `npm run check`：330项Vitest、67项PostgreSQL、4项Sites测试通过，另含依赖兼容、类型、格式、ESLint、边界和构建检查。
 - DFA检查从`apps/web`运行，目标`src/design-preview`：项目TSC、目标ESLint和文件长度门禁通过。
 - `node scripts/verify-design-pack.mjs`：来源文件、全部路由、全部平台稿件、PNG完整性与尺寸、无越界、可访问性覆盖均通过。
 - 浏览器交互记录：[interaction-evidence.json](docs/design/receipt-relay-2026-11-06/interaction-evidence.json)。所有操作针对虚构视觉稿，不提交真实账本。
