@@ -76,6 +76,12 @@ export function FinanceFormDialog({
                   ) : (
                     <TextInput
                       label={field.label}
+                      type={
+                        field.type === "money" &&
+                        ledger.preferences?.hideAmounts
+                          ? "password"
+                          : "text"
+                      }
                       value={current}
                       inputMode={
                         field.type === "money"

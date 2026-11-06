@@ -8,6 +8,7 @@ import { Icons } from "./Icons";
 const YEAR_LENGTH = 4;
 const MONTH_START = 5;
 const PAGE_LABELS: Record<PageId, string> = {
+  inbox: "待处理",
   overview: "总览",
   transactions: "全部账单",
   import: "导入账单",
@@ -44,6 +45,18 @@ export function AppHeader({
   const auth = useAuth();
   return (
     <header className="topbar">
+      <UnstyledButton
+        type="button"
+        className="mobile-brand"
+        aria-label={`切换账本：${bookName}`}
+        onClick={onSettings}
+      >
+        <img src="/assets/hamster-logo.png" alt="" />
+        <span>
+          <b>仓鼠记账</b>
+          <small>{bookName}</small>
+        </span>
+      </UnstyledButton>
       <div className="breadcrumb">
         <UnstyledButton
           type="submit"
@@ -69,10 +82,11 @@ export function AppHeader({
           variant="filled"
           type="submit"
           className="primary-button"
+          aria-label="记一笔"
           onClick={onAdd}
         >
           <Icons.Plus size={20} />
-          <span>记一笔</span>
+          <span className="primary-label">记一笔</span>
         </Button>
         {page === "overview" || page === "transactions" ? (
           <label className="month-picker">
@@ -109,6 +123,14 @@ export function AppHeader({
             <span>导入账单</span>
           </Button>
         ) : null}
+        <UnstyledButton
+          type="button"
+          className="mobile-tools"
+          aria-label="工具与设置"
+          onClick={onSettings}
+        >
+          <Icons.Book size={24} />
+        </UnstyledButton>
       </div>
     </header>
   );

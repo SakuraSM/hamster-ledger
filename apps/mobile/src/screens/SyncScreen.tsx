@@ -3,6 +3,7 @@ import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { Screen, Section, ErrorMessage } from "../ui/Screen";
 import type { NativeSyncController } from "../hooks/useNativeSync";
 import { useNativeAccount } from "../auth/NativeAccount";
+import { ReceiptAction } from "./ReceiptAction";
 export function SyncScreen({
   controller,
   sync,
@@ -11,11 +12,18 @@ export function SyncScreen({
   sync: NativeSyncController;
 }): React.JSX.Element {
   const account = useNativeAccount();
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const disabled = sync.isBusy || controller.isLoading || controller.isSaving;
   if (controller.network?.isConnected)
     return (
       <Screen>
-        <Text variant="headlineSmall">联网账本保存</Text>
+        <Text
+          variant="headlineLarge"
+          accessibilityRole="header"
+          style={{ fontWeight: "700" }}
+        >
+          联网账本保存
+        </Text>
         <Text>
           修改通过联网操作接口保存到服务器；断网时可查看缓存。成员和邀请在「家庭账本」管理。
         </Text>
@@ -27,8 +35,12 @@ export function SyncScreen({
     );
   return (
     <Screen>
-      <Text variant="headlineSmall" accessibilityRole="header">
-        云端同步
+      <Text
+        variant="headlineLarge"
+        accessibilityRole="header"
+        style={{ fontWeight: "700" }}
+      >
+        两边的账，接得上
       </Text>
       {!account.credentials || account.credentials.user.mustChangePassword ? (
         <Text>
@@ -38,13 +50,19 @@ export function SyncScreen({
         </Text>
       ) : (
         <>
-          <Section title={"已登录 " + account.credentials.user.username}>
+          <Section
+            title={
+              isAmountHidden
+                ? "已登录"
+                : "已登录 " + account.credentials.user.username
+            }
+          >
             <Text>
               当前账本：
-              {
-                controller.books.find((book) => book.id === controller.mode)
-                  ?.name
-              }
+              {isAmountHidden
+                ? "当前账本"
+                : controller.books.find((book) => book.id === controller.mode)
+                    ?.name}
             </Text>
             <Text>
               {sync.link
@@ -54,14 +72,13 @@ export function SyncScreen({
             <Text>
               仅云端有更新时自动获取；两端都有修改时保留双方版本，可预览并恢复为新账本。
             </Text>
-            <Button
-              mode="contained"
+            <ReceiptAction
               disabled={disabled}
               loading={sync.isBusy}
               onPress={() => void (sync.link ? sync.sync() : sync.upload())}
             >
               {sync.link ? "立即同步" : "上传当前账本"}
-            </Button>
+            </ReceiptAction>
             {sync.link ? (
               <Button
                 disabled={disabled}
@@ -75,7 +92,8 @@ export function SyncScreen({
             <Card mode="outlined">
               <Card.Content style={{ gap: 12 }}>
                 <Text variant="titleMedium">
-                  云端版本预览 · {sync.preview.name}
+                  云端版本预览 ·{" "}
+                  {isAmountHidden ? "云端账本" : sync.preview.name}
                 </Text>
                 <Text>
                   版本 {sync.preview.revision} ·{" "}
@@ -108,10 +126,10 @@ export function SyncScreen({
               刷新云端列表
             </Button>
             {!sync.books.length ? <Text>还没有云端账本。</Text> : null}
-            {sync.books.map((book) => (
+            {sync.books.map((book, index) => (
               <List.Item
                 key={book.id}
-                title={book.name}
+                title={isAmountHidden ? `云端账本 ${index + 1}` : book.name}
                 description={"版本 " + book.revision}
                 onPress={() => {
                   if (!disabled) void sync.inspect(book.id);

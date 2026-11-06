@@ -1,4 +1,5 @@
 import type { CloudController } from "../hooks/useCloudSync";
+import { Button } from "@mantine/core";
 import { useMemo } from "react";
 import type { PageId } from "../app-config";
 import type { LedgerController } from "../hooks/useLedger";
@@ -14,6 +15,8 @@ import {
   type Ledger,
 } from "@hamster-ledger/core";
 import { AssetsPage } from "./assets/AssetsPage";
+import { isSameAssetBook, type AssetBookContext } from "./assets/AccountEditor";
+import { InboxWorkspace } from "./InboxWorkspace";
 import { AssetSnapshot } from "./assets/AssetSnapshot";
 import { Overview } from "./Overview";
 import { Transactions, type BillFilter } from "./Transactions";
@@ -36,6 +39,7 @@ interface Props {
   onMonth: (month: string) => void;
   onNavigate: (page: PageId) => void;
   onSelect: (record: BillRecord) => void;
+  onReimburse?: (record: BillRecord) => void;
   onPreview: (record: BillRecord) => void;
   onCategory: (category: Category) => void;
   onUnassigned: () => void;
@@ -55,6 +59,7 @@ export function AppPages(props: Props): React.JSX.Element {
     onMonth,
     onNavigate,
     onSelect,
+    onReimburse,
     onPreview,
     onCategory,
     onUnassigned,
@@ -67,7 +72,56 @@ export function AppPages(props: Props): React.JSX.Element {
     [ledger, recordMonth],
   );
   const pending = pendingReviewCount(ledger);
+  const personalBook = controller.books.find((book) => book.id === "personal");
+  const needsImportBook =
+    mode === "demo" &&
+    (!personalBook || personalBook.isArchived || Boolean(personalBook.cloud));
+  const cloud = controller.books.find((book) => book.id === mode)?.cloud;
+  const bookContext: AssetBookContext = {
+    mode,
+    cloud: cloud
+      ? { id: cloud.id, userId: cloud.userId, server: cloud.server }
+      : null,
+    isNetwork: Boolean(controller.network?.isConnected),
+    revision: controller.network?.revision,
+  };
+  function commitAsset(next: Ledger, guard?: AssetBookContext): Promise<void> {
+    if (
+      guard &&
+      (!isSameAssetBook(guard, bookContext) ||
+        guard.revision !== bookContext.revision)
+    )
+      return Promise.reject(new Error("账本已变化，请重新核对后再确认。"));
+    const snapshot = guard ?? bookContext;
+    if (snapshot.isNetwork || snapshot.cloud) {
+      if (
+        !snapshot.isNetwork ||
+        !snapshot.cloud ||
+        snapshot.revision === undefined
+      )
+        return Promise.reject(
+          new Error("联网账本身份或版本不可用，请刷新后重试。"),
+        );
+      return controller.commit(next, {
+        mode: snapshot.mode,
+        expectedRevision: snapshot.revision,
+        expectedCloud: snapshot.cloud,
+      });
+    }
+    return controller.commit(next);
+  }
   const pages: Record<PageId, () => React.JSX.Element> = {
+    inbox: () => (
+      <InboxWorkspace
+        key={mode}
+        controller={controller}
+        month={month}
+        onMonth={onMonth}
+        onReview={() => onNavigate("review")}
+        onImport={() => onNavigate("import")}
+        onLater={() => onNavigate("overview")}
+      />
+    ),
     overview: () => (
       <>
         <AssetSnapshot ledger={ledger} onOpen={() => onNavigate("assets")} />
@@ -104,49 +158,66 @@ export function AppPages(props: Props): React.JSX.Element {
     assets: () => (
       <AssetsPage
         key={mode}
-        onCommit={controller.commit}
+        onCommit={commitAsset}
+        bookContext={bookContext}
         canUndo={controller.canUndo}
         onUndo={controller.undo}
         ledger={ledger}
         isDemo={mode === "demo"}
         onSave={async (input) => {
-          await controller.commit(
+          if (
+            input.expectedBook &&
+            !isSameAssetBook(input.expectedBook, bookContext)
+          )
+            throw new Error("账本或绑定身份已变化，请重新打开后重试。");
+          await commitAsset(
             saveAssetAccount({
               ledger,
               account: input.account,
               now: localNow(),
               checkpointId: newEntityId(),
               note: input.note,
+              expectedAccount: input.expectedAccount,
             }),
+            input.previewGuard,
           );
           controller.notify("账户已保存。");
         }}
         onArchive={async (input) => {
-          await controller.commit(
+          await commitAsset(
             archiveAssetAccount({ ledger, ...input, at: localNow() }),
           );
         }}
         onRecord={onSelect}
         onLoadExamples={() =>
-          controller.commit({ ...ledger, accounts: createDemoAccounts() })
+          commitAsset({ ...ledger, accounts: createDemoAccounts() })
         }
         onUnassigned={onUnassigned}
       />
     ),
-    import: () => (
-      <ImportPage
-        targetBookName={
-          controller.books.find(
-            (book) => book.id === (mode === "demo" ? "personal" : mode),
-          )?.name ?? "我的账本"
-        }
-        targetLedger={mode === "demo" ? controller.personalLedger : ledger}
-        onCommit={onImport}
-        onReview={() => onNavigate("review")}
-        onAll={() => onNavigate("transactions")}
-        onSelect={onPreview}
-      />
-    ),
+    import: () =>
+      needsImportBook ? (
+        <section className="import-page">
+          <div className="page-heading">
+            <h1>账单放进来，收支理清楚</h1>
+            <p>当前不能从示例账本导入，请先在账本管理中切换到可用账本。</p>
+          </div>
+          <Button onClick={() => onNavigate("tools")}>进入账本管理</Button>
+        </section>
+      ) : (
+        <ImportPage
+          targetBookName={
+            controller.books.find(
+              (book) => book.id === (mode === "demo" ? "personal" : mode),
+            )?.name ?? "我的账本"
+          }
+          targetLedger={mode === "demo" ? controller.personalLedger : ledger}
+          onCommit={onImport}
+          onReview={() => onNavigate("review")}
+          onAll={() => onNavigate("transactions")}
+          onSelect={onPreview}
+        />
+      ),
     review: () => (
       <ReviewPage key={mode} controller={controller} onSelect={onSelect} />
     ),
@@ -172,6 +243,8 @@ export function AppPages(props: Props): React.JSX.Element {
         key={mode}
         ledger={ledger}
         month={month}
+        onRecord={onSelect}
+        onReimburse={onReimburse}
         bookId={controller.books.find((book) => book.id === mode)?.cloud?.id}
       />
     ),

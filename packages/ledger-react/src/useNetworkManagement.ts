@@ -72,6 +72,18 @@ export function useNetworkManagement(input: {
   const contextKey = `${userId ?? ""}:${server}:${cloud?.id ?? ""}`;
   const currentKey = useRef(contextKey);
   currentKey.current = contextKey;
+  const openContext = JSON.stringify([
+    userId,
+    server,
+    controller.mode,
+    cloud?.id,
+  ]);
+  const openGeneration = useRef({ key: openContext, value: 0 });
+  if (openGeneration.current.key !== openContext)
+    openGeneration.current = {
+      key: openContext,
+      value: openGeneration.current.value + 1,
+    };
   const active = useRef(input);
   active.current = input;
   async function refresh(): Promise<void> {
@@ -193,15 +205,62 @@ export function useNetworkManagement(input: {
       controller.switchMode(existing.id as LedgerMode);
       return;
     }
+    const generation = openGeneration.current.value;
+    const originalBooks = controller.books;
+    const authorization = controller.network?.authorizationToken;
+    const ensureCurrent = (): void => {
+      if (
+        openGeneration.current.value !== generation ||
+        active.current.controller.mode !== controller.mode ||
+        active.current.controller.books !== originalBooks ||
+        (authorization &&
+          active.current.controller.network?.authorizationToken !==
+            authorization)
+      )
+        throw new Error(
+          "账本或登录身份已变化；已写入的本地数据会保留，请切回原账号核对。",
+        );
+    };
     const snapshot = await client.request<NetworkSnapshot>(
       `/network/books/${remote.id}`,
     );
-    await controller.createBook(remote.name, snapshot.ledger, {
-      id: remote.id,
-      server,
-      userId,
-      role: remote.role,
-    });
+    ensureCurrent();
+    if (snapshot.id !== remote.id) throw new Error("联网账本身份不匹配。");
+    let cacheFailed = false;
+    const prepare = Object.assign(
+      async (mode: LedgerMode): Promise<void> => {
+        ensureCurrent();
+        try {
+          if (!controller.network?.prepareCache)
+            throw new Error("本机仓储不支持联网离线缓存。");
+          await controller.network.prepareCache({ mode, snapshot });
+        } catch (cause) {
+          ensureCurrent();
+          if (
+            cause &&
+            typeof cause === "object" &&
+            "code" in cause &&
+            (cause.code === "NETWORK_CONTEXT_CHANGED" ||
+              cause.code === "NETWORK_CACHE_REVOKED" ||
+              cause.code === "LEDGER_STORAGE_CONFLICT")
+          )
+            throw cause;
+          cacheFailed = true;
+        }
+        ensureCurrent();
+      },
+      { assertCurrent: ensureCurrent },
+    );
+    await controller.createBook(
+      remote.name,
+      snapshot.ledger,
+      { id: remote.id, server, userId, role: snapshot.role },
+      prepare,
+    );
+    if (cacheFailed)
+      controller.notify(
+        "联网账本已打开，但离线缓存未保存；请检查本机存储并联网重试。",
+      );
   }
   async function manage(
     rest: string,
@@ -218,7 +277,32 @@ export function useNetworkManagement(input: {
       `/network/books/${cloud.id}${remove ? "" : `/members/${userId}`}`,
       { method: "DELETE", body: { confirm: true } },
     );
-    controller.switchMode("demo");
+    const currentBeforeRevoke = active.current.controller;
+    const contextToken = controller.network?.contextToken;
+    const authorizationToken = controller.network?.authorizationToken;
+    const shouldSwitch =
+      currentBeforeRevoke.mode === controller.mode &&
+      currentBeforeRevoke.network?.contextToken === contextToken &&
+      currentBeforeRevoke.network?.authorizationToken === authorizationToken;
+    let cacheFailure: unknown;
+    try {
+      await controller.network?.revokeCache?.();
+    } catch (cause) {
+      cacheFailure = cause;
+    }
+    const currentAfterRevoke = active.current.controller;
+    if (
+      shouldSwitch &&
+      currentAfterRevoke.mode === controller.mode &&
+      currentAfterRevoke.network?.contextToken === contextToken
+    )
+      currentAfterRevoke.switchMode("demo");
+    if (cacheFailure) {
+      const message =
+        "服务端已退出，但本机撤权状态保存失败；重启离线时缓存可能仍可见。";
+      controller.notify(message);
+      throw new Error(message);
+    }
     setMessage(remove ? "联网账本已删除。" : "已退出联网账本。");
   }
   async function invite(role: BookRole): Promise<void> {

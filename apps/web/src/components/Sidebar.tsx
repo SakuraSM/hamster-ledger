@@ -4,16 +4,17 @@ const PRIMARY_SOURCE_COUNT = 3;
 import { Icons, SourceIcon } from "./Icons";
 import { SOURCES, type Source, type LedgerMode } from "@hamster-ledger/core";
 const NAV_ITEMS = [
+  { id: "inbox", label: "待处理", icon: Icons.Receipt },
   { id: "overview", label: "总览", icon: Icons.House },
   { id: "transactions", label: "全部账单", icon: Icons.List },
   { id: "assets", label: "资产管理", icon: Icons.Wallet },
-  { id: "reports", label: "收支报表", icon: Icons.Chart },
-  { id: "tools", label: "更多功能", icon: Icons.Settings },
-  { id: "calendar", label: "账单日历", icon: Icons.Calendar },
   { id: "budgets", label: "预算管理", icon: Icons.Wallet },
-  { id: "recurring", label: "周期记账", icon: Icons.Undo },
+  { id: "calendar", label: "账单日历", icon: Icons.Calendar },
   { id: "import", label: "导入账单", icon: Icons.Upload },
+  { id: "reports", label: "收支报表", icon: Icons.Chart },
+  { id: "recurring", label: "周期记账", icon: Icons.Undo },
   { id: "review", label: "重复核对", icon: Icons.Link },
+  { id: "tools", label: "更多功能", icon: Icons.Settings },
 ] as const;
 interface SidebarProps {
   bookName: string;
@@ -28,6 +29,7 @@ interface SidebarProps {
 export function Sidebar({
   bookName,
   isNetwork,
+  mode,
   page,
   pending,
   onNavigate,
@@ -43,6 +45,17 @@ export function Sidebar({
           <span>把每一笔，存进小日子</span>
         </div>
       </div>
+      <UnstyledButton
+        type="button"
+        className="sidebar-book"
+        aria-label={`切换账本：${bookName}`}
+        onClick={onSettings}
+      >
+        <Icons.Book size={21} />
+        <strong>{bookName}</strong>
+        <small>{mode === "demo" ? "示例" : "账本"}</small>
+        <Icons.Caret size={15} />
+      </UnstyledButton>
       <nav className="main-nav" aria-label="主导航">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <UnstyledButton
@@ -50,12 +63,17 @@ export function Sidebar({
             key={id}
             aria-label={label}
             onClick={() => onNavigate(id)}
-            className={`${page === id ? "nav-item active" : "nav-item"} ${["import", "review", "calendar", "budgets", "recurring"].includes(id) ? "desktop-nav" : ""}`}
+            className={`${page === id ? "nav-item active" : "nav-item"} ${["inbox", "transactions", "assets"].includes(id) ? "" : "desktop-nav"} ${["transactions", "assets"].includes(id) ? "has-mobile-label" : ""}`}
             aria-current={page === id ? "page" : undefined}
           >
             <Icon size={25} weight={page === id ? "fill" : "regular"} />
-            <span>{label}</span>
-            {id === "review" && pending > 0 ? (
+            <span className="nav-label">{label}</span>
+            {id === "transactions" || id === "assets" ? (
+              <span className="nav-mobile-label">
+                {id === "transactions" ? "账单" : "资产"}
+              </span>
+            ) : null}
+            {id === "inbox" && pending > 0 ? (
               <span className="count-badge">{pending}</span>
             ) : null}
           </UnstyledButton>
@@ -76,8 +94,8 @@ export function Sidebar({
       </div>
       <div className="sidebar-footer">
         <UnstyledButton type="submit" onClick={onSettings}>
-          <Icons.Book size={25} />
-          <span>{bookName}</span>
+          <Icons.Settings size={23} />
+          <span>工具与设置</span>
           <Icons.Caret size={18} />
         </UnstyledButton>
         <p>

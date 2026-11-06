@@ -69,7 +69,7 @@ function fixture() {
   };
   return { local, repository, snapshot, request, client, cache };
 }
-it("keeps the offline cache read-only and recovers after reconnecting", async () => {
+it("hides an unverified offline cache, then retains a verified session cache read-only", async () => {
   const env = fixture();
   env.request.mockRejectedValueOnce(new Error("offline"));
   const { result } = renderHook(() =>
@@ -81,11 +81,15 @@ it("keeps the offline cache read-only and recovers after reconnecting", async ()
     }),
   );
   await waitFor(() => expect(result.current.network?.error).toBe("offline"));
-  expect(result.current.ledger).toEqual(env.cache);
+  expect(result.current.ledger.rules).toEqual({});
   await expect(result.current.commit(env.cache)).rejects.toThrow("当前只读");
   expect(env.local.commit).not.toHaveBeenCalled();
   await act(async () => result.current.network?.refresh());
   expect(result.current.network?.isOnline).toBe(true);
+  env.request.mockRejectedValueOnce(new Error("offline again"));
+  await act(async () => result.current.network?.refresh());
+  expect(result.current.network?.isOnline).toBe(false);
+  expect(result.current.ledger).toEqual(env.cache);
 });
 it("hides protected cached data after membership revocation and across account changes", async () => {
   const env = fixture();

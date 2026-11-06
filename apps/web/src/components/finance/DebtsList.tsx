@@ -1,4 +1,6 @@
 import { Button, Group, Text, Stack } from "@mantine/core";
+import { useState } from "react";
+import { PlanningActionConfirm } from "./PlanningActionConfirm";
 import {
   debtRemaining,
   formatCurrency,
@@ -10,6 +12,8 @@ import {
   type PlanningPanelController,
 } from "@hamster-ledger/ledger-react";
 import { localNow, newEntityId } from "../../platform/browser/runtime";
+const DATE_KEY_LENGTH = 10;
+
 export function DebtsList({
   ledger,
   panel,
@@ -17,7 +21,13 @@ export function DebtsList({
   ledger: Ledger;
   panel: PlanningPanelController;
 }): React.JSX.Element {
-  const today = localNow().slice(0, 10);
+  const today = localNow().slice(0, DATE_KEY_LENGTH);
+  const isHidden = Boolean(ledger.preferences?.hideAmounts);
+  const [archiveTarget, setArchiveTarget] = useState<{
+    id: string;
+    name: string;
+    isArchived: boolean;
+  } | null>(null);
   return (
     <Stack>
       <Button
@@ -36,12 +46,19 @@ export function DebtsList({
           </h3>
           <Text>
             剩余本金{" "}
-            {formatCurrency({
-              minor: debtRemaining(ledger, item),
-              currency: item.currency,
-            })}{" "}
+            {isHidden
+              ? "••••"
+              : formatCurrency({
+                  minor: debtRemaining(ledger, item),
+                  currency: item.currency,
+                })}{" "}
             /{" "}
-            {formatCurrency({ minor: item.principal, currency: item.currency })}
+            {isHidden
+              ? "••••"
+              : formatCurrency({
+                  minor: item.principal,
+                  currency: item.currency,
+                })}
           </Text>
           <Text size="sm">
             {item.openedOn} 起 ·{" "}
@@ -61,14 +78,11 @@ export function DebtsList({
             <Button
               variant="subtle"
               onClick={() =>
-                void panel.commit((current) => ({
-                  ...current,
-                  debts: current.debts?.map((debt) =>
-                    debt.id === item.id
-                      ? { ...debt, isArchived: !debt.isArchived }
-                      : debt,
-                  ),
-                }))
+                setArchiveTarget({
+                  id: item.id,
+                  name: item.name,
+                  isArchived: item.isArchived,
+                })
               }
             >
               {item.isArchived ? "恢复展示" : "归档台账"}
@@ -80,14 +94,38 @@ export function DebtsList({
               .filter((record) => record.detail?.debtId === item.id)
               .map((record) => (
                 <p key={record.id}>
-                  {record.date.slice(0, 10)} · {record.merchant} ·{" "}
+                  {record.date.slice(0, DATE_KEY_LENGTH)} · {record.merchant} ·{" "}
                   {record.isDeleted ? "已删除 · " : ""}
-                  {formatCurrency(record.detail!.original)}
+                  {isHidden ? "••••" : formatCurrency(record.detail!.original)}
                 </p>
               ))}
           </details>
         </article>
       ))}
+      {archiveTarget ? (
+        <PlanningActionConfirm
+          title={archiveTarget.isArchived ? "恢复台账" : "归档台账"}
+          description={
+            archiveTarget.isArchived
+              ? `恢复“${archiveTarget.name}”的展示。`
+              : `归档“${archiveTarget.name}”后保留关联流水，可随时恢复。`
+          }
+          confirmLabel={archiveTarget.isArchived ? "确认恢复" : "确认归档"}
+          isBusy={panel.isBusy}
+          onClose={() => setArchiveTarget(null)}
+          onConfirm={async () => {
+            await panel.commit((current) => ({
+              ...current,
+              debts: current.debts?.map((debt) =>
+                debt.id === archiveTarget.id
+                  ? { ...debt, isArchived: !archiveTarget.isArchived }
+                  : debt,
+              ),
+            }));
+            setArchiveTarget(null);
+          }}
+        />
+      ) : null}
     </Stack>
   );
 }

@@ -16,6 +16,7 @@ import { Screen, ErrorMessage } from "../ui/Screen";
 import { pickBackup, shareBackup, shareExcel } from "../platform/files";
 import { nativeAttachments, verifyAttachment } from "../platform/attachments";
 import { useNativeAccount } from "../auth/NativeAccount";
+import { ReceiptAction } from "./ReceiptAction";
 export function BackupScreen({
   controller,
 }: {
@@ -53,7 +54,11 @@ export function BackupScreen({
   }
   return (
     <Screen>
-      <Text variant="headlineSmall" accessibilityRole="header">
+      <Text
+        variant="headlineLarge"
+        accessibilityRole="header"
+        style={{ fontWeight: "700" }}
+      >
         备份与导出
       </Text>
       <Text>
@@ -86,8 +91,7 @@ export function BackupScreen({
           <Button onPress={progress.cancel}>取消操作</Button>
         </>
       )}
-      <Button
-        mode="contained"
+      <ReceiptAction
         icon="share-variant"
         disabled={isBusy}
         onPress={() =>
@@ -110,7 +114,7 @@ export function BackupScreen({
         }
       >
         导出含附件完整备份
-      </Button>
+      </ReceiptAction>
       <Button
         mode="outlined"
         icon="table"

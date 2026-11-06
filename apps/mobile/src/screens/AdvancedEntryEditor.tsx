@@ -1,5 +1,6 @@
+import { ReceiptAction } from "./ReceiptAction";
 import { useState, type ReactNode } from "react";
-import { Button, Checkbox, TextInput } from "react-native-paper";
+import { Checkbox, TextInput } from "react-native-paper";
 import {
   TRANSACTION_LABELS,
   TRANSACTION_TYPES,
@@ -118,9 +119,11 @@ export function AdvancedEntryEditor({
                   !item.isDeleted &&
                   item.status === "confirmed",
               )
-              .map((item) => ({
+              .map((item, index) => ({
                 value: item.id,
-                label: `${item.date.slice(0, 10)} · ${item.merchant} · ¥${(item.amount / 100).toFixed(2)}`,
+                label: ledger.preferences?.hideAmounts
+                  ? `原支出 ${index + 1}`
+                  : `${item.date.slice(0, 10)} · ${item.merchant} · ¥${(item.amount / 100).toFixed(2)}`,
               })),
           ]}
           onChange={(value) => change("relatedId", value)}
@@ -146,14 +149,13 @@ export function AdvancedEntryEditor({
         onChangeText={(value) => change("tags", value)}
       />
       <ErrorMessage message={form.error} />
-      <Button
-        mode="contained"
+      <ReceiptAction
         loading={form.isBusy}
         disabled={form.isBusy || !isTypeConfirmed}
         onPress={() => void form.save()}
       >
         保存完整交易
-      </Button>
+      </ReceiptAction>
     </FormSheet>
   );
 }

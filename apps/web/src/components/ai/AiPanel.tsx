@@ -74,6 +74,7 @@ export function AiPanel({
       setFileError(cause instanceof Error ? cause.message : "图片读取失败。");
     }
   }
+  const isHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE_SIZE);
   const pending =
     controller.ledger.aiDrafts?.filter((draft) => draft.state === "pending") ??
@@ -119,13 +120,15 @@ export function AiPanel({
         value={[]}
         onChange={(files) => void select(files)}
       />
-      {ai.images.map((image) => (
+      {ai.images.map((image, index) => (
         <div className="stat-row" key={image.id}>
-          <span>{image.name}</span>
+          <span>{isHidden ? `已选择图片 ${index + 1}` : image.name}</span>
           <Button
             variant="subtle"
             onClick={() => ai.removeImage(image.id)}
-            aria-label={`移除图片 ${image.name}`}
+            aria-label={
+              isHidden ? `移除第 ${index + 1} 张图片` : `移除图片 ${image.name}`
+            }
           >
             移除
           </Button>
@@ -168,34 +171,56 @@ export function AiPanel({
       )}
       {pending.slice(0, visibleCount).map((draft) => (
         <article className="panel" key={draft.id}>
-          <h4>{draft.candidate.merchant || "交易对象待确认"}</h4>
+          <h4>
+            {isHidden
+              ? "待确认草稿"
+              : draft.candidate.merchant || "交易对象待确认"}
+          </h4>
           <p>
             {TRANSACTION_LABELS[draft.candidate.type]} ·{" "}
-            {draft.candidate.currency} {draft.candidate.amount || "金额待确认"}{" "}
+            {isHidden
+              ? "••••"
+              : `${draft.candidate.currency} ${draft.candidate.amount || "金额待确认"}`}{" "}
             · {draft.candidate.date || "日期待确认"}
           </p>
           <p>
-            分类：{draft.candidate.category} · 账户：
-            {controller.ledger.accounts.find(
-              (account) => account.id === draft.candidate.accountId,
-            )?.name ?? "待选择"}
+            分类：{isHidden ? "已隐藏" : draft.candidate.category} · 账户：
+            {isHidden
+              ? "已隐藏"
+              : (controller.ledger.accounts.find(
+                  (account) => account.id === draft.candidate.accountId,
+                )?.name ?? "待选择")}
           </p>
           <p className="muted">
-            来源：{draft.sourceLabel} · {draft.attachmentIds.length} 张凭证
+            来源：{isHidden ? "已隐藏" : draft.sourceLabel} ·{" "}
+            {draft.attachmentIds.length} 张凭证
           </p>
-          <DraftAttachments
-            store={bookId ? remote : browserAttachments}
-            bookId={bookId ?? controller.mode}
-            ids={draft.attachmentIds}
-          />
+          {isHidden ? (
+            draft.attachmentIds.length ? (
+              <p>凭证已隐藏。</p>
+            ) : null
+          ) : (
+            <DraftAttachments
+              store={bookId ? remote : browserAttachments}
+              bookId={bookId ?? controller.mode}
+              ids={draft.attachmentIds}
+            />
+          )}
           {candidateIssues(controller.ledger, draft.candidate).length ? (
-            <ul>
-              {candidateIssues(controller.ledger, draft.candidate).map(
-                (issue) => (
-                  <li key={issue}>{issue}</li>
-                ),
-              )}
-            </ul>
+            isHidden ? (
+              <p>
+                有 {candidateIssues(controller.ledger, draft.candidate).length}{" "}
+                项待核对。
+              </p>
+            ) : (
+              <ul>
+                {candidateIssues(controller.ledger, draft.candidate).map(
+                  (issue) => (
+                    <li key={issue}>{issue}</li>
+                  ),
+                )}
+              </ul>
+            )
           ) : (
             <p>规则校验通过，请核对后入账。</p>
           )}

@@ -1,5 +1,4 @@
 import {
-  RECORD_STATUS,
   normalizeLegacyRecord,
   assertRecordUnchanged,
   type BillRecord,
@@ -58,11 +57,6 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
     )
   )
     throw new Error("外币账户须使用完整交易编辑。");
-  const hasPendingReview = ledger.reviews.some(
-    (review) =>
-      review.state === "pending" &&
-      (review.leftId === input.id || review.rightId === input.id),
-  );
   const records = ledger.records.map((item) =>
     item.id === input.id
       ? {
@@ -77,10 +71,6 @@ export function editLedgerRecord(ledger: Ledger, input: RecordEdit): Ledger {
           ...(input.transferToAccountId !== undefined
             ? { transferToAccountId: input.transferToAccountId }
             : {}),
-          status:
-            hasPendingReview || item.status === RECORD_STATUS.DUPLICATE
-              ? item.status
-              : RECORD_STATUS.CONFIRMED,
         }
       : item,
   );

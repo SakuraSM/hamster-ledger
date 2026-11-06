@@ -8,12 +8,13 @@ import { useCloudSync } from "./hooks/useCloudSync";
 import { AppPages } from "./components/AppPages";
 import { EntryEditor } from "./components/EntryEditor";
 import { usePreferences } from "./hooks/usePreferences";
+import { useAppIdentityScope } from "./hooks/useAppIdentityScope";
 import { AppHeader } from "./components/AppHeader";
+import { IdentityBlockedRecovery } from "./components/IdentityBlockedRecovery";
 import { DEFAULT_MONTH, type PageId } from "./app-config";
 const MONTH_KEY_LENGTH = 7;
 import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
-import { type BillFilter } from "./components/Transactions";
 import { RecordDetail } from "./components/RecordDetail";
 import { Dialog } from "./components/Dialog";
 import { useLedger } from "./hooks/useLedger";
@@ -21,7 +22,6 @@ import { useNetworkController } from "./hooks/useNetworkController";
 import {
   type Source,
   type Category,
-  type BillRecord,
   type Ledger,
   UNASSIGNED_ACCOUNT_FILTER,
   saveEntry,
@@ -35,11 +35,12 @@ export function App(): React.JSX.Element {
   const local = useLedger();
   const controller = useNetworkController(local);
   const { ledger, mode } = controller;
+  const bookName = controller.books.find((book) => book.id === mode)?.name;
   const sync = useCloudSync(controller);
   const [page, setPage] = useState<PageId>(() =>
     new URLSearchParams(location.search).get("page") === "tools"
       ? "tools"
-      : "overview",
+      : "inbox",
   );
   const [month, setMonth] = useState(DEFAULT_MONTH);
   const [recordMonth, setRecordMonth] = useState(DEFAULT_MONTH);
@@ -51,23 +52,21 @@ export function App(): React.JSX.Element {
     setMonth(selected);
     setRecordMonth(selected);
   }, [mode]);
-  const [filter, setFilter] = useState<BillFilter>({
-    source: "",
-    category: "",
-  });
-  const [selected, setSelected] = useState<BillRecord | null>(null);
-  const [editor, setEditor] = useState<{
-    record?: BillRecord;
-    date?: string;
-    revision?: number;
-  } | null>(() =>
-    new URLSearchParams(window.location.search).get("action") === "add"
-      ? {}
-      : null,
-  );
+  const {
+    identity,
+    selected,
+    editor,
+    previewRecord,
+    filter,
+    setSelected,
+    setEditor,
+    setPreviewRecord,
+    setFilter,
+  } = useAppIdentityScope({ controller, userId: auth.user?.id ?? null });
   usePreferences({ ledger, mode, notify: controller.notify });
-  const [previewRecord, setPreviewRecord] = useState<BillRecord | null>(null);
-  const pending = pendingReviewCount(ledger);
+  const pending =
+    pendingReviewCount(ledger) +
+    (ledger.aiDrafts?.filter((draft) => draft.state === "pending").length ?? 0);
   const months = [
     ...new Set([
       DEFAULT_MONTH,
@@ -114,6 +113,9 @@ export function App(): React.JSX.Element {
         <p role={controller.error ? "alert" : "status"}>
           {controller.error || "正在打开本地账本…"}
         </p>
+        {controller.network?.isIdentityBlocked ? (
+          <IdentityBlockedRecovery />
+        ) : null}
       </main>
     );
   return (
@@ -123,9 +125,7 @@ export function App(): React.JSX.Element {
       </a>
       <Sidebar
         isNetwork={controller.network?.isConnected}
-        bookName={
-          controller.books.find((book) => book.id === mode)?.name ?? "我的账本"
-        }
+        bookName={bookName ?? "我的账本"}
         page={page}
         pending={pending}
         mode={mode}
@@ -141,9 +141,7 @@ export function App(): React.JSX.Element {
           month={page === "transactions" ? recordMonth : month}
           onMonth={page === "transactions" ? setRecordMonth : setMonth}
           onSettings={() => navigate("tools")}
-          bookName={
-            controller.books.find((book) => book.id === mode)?.name ?? "账本"
-          }
+          bookName={bookName ?? "账本"}
           onAdd={() => setEditor({})}
           onImport={() => navigate("import")}
         />
@@ -166,7 +164,7 @@ export function App(): React.JSX.Element {
           </p>
         ) : null}
         <LedgerViewBoundary
-          key={`${mode}:${page}`}
+          key={`${identity}:${page}`}
           onRecovery={() => navigate("tools")}
         >
           <AppPages
@@ -181,6 +179,16 @@ export function App(): React.JSX.Element {
             onMonth={setMonth}
             onNavigate={navigate}
             onSelect={setSelected}
+            onReimburse={(record) =>
+              setEditor({
+                initialDraft: {
+                  type: "reimburse",
+                  relatedId: record.id,
+                  accountId: "",
+                  amount: "",
+                },
+              })
+            }
             onPreview={setPreviewRecord}
             onCategory={showCategory}
             onUnassigned={() => {
@@ -250,6 +258,7 @@ export function App(): React.JSX.Element {
           }}
           ledger={ledger}
           record={editor.record}
+          initialDraft={editor.initialDraft}
           date={editor.date}
           onClose={() => setEditor(null)}
           onSave={async (input) => {

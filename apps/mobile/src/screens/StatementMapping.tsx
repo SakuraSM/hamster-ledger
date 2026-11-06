@@ -16,16 +16,19 @@ import {
 import { SOURCES, type Source } from "@hamster-ledger/core";
 import { FormSheet } from "../ui/FormSheet";
 import { ChoiceField } from "../ui/ChoiceField";
+import { ReceiptAction } from "./ReceiptAction";
 const ERROR_PREVIEW_LIMIT = 3;
 interface StatementMappingProps {
   file: StatementFile;
   preview: ParseResult;
+  isAmountHidden?: boolean;
   onChange: (file: StatementFile) => void;
   onClose: () => void;
 }
 export function StatementMapping({
   file,
   preview,
+  isAmountHidden = false,
   onChange,
   onClose,
 }: StatementMappingProps): React.JSX.Element {
@@ -43,16 +46,21 @@ export function StatementMapping({
   const mappingError = validateMapping(file);
   return (
     <FormSheet title="核对账单字段" onClose={onClose}>
-      <Text>{file.name}</Text>
+      <Text>{isAmountHidden ? "账单文件" : file.name}</Text>
       <Text>
-        当前使用第 {file.headerIndex + 1} 行表头。每个选项都附有原始数据样例。
+        当前使用第 {file.headerIndex + 1} 行表头。
+        {isAmountHidden
+          ? "金额隐藏时不展示原始数据样例。"
+          : "每个选项都附有原始数据样例。"}
       </Text>
       <Text accessibilityLiveRegion="polite">
         当前映射可解析 {preview.records.length} 条流水
       </Text>
       {preview.errors.length ? (
         <HelperText type="error" visible accessibilityLiveRegion="polite">
-          {preview.errors.slice(0, ERROR_PREVIEW_LIMIT).join("\n")}
+          {isAmountHidden
+            ? `有 ${preview.errors.length} 行无法识别。`
+            : preview.errors.slice(0, ERROR_PREVIEW_LIMIT).join("\n")}
         </HelperText>
       ) : null}
       <Button
@@ -126,7 +134,9 @@ export function StatementMapping({
             { value: "", label: "未设置" },
             ...columns.map((column) => ({
               value: String(column.index),
-              label: column.label,
+              label: isAmountHidden
+                ? `第 ${column.index + 1} 列`
+                : column.label,
             })),
           ]}
           onChange={(value) =>
@@ -161,13 +171,12 @@ export function StatementMapping({
         确认并保存同表头模板
       </Button>
       {file.reviewFields?.length ? (
-        <Button
-          mode="contained"
+        <ReceiptAction
           disabled={Boolean(mappingError)}
           onPress={() => onChange({ ...file, mappingConfirmed: true })}
         >
           {needsReview ? "确认字段映射" : "字段映射已确认"}
-        </Button>
+        </ReceiptAction>
       ) : null}
       <Button mode="outlined" onPress={onClose}>
         返回导入预览

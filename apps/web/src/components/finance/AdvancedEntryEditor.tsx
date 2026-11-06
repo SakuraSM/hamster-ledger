@@ -18,6 +18,11 @@ import { DateField } from "../../ui/DateField";
 import { Dialog } from "../Dialog";
 import { EntryMoneyFields } from "./EntryMoneyFields";
 import { EntrySplitFields } from "./EntrySplitFields";
+const MINUTE_PRECISION_LENGTH = 16;
+const DATE_KEY_LENGTH = 10;
+const MINOR_PER_YUAN = 100;
+const MONEY_PRECISION = 2;
+
 export function AdvancedEntryEditor({
   ledger,
   record,
@@ -81,7 +86,8 @@ export function AdvancedEntryEditor({
             onChange={(value) =>
               change(
                 "date",
-                value.replace("T", " ") + (value.length === 16 ? ":00" : ""),
+                value.replace("T", " ") +
+                  (value.length === MINUTE_PRECISION_LENGTH ? ":00" : ""),
               )
             }
           />
@@ -113,10 +119,11 @@ export function AdvancedEntryEditor({
                     !item.isDeleted &&
                     item.status === "confirmed",
                 )
-                .map((item) => (
+                .map((item, index) => (
                   <option value={item.id} key={item.id}>
-                    {item.date.slice(0, 10)} · {item.merchant} · ¥
-                    {(item.amount / 100).toFixed(2)}
+                    {ledger.preferences?.hideAmounts
+                      ? `原支出 ${index + 1}`
+                      : `${item.date.slice(0, DATE_KEY_LENGTH)} · ${item.merchant} · ¥${(item.amount / MINOR_PER_YUAN).toFixed(MONEY_PRECISION)}`}
                   </option>
                 ))}
             </Choice>
@@ -144,7 +151,11 @@ export function AdvancedEntryEditor({
             onChange={(event) => change("tags", event.currentTarget.value)}
           />
         </div>
-        <EntrySplitFields form={form} members={members} />
+        <EntrySplitFields
+          form={form}
+          members={members}
+          hideAmounts={Boolean(ledger.preferences?.hideAmounts)}
+        />
         {form.error ? (
           <Alert color="red" role="alert">
             {form.error}

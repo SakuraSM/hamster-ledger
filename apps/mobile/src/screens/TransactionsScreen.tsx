@@ -82,8 +82,9 @@ export function TransactionsScreen({
   const result = useTransactionQuery(ledger, queryFilter);
   const records = result.records;
   const batch = useBatchRecords(controller, records);
+  const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const amount = (value: number): string =>
-    ledger.preferences?.hideAmounts ? "••••" : `¥${money(value)}`;
+    isAmountHidden ? "••••" : `¥${money(value)}`;
   function clearFilters(): void {
     setFilter(EMPTY_FILTER);
     setQuery("");
@@ -109,15 +110,23 @@ export function TransactionsScreen({
       <View>
         {batchOpen && !item.isDeleted ? (
           <Checkbox.Item
-            label={`选择 ${item.merchant}`}
+            label={
+              isAmountHidden
+                ? `选择 ${item.date} 的账单`
+                : `选择 ${item.merchant}`
+            }
             status={selectedIds.has(item.id) ? "checked" : "unchecked"}
             onPress={() => toggleRecord(item)}
           />
         ) : null}
-        <RecordRow record={item} onPress={onRecord} />
+        <RecordRow
+          record={item}
+          isAmountHidden={isAmountHidden}
+          onPress={onRecord}
+        />
       </View>
     ),
-    [batchOpen, selectedIds, toggleRecord, onRecord],
+    [batchOpen, selectedIds, toggleRecord, onRecord, isAmountHidden],
   );
   return (
     <View style={{ flex: 1, paddingHorizontal: 16 }}>
@@ -141,10 +150,52 @@ export function TransactionsScreen({
         key={fontScale}
         ListHeaderComponent={
           <>
+            <Text
+              variant="headlineLarge"
+              accessibilityRole="header"
+              style={{ fontWeight: "700", marginTop: 16 }}
+            >
+              每一笔，都有来处
+            </Text>
+            <Text style={{ marginTop: 8 }}>
+              当前账本 · 已确认账单与待核对记录
+            </Text>
+            {result.error ? (
+              <Text accessibilityRole="alert">{result.error}</Text>
+            ) : (
+              <View style={{ gap: 8, marginVertical: 16 }}>
+                <View
+                  style={{ flexDirection: "row", flexWrap: "wrap", gap: 24 }}
+                >
+                  <View>
+                    <Text>净支出</Text>
+                    <Text variant="headlineSmall" style={{ fontWeight: "700" }}>
+                      {amount(result.summary.expense)}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text>收入</Text>
+                    <Text variant="headlineSmall" style={{ fontWeight: "700" }}>
+                      {amount(result.summary.income)}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text>结余</Text>
+                    <Text variant="titleMedium">
+                      {amount(result.summary.net)}
+                    </Text>
+                  </View>
+                </View>
+                <Text variant="bodySmall">
+                  净支出已扣退款；待确认、重复、转账及不计收支的记录不计入合计。
+                </Text>
+              </View>
+            )}
             <SavedFilters
               bookId={`native:${controller.mode}`}
               filter={queryFilter}
               position={position}
+              isAmountHidden={isAmountHidden}
               onApply={({ filter: value, position: offset }) => {
                 setFilter(value);
                 setQuery(value.query);
@@ -206,20 +257,6 @@ export function TransactionsScreen({
               />
             ) : null}
             <Button onPress={clearFilters}>清除全部筛选</Button>
-            {result.error ? (
-              <Text accessibilityRole="alert">{result.error}</Text>
-            ) : (
-              <View style={{ gap: 4, marginVertical: 8 }}>
-                <Text>筛选内已入账：收入 {amount(result.summary.income)}</Text>
-                <Text>
-                  净支出 {amount(result.summary.expense)} · 结余{" "}
-                  {amount(result.summary.net)}
-                </Text>
-                <Text variant="bodySmall">
-                  净支出已扣退款；待确认、重复、转账及不计收支的记录不计入合计。
-                </Text>
-              </View>
-            )}
             <Button onPress={() => setBatchOpen(!batchOpen)}>
               {batchOpen ? "收起批量整理" : "批量整理"}
             </Button>

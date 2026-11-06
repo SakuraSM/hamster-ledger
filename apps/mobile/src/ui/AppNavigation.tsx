@@ -9,9 +9,9 @@ import { NATIVE_SCENE_EASING } from "./motion";
 export const APP_ROUTES = [
   {
     key: "overview",
-    title: "总览",
-    header: "总览",
-    focusedIcon: "home-outline",
+    title: "待处理",
+    header: "待处理",
+    focusedIcon: "receipt",
   },
   {
     key: "records",
@@ -24,18 +24,6 @@ export const APP_ROUTES = [
     title: "资产",
     header: "资产管理",
     focusedIcon: "wallet-outline",
-  },
-  {
-    key: "reports",
-    title: "报表",
-    header: "收支报表",
-    focusedIcon: "chart-pie",
-  },
-  {
-    key: "tools",
-    title: "更多",
-    header: "更多功能",
-    focusedIcon: "dots-horizontal",
   },
 ];
 export type AppRoute = (typeof APP_ROUTES)[number];

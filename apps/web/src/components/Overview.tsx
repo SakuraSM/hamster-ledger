@@ -215,6 +215,7 @@ export function Overview({
             </div>
             <TransactionTable
               accounts={accounts}
+              hideAmounts={hideAmounts}
               records={recent}
               onSelect={onSelect}
             />

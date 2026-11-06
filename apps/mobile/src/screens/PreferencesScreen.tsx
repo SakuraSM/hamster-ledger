@@ -11,6 +11,7 @@ import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { Screen, ErrorMessage } from "../ui/Screen";
 import { ChoiceField } from "../ui/ChoiceField";
 import { configureReminder, reminderDiagnostics } from "../platform/reminders";
+import { ReceiptAction } from "./ReceiptAction";
 interface PreferencesScreenProps {
   controller: LedgerController;
 }
@@ -82,10 +83,11 @@ export function PreferencesScreen({
         ]}
       />
       <List.Item
-        title="隐藏首页金额"
+        title="隐藏金额"
+        description="隐藏首页、报表与列表中的金额"
         right={() => (
           <Switch
-            accessibilityLabel="隐藏首页金额"
+            accessibilityLabel="隐藏金额"
             value={draft.hideAmounts}
             onValueChange={(value) => update({ hideAmounts: value })}
           />
@@ -124,14 +126,13 @@ export function PreferencesScreen({
         <Text accessibilityLiveRegion="polite">{diagnostics}</Text>
       )}
       <ErrorMessage message={error} />
-      <Button
-        mode="contained"
+      <ReceiptAction
         loading={isBusy}
         disabled={isBusy}
         onPress={() => void save()}
       >
         保存偏好
-      </Button>
+      </ReceiptAction>
     </Screen>
   );
 }

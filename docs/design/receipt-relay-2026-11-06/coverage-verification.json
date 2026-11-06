@@ -11,6 +11,7 @@
   "offlineGallery": "file protocol verified",
   "wcagViolations": 0,
   "webRoutes": {
+    "inbox": "inbox",
     "overview": "overview",
     "transactions": "transactions",
     "import": "import",
@@ -23,11 +24,14 @@
     "tools": "tools"
   },
   "androidMainRoutes": {
-    "overview": "overview",
+    "overview": "inbox",
     "records": "transactions",
-    "assets": "assets",
-    "reports": "reports",
-    "tools": "tools"
+    "assets": "assets"
+  },
+  "androidAuxiliaryRoutes": {
+    "overview-home": "overview",
+    "reports-home": "reports",
+    "tools-home": "tools"
   },
   "androidToolRoutes": {
     "payment-inbox": "payment-inbox",

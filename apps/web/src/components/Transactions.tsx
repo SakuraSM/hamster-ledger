@@ -258,6 +258,7 @@ export function Transactions({
       </p>
       <TransactionTable
         accounts={accounts}
+        hideAmounts={Boolean(controller.ledger.preferences?.hideAmounts)}
         records={filtered.slice(
           safePage * PAGE_SIZE,
           (safePage + 1) * PAGE_SIZE,

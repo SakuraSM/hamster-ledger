@@ -130,7 +130,7 @@ export function SimpleEntryEditor({
               merchant,
               date:
                 timestamp.replace("T", " ") +
-                (timestamp.length === 16 ? ":00" : ""),
+                (timestamp.length === MINUTE_TIMESTAMP_LENGTH ? ":00" : ""),
               category,
               description,
               tags,
@@ -179,6 +179,7 @@ export function SimpleEntryEditor({
         />
         <TextInput
           label={<>金额（元）</>}
+          type={ledger.preferences?.hideAmounts ? "password" : "text"}
           className="entry-amount"
           autoFocus
           inputMode="decimal"

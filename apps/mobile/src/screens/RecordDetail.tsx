@@ -2,8 +2,9 @@ import { AmountText } from "../ui/AmountText";
 import { recordAmountTone } from "../ui/amount-tones";
 import { RecordAttachments } from "./RecordAttachments";
 import { TransactionFacts } from "./TransactionFacts";
+import { ReceiptAction } from "./ReceiptAction";
 import { useState } from "react";
-import { Button, Text, Divider, Chip } from "react-native-paper";
+import { Button, Text, Divider, Chip, useTheme } from "react-native-paper";
 import { Alert, View } from "react-native";
 import {
   deleteEntry,
@@ -27,8 +28,10 @@ export function RecordDetail({
   onEdit,
 }: RecordDetailProps): React.JSX.Element {
   const [error, setError] = useState("");
+  const theme = useTheme();
   const current =
     controller.ledger.records.find((item) => item.id === record.id) ?? record;
+  const isAmountHidden = Boolean(controller.ledger.preferences?.hideAmounts);
   async function applyRemoval(): Promise<void> {
     try {
       await controller.commit(
@@ -46,69 +49,86 @@ export function RecordDetail({
   }
   return (
     <FormSheet title="账单详情" onClose={onClose}>
-      <Text variant="headlineMedium">{current.merchant}</Text>
+      <Text
+        variant="headlineLarge"
+        accessibilityRole="header"
+        style={{ fontWeight: "700" }}
+      >
+        账单详情
+      </Text>
+      <Text style={{ color: theme.colors.onSurfaceVariant }}>
+        {current.status === "confirmed"
+          ? "已入账"
+          : current.status === "pending"
+            ? "待确认"
+            : "重复记录"}{" "}
+        · {current.source}
+      </Text>
+      <Text variant="titleMedium">
+        {isAmountHidden ? "金额已隐藏" : current.merchant}
+      </Text>
       <AmountText
         variant="displaySmall"
         amount={current.amount}
         tone={recordAmountTone(current)}
+        isMuted={isAmountHidden}
       >
-        {signedMoney(current)}
+        {isAmountHidden ? "••••" : signedMoney(current)}
       </AmountText>
       <View style={styles.row}>
         <Chip>{current.kind}</Chip>
-        <Chip>{current.category}</Chip>
-        <Chip>
-          {current.status === "confirmed"
-            ? "已入账"
-            : current.status === "pending"
-              ? "待确认"
-              : "重复记录"}
-        </Chip>
+        {!isAmountHidden ? <Chip>{current.category}</Chip> : null}
       </View>
-      <Text>{current.date}</Text>
-      <Text>来源：{current.source}</Text>
-      <Text>
-        账户：
-        {controller.ledger.accounts.find(
-          (account) => account.id === current.accountId,
-        )?.name ||
-          current.account ||
-          "未关联"}
-      </Text>
-      {current.transferToAccountId ? (
-        <Text>
-          转入账户：
-          {controller.ledger.accounts.find(
-            (account) => account.id === current.transferToAccountId,
-          )?.name ?? "已归档账户"}
-        </Text>
-      ) : null}
-      <Text>备注：{current.description || "无"}</Text>
-      <Text>标签：{current.tags?.join("、") || "无"}</Text>
-      <RecordAttachments controller={controller} recordId={current.id} />
-      <TransactionFacts
-        record={current}
-        ledger={controller.ledger}
-        bookId={
-          controller.books.find((book) => book.id === controller.mode)?.cloud
-            ?.id
-        }
-      />
       <Divider />
-      <Text variant="titleMedium">原始流水</Text>
-      {Object.entries(current.raw).map(([name, value]) => (
-        <Text key={name} selectable>
-          {name}：{value}
-        </Text>
-      ))}
+      <Text variant="titleMedium">交易时间 · {current.date}</Text>
+      {!isAmountHidden ? (
+        <>
+          <Text>分类：{current.category}</Text>
+          <Text>
+            收付款账户：
+            {controller.ledger.accounts.find(
+              (account) => account.id === current.accountId,
+            )?.name ||
+              current.account ||
+              "未关联"}
+          </Text>
+          {current.transferToAccountId ? (
+            <Text>
+              转入账户：
+              {controller.ledger.accounts.find(
+                (account) => account.id === current.transferToAccountId,
+              )?.name ?? "已归档账户"}
+            </Text>
+          ) : null}
+          <Text>备注：{current.description || "无"}</Text>
+          <Text>标签：{current.tags?.join("、") || "无"}</Text>
+          <RecordAttachments controller={controller} recordId={current.id} />
+          <TransactionFacts
+            record={current}
+            ledger={controller.ledger}
+            bookId={
+              controller.books.find((book) => book.id === controller.mode)
+                ?.cloud?.id
+            }
+          />
+          <Divider />
+          <Text variant="titleMedium">原始流水</Text>
+          {Object.entries(current.raw).map(([name, value]) => (
+            <Text key={name} selectable>
+              {name}：{value}
+            </Text>
+          ))}
+        </>
+      ) : (
+        <Text>金额、原始流水与凭证已隐藏；编辑时可核对完整信息。</Text>
+      )}
       <ErrorMessage message={error} />
       {!current.isDeleted ? (
-        <Button mode="contained" onPress={() => onEdit(current)}>
-          编辑账单
-        </Button>
+        <ReceiptAction onPress={() => onEdit(current)}>编辑账单</ReceiptAction>
       ) : null}
       <Button
         mode="outlined"
+        contentStyle={{ minHeight: 48 }}
         disabled={controller.isSaving}
         onPress={() =>
           current.isDeleted

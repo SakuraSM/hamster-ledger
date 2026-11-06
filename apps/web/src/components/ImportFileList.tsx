@@ -13,6 +13,7 @@ interface ImportFileListProps {
     errors: string[];
   }>;
   mappingHash: string | null;
+  hideAmounts?: boolean;
   onToggle: (hash: string) => void;
   onRemove: (hash: string) => void;
   onChange: (file: StatementFile) => void;
@@ -20,6 +21,7 @@ interface ImportFileListProps {
 export function ImportFileList({
   files,
   mappingHash,
+  hideAmounts = false,
   onToggle,
   onRemove,
   onChange,
@@ -61,7 +63,11 @@ export function ImportFileList({
             </ActionIcon>
           </div>
           {mappingHash === file.hash ? (
-            <FieldMapping file={file} onChange={onChange} />
+            <FieldMapping
+              file={file}
+              hideAmounts={hideAmounts}
+              onChange={onChange}
+            />
           ) : null}
         </div>
       ))}
