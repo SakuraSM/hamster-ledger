@@ -8,6 +8,7 @@ import {
   RawScene,
 } from "./DesignAtlas";
 import type { DesignMode, SceneSpec } from "./model";
+import { planPreviewNavigation } from "./navigation";
 import "./styles/index.css";
 declare global {
   interface Window {
@@ -35,7 +36,15 @@ function DesignApplication(): React.JSX.Element {
     url.searchParams.set("mode", supportedMode);
     history.replaceState(null, "", url);
   };
-  const onNavigate = (id: string): void => setView(id, mode);
+  const onNavigate = (id: string, subject?: string): void => {
+    const plan = planPreviewNavigation({ sceneId, target: id, subject });
+    if (plan.kind === "static") {
+      window.alert(plan.message);
+      return;
+    }
+    if (plan.kind === "confirm" && !window.confirm(plan.message)) return;
+    setView(plan.target, mode);
+  };
   const onMode = (next: DesignMode): void =>
     setView(
       scenesForMode(next).some((scene) => scene.id === sceneId)
@@ -43,7 +52,13 @@ function DesignApplication(): React.JSX.Element {
         : "inbox",
       next,
     );
-  const props = { sceneId, mode, onNavigate, onMode };
+  const props = {
+    sceneId,
+    mode,
+    onNavigate,
+    onMode,
+    onSelectScene: (id: string): void => setView(id, mode),
+  };
   if (initial.get("compare") === "1")
     return <ComparisonView onNavigate={onNavigate} />;
   if (initial.has("sheet"))

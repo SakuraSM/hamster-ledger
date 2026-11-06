@@ -39,7 +39,7 @@ export const ASSET_ACCOUNTS: DesignAccount[] = [
     kind: "asset",
     note: "CNY · 已关联5笔支出",
     icon: "wallet",
-    target: "account-records",
+    target: "wallet-accounts",
   },
   {
     id: "wechat",
@@ -49,7 +49,7 @@ export const ASSET_ACCOUNTS: DesignAccount[] = [
     kind: "asset",
     note: "CNY · 暂无基准后变动",
     icon: "wallet",
-    target: "account-records",
+    target: "wallet-accounts",
   },
   {
     id: "credit",

@@ -11,6 +11,7 @@ interface DesignAtlasProps {
   mode: DesignMode;
   onNavigate: (id: string) => void;
   onMode: (mode: DesignMode) => void;
+  onSelectScene?: (id: string) => void;
 }
 function PreviewScene({
   scene,
@@ -42,6 +43,7 @@ export function DesignAtlas({
   mode,
   onNavigate,
   onMode,
+  onSelectScene = onNavigate,
 }: DesignAtlasProps): React.JSX.Element {
   const [query, setQuery] = useState("");
   const scene = getScene(sceneId);
@@ -96,7 +98,7 @@ export function DesignAtlas({
                     type="button"
                     key={item.id}
                     className={item.id === scene.id ? "active" : ""}
-                    onClick={() => onNavigate(item.id)}
+                    onClick={() => onSelectScene(item.id)}
                   >
                     <span>
                       {String(SCENES.indexOf(item) + 1).padStart(
@@ -177,6 +179,7 @@ export function DesignAtlas({
             />
             <p className="atlas-export-note">
               视觉稿中的各状态是独立示例。按钮可切换关联稿件，输入仅用于预览。数据不会提交到真实账本。
+              未展开的账户或账单分支会提示静态示意，不会跳到其他对象。
             </p>
           </aside>
         </div>
