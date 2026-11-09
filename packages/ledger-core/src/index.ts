@@ -11,6 +11,7 @@ export * from "./periods.js";
 export * from "./planning.js";
 export * from "./entries.js";
 export * from "./reports.js";
+export * from "./report-visualization.js";
 export * from "./categories.js";
 
 export * from "./record-conflicts.js";

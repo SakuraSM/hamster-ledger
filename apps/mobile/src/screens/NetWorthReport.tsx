@@ -5,6 +5,7 @@ import {
   accountActiveAt,
   accountBaselines,
   money,
+  netWorthGapDescription,
   type Ledger,
 } from "@hamster-ledger/core";
 import { useReportData } from "@hamster-ledger/ledger-react";
@@ -111,10 +112,10 @@ export function NetWorthReport({
                 onSelect={setSelectedDate}
               />
             ) : (
-              <Text>当前范围缺少估值所需的汇率，暂无法绘制趋势。</Text>
+              <Text>当前范围缺少余额基准或汇率，暂无法绘制趋势。</Text>
             )}
             {selected?.amount === null ? (
-              <Text>缺少 {selected.missing.join("、")} 汇率，此期留空。</Text>
+              <Text>{netWorthGapDescription(selected)}，此期留空。</Text>
             ) : null}
             {report.rows.length > 1 ? (
               <View style={styles.controls}>
@@ -162,7 +163,7 @@ export function NetWorthReport({
           variant="bodySmall"
           style={{ color: theme.colors.onSurfaceVariant }}
         >
-          按月末及起止日估值，并按各日账户状态统计；缺汇率留空。
+          按月末及起止日估值，并按各日账户状态统计；缺基准或汇率留空。
         </Text>
       </Card.Content>
     </Card>
@@ -176,7 +177,13 @@ function ChangeSummary({ rows }: ChangeSummaryProps): React.JSX.Element {
   if (rows.length === 1)
     return <Text variant="bodySmall">当前范围仅一个估值点，暂无期间变化</Text>;
   if (change === null)
-    return <Text variant="bodySmall">起止日估值齐全后显示期间变化</Text>;
+    return (
+      <Text variant="bodySmall">
+        {rows[0]?.amount != null && rows[rows.length - 1]?.amount != null
+          ? "区间变化超出显示范围"
+          : "起止日估值齐全后显示期间变化"}
+      </Text>
+    );
   return (
     <Text variant="bodyMedium">
       {change === 0 ? "期间持平 " : change > 0 ? "期间净增 " : "期间净减 "}
@@ -200,7 +207,7 @@ function ValueDetails({ rows }: ValueDetailsProps): React.JSX.Element {
         >
           {row.date} ·{" "}
           {row.amount === null
-            ? `缺少 ${row.missing.join("、")} 汇率`
+            ? netWorthGapDescription(row)
             : `¥${money(row.amount)}`}
         </Text>
       ))}

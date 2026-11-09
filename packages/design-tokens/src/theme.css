@@ -11,4 +11,26 @@
   --line: #dedfd5;
   --apricot: #e4e8c8;
   --positive: #57642e;
+  --chart-income: #566c3a;
+  --chart-income-muted: #a0ad88;
+  --chart-expense: #a94c2c;
+  --chart-expense-muted: #dfaa91;
+  --chart-category-1: #a85032;
+  --chart-category-2: #d9875f;
+  --chart-category-3: #b3a15f;
+  --chart-category-4: #718163;
+  --chart-category-5: #9a7990;
+  --chart-category-6: #738f9b;
+}
+:root[data-theme="night"] {
+  --chart-income: #94d1ad;
+  --chart-income-muted: #638b70;
+  --chart-expense: #ffb09c;
+  --chart-expense-muted: #b97866;
+  --chart-category-1: #ffb09c;
+  --chart-category-2: #f2bb8e;
+  --chart-category-3: #d9c681;
+  --chart-category-4: #a9bd96;
+  --chart-category-5: #d7a9c8;
+  --chart-category-6: #a5c7d1;
 }
