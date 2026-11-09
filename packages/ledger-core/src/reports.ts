@@ -27,7 +27,7 @@ export function reportGroups({
       dimension === "category"
         ? [record.category]
         : record.tags?.length
-          ? record.tags
+          ? [...new Set(record.tags)]
           : ["无标签"];
     for (const key of keys) groups.set(key, (groups.get(key) ?? 0) + amount);
   }

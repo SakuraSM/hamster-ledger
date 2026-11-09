@@ -4,7 +4,6 @@ import { Alert, StyleSheet } from "react-native";
 import { Button, Text, useTheme } from "react-native-paper";
 import {
   accountActiveAt,
-  assetTrendStart,
   type AssetAccount,
   type BillRecord,
 } from "@hamster-ledger/core";
@@ -29,7 +28,7 @@ import {
   type AssetArchiveRequest,
 } from "./asset-archive";
 import { AssetTransfer } from "./AssetTransfer";
-import { NetWorthReport } from "./NetWorthReport";
+import { AssetTrendPanel } from "./AssetTrendPanel";
 import { AssetValuationDialog } from "./AssetValuationDialog";
 import { localNow } from "../platform/runtime";
 
@@ -81,7 +80,6 @@ export function AssetsScreen({
     date: valuationDate,
     client: useNativeAccount().client,
   });
-  const trendStart = assetTrendStart({ ledger, end: valuationDate });
   const through = valuationDate + " 23:59:59";
   const account = ledger.accounts.find((item) => item.id === selected);
   const calibrationAccount = ledger.accounts.find(
@@ -271,12 +269,8 @@ export function AssetsScreen({
             >
               显示资产金额后查看趋势
             </Button>
-          ) : ledger.accounts.length > 0 && trendStart <= valuationDate ? (
-            <NetWorthReport
-              ledger={ledger}
-              start={trendStart}
-              end={valuationDate}
-            />
+          ) : ledger.accounts.length > 0 ? (
+            <AssetTrendPanel ledger={ledger} end={valuationDate} />
           ) : (
             <Text>添加账户并设置余额后，即可查看净资产趋势。</Text>
           )}
