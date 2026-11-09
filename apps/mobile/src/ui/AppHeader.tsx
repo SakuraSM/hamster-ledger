@@ -32,7 +32,7 @@ export function AppHeader({
         <Appbar.BackAction
           style={styles.action}
           onPress={onBack}
-          accessibilityLabel="返回更多功能"
+          accessibilityLabel="返回"
         />
       ) : (
         <Image source={hamsterLogo} style={styles.logo} accessible={false} />

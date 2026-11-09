@@ -29,6 +29,8 @@ interface AppHeaderProps {
   month: string;
   onMonth: (month: string) => void;
   onSettings: () => void;
+  onBooks: () => void;
+  onAccount: () => void;
   onImport: () => void;
 }
 export function AppHeader({
@@ -40,6 +42,8 @@ export function AppHeader({
   month,
   onMonth,
   onSettings,
+  onBooks,
+  onAccount,
   onImport,
 }: AppHeaderProps): React.JSX.Element {
   const auth = useAuth();
@@ -49,7 +53,7 @@ export function AppHeader({
         type="button"
         className="mobile-brand"
         aria-label={`切换账本：${bookName}`}
-        onClick={onSettings}
+        onClick={onBooks}
       >
         <img src="/assets/hamster-logo.png" alt="" />
         <span>
@@ -58,11 +62,7 @@ export function AppHeader({
         </span>
       </UnstyledButton>
       <div className="breadcrumb">
-        <UnstyledButton
-          type="submit"
-          aria-label="切换账本"
-          onClick={onSettings}
-        >
+        <UnstyledButton type="submit" aria-label="切换账本" onClick={onBooks}>
           {bookName}
         </UnstyledButton>
         <span>/</span>
@@ -73,7 +73,7 @@ export function AppHeader({
           type="submit"
           className="header-account"
           aria-label={auth.user ? `账号 ${auth.user.username}` : "登录账号"}
-          onClick={() => (auth.user ? onSettings() : navigateAuth(loginPath()))}
+          onClick={() => (auth.user ? onAccount() : navigateAuth(loginPath()))}
         >
           <Icons.Shield size={19} />
           <span>{auth.user?.username ?? "登录"}</span>

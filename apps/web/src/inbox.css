@@ -39,16 +39,13 @@
 .inbox-filters button {
   min-height: 40px;
   padding: 8px 15px;
-  background: var(--apricot);
+  background: var(--sidebar);
   border-radius: 22px;
   font-size: 13px;
 }
-.inbox-filters button + button {
-  background: var(--sidebar);
-}
 .inbox-paper {
   width: min(480px, 100%);
-  min-height: 390px;
+  min-height: 300px;
   margin: 26px auto 0;
   background: url("/assets/receipt-paper.png") center / 100% 100% no-repeat;
   overflow-wrap: anywhere;
@@ -82,16 +79,6 @@
 .inbox-date {
   margin-top: 8px;
   color: var(--muted);
-  font-size: 13px;
-}
-.inbox-evidence {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 28px;
-  padding: 18px;
-  background: var(--sidebar);
-  border-radius: 8px;
   font-size: 13px;
 }
 .inbox-paper dl {
@@ -204,7 +191,7 @@
     font-size: 45px;
   }
   .inbox-paper {
-    min-height: 360px;
+    min-height: 300px;
     margin-top: 20px;
   }
   .inbox-paper-content {

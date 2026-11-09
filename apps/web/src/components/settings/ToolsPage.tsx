@@ -6,14 +6,10 @@ import { Button } from "@mantine/core";
 import { AccountSecurityPanel } from "../auth/AccountSecurityPanel";
 const DATE_KEY_LENGTH = 10;
 import type { CloudController } from "../../hooks/useCloudSync";
-import { useState } from "react";
-import {
-  restoreEntry,
-  pendingReviewCount,
-  type Ledger,
-} from "@hamster-ledger/core";
+import { useLayoutEffect, useRef, useState } from "react";
+import { restoreEntry, type Ledger } from "@hamster-ledger/core";
 import type { LedgerController } from "../../hooks/useLedger";
-import type { PageId } from "../../app-config";
+import type { PageId, ToolDestination } from "../../app-config";
 import { BooksPanel } from "./BooksPanel";
 import { BackupPanel } from "./BackupPanel";
 import { CategoriesPanel } from "./CategoriesPanel";
@@ -26,15 +22,27 @@ interface Props {
   controller: LedgerController;
   onNavigate: (page: PageId) => void;
   onMonth: (month: string) => void;
+  destination?: ToolDestination;
 }
 export function ToolsPage({
   sync,
   controller,
   onNavigate,
   onMonth,
+  destination,
 }: Props): React.JSX.Element {
   const [error, setError] = useState("");
-  const [section, setSection] = useState("books");
+  const [section, setSection] = useState<string | null>(
+    destination?.section ?? null,
+  );
+  const indexHeading = useRef<HTMLHeadingElement>(null);
+  const backButton = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    setSection(destination?.section ?? null);
+  }, [destination?.serial, destination?.section]);
+  useLayoutEffect(() => {
+    (section === null ? indexHeading.current : backButton.current)?.focus();
+  }, [section]);
   const [trashLimit, setTrashLimit] = useState(LIST_PAGE_SIZE);
   const { ledger } = controller;
   async function restore(next: Ledger): Promise<void> {
@@ -47,90 +55,83 @@ export function ToolsPage({
   }
   return (
     <section className="planning-page">
-      <div className="page-heading">
-        <h1>让账本更合你的习惯</h1>
-        <p>
-          {controller.network?.isConnected
-            ? "家庭联网账本：修改保存在服务器；断网时仅可查看本机缓存。"
-            : sync.isLinked
-              ? "个人同步账本：本机可离线编辑，页面打开时尝试自动同步；冲突时保留双方版本。"
-              : "本机账本：数据保存在此浏览器，可离线编辑；尚未连接云端同步。"}
-        </p>
-        {!ledger.accounts.length && (
-          <Button variant="outline" onClick={() => onNavigate("assets")}>
-            建立首个账户与余额基准
-          </Button>
-        )}
-      </div>
-      <div className="tools-shortcuts">
-        {(
-          [
-            ["overview", "总览"],
-            ["reports", "收支报表"],
-            ["calendar", "账单日历"],
-            ["budgets", "预算管理"],
-            ["recurring", "周期记账"],
-            ["import", "导入账单"],
-            ["review", "重复核对"],
-          ] as const
-        ).map(([id, label]) => (
-          <Button
-            variant="outline"
-            type="submit"
-            className="secondary-button"
-            key={id}
-            onClick={() => onNavigate(id)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
-      <section
-        className="panel"
-        aria-label="待处理事项"
-        style={{ marginBottom: 24 }}
-      >
-        <h2>待处理</h2>
-        <div className="button-row">
-          <Button variant="outline" onClick={() => onNavigate("review")}>
-            账单核对 · {pendingReviewCount(ledger)}
-          </Button>
-          <Button variant="outline" onClick={() => setSection("ai")}>
-            AI 草稿 ·{" "}
-            {ledger.aiDrafts?.filter((item) => item.state === "pending")
-              .length ?? 0}
-          </Button>
+      {section === null ? (
+        <>
+          <div className="page-heading">
+            <h1 ref={indexHeading} tabIndex={-1}>
+              工具与设置
+            </h1>
+            <p>
+              {controller.network?.isConnected
+                ? "家庭联网账本 · 断网时仅可查看缓存"
+                : sync.isLinked
+                  ? "个人同步账本 · 页面打开时尝试同步"
+                  : "本机账本 · 未连接同步"}
+            </p>
+            {!ledger.accounts.length && (
+              <Button variant="outline" onClick={() => onNavigate("assets")}>
+                建立首个账户与余额基准
+              </Button>
+            )}
+          </div>
+          <div className="tools-shortcuts">
+            {(
+              [
+                ["overview", "总览"],
+                ["reports", "收支报表"],
+                ["calendar", "账单日历"],
+                ["budgets", "预算管理"],
+                ["recurring", "周期记账"],
+                ["import", "导入账单"],
+                ["review", "重复核对"],
+              ] as const
+            ).map(([id, label]) => (
+              <Button
+                variant="outline"
+                type="button"
+                className="secondary-button"
+                key={id}
+                onClick={() => onNavigate(id)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+          <nav className="tools-categories" aria-label="工具分类">
+            {[
+              ["books", "账本管理"],
+              ["ai", "AI 记账与凭证"],
+              ["planning", "生活计划与提醒"],
+              ["network", "家庭与联网账本"],
+              ["sync", "云端同步"],
+              ["backup", "备份与导出"],
+              ["categories", "分类管理"],
+              ["preferences", "记账偏好"],
+              ["account", "账号安全"],
+              ["privacy", "隐私保护"],
+              ["trash", "回收站"],
+            ].map(([id, title]) => (
+              <Button key={id} variant="outline" onClick={() => setSection(id)}>
+                {title}
+              </Button>
+            ))}
+          </nav>
           {controller.canUndo ? (
             <Button variant="subtle" onClick={controller.undo}>
               撤销上一步
             </Button>
           ) : null}
-        </div>
-      </section>
-      <nav className="tools-shortcuts" aria-label="工具分类">
-        {[
-          ["books", "账本管理"],
-          ["ai", "AI 记账与凭证"],
-          ["planning", "生活计划与提醒"],
-          ["network", "家庭与联网账本"],
-          ["sync", "云端同步"],
-          ["backup", "备份与导出"],
-          ["categories", "分类管理"],
-          ["preferences", "记账偏好"],
-          ["account", "账号安全"],
-          ["privacy", "隐私保护"],
-          ["trash", "回收站"],
-        ].map(([id, title]) => (
-          <Button
-            key={id}
-            variant={section === id ? "filled" : "outline"}
-            aria-pressed={section === id}
-            onClick={() => setSection(id)}
-          >
-            {title}
-          </Button>
-        ))}
-      </nav>
+        </>
+      ) : (
+        <Button
+          ref={backButton}
+          variant="subtle"
+          className="text-button"
+          onClick={() => setSection(null)}
+        >
+          返回工具与设置
+        </Button>
+      )}
       <div
         className="settings-grid"
         style={{ gridTemplateColumns: "minmax(0, 1fr)" }}

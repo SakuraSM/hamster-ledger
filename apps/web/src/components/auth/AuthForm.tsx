@@ -95,7 +95,7 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
         <p>
           {isRegister
             ? "注册后，把需要同步的账本带到其他设备。"
-            : "登录仓鼠记账，接着记下生活。"}
+            : "登录后可同步账本。"}
         </p>
       </div>
       <form className="auth-form" onSubmit={submit} noValidate>
@@ -109,7 +109,7 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
             spellCheck={false}
             required
             maxLength={64}
-            autoFocus
+            autoFocus={!auth.isOffline}
             value={username}
             aria-invalid={Boolean(fieldErrors.username)}
             aria-describedby={
@@ -131,11 +131,7 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
           onChange={setPassword}
           autoComplete={isRegister ? "new-password" : "current-password"}
           error={fieldErrors.password}
-          description={
-            isRegister
-              ? newPasswordHint(auth.policy)
-              : "请输入登录密码，区分大小写，空格也计入密码。"
-          }
+          description={isRegister ? newPasswordHint(auth.policy) : undefined}
         />
         {isRegister ? (
           <PasswordField
@@ -167,7 +163,9 @@ export function AuthForm({ mode }: Props): React.JSX.Element {
             </Button>
           ) : null}
         </div>
-        <p className="auth-device-note">记住登录仅适用于你的个人设备。</p>
+        {remember ? (
+          <p className="auth-device-note">记住登录仅适用于你的个人设备。</p>
+        ) : null}
         {showRecovery ? (
           <div className="auth-help">
             <h2>联系服务管理员重置</h2>

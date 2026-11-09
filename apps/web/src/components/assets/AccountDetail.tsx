@@ -1,5 +1,5 @@
 import { Button } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   projectAccountBalance,
   type AssetAccount,
@@ -44,6 +44,10 @@ export function AccountDetail({
   onArchive,
   onRecord,
 }: AccountDetailProps): React.JSX.Element {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [account.id]);
   const [error, setError] = useState("");
   const [isArchiving, setArchiving] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<{
@@ -104,7 +108,9 @@ export function AccountDetail({
       </Button>
       <div className="page-heading heading-with-action">
         <div>
-          <h1>{accountLabel}</h1>
+          <h1 ref={headingRef} tabIndex={-1}>
+            {accountLabel}
+          </h1>
           <p>
             {account.kind === "asset" ? "资产" : "负债"} · {account.type} ·{" "}
             {account.currency ?? "CNY"} · 截至{" "}
@@ -175,8 +181,18 @@ export function AccountDetail({
         </div>
       ) : null}
       <p className="account-balance-note">
-        余额来自基准之后的已确认流水。待确认、重复和已删除记录不会重复叠加。
+        仅计入基准之后的已确认流水，不重复累计。
       </p>
+      <div className="account-actions">
+        <Button className="primary-button" onClick={onCalibrate}>
+          核对实际余额
+        </Button>
+        {!account.isArchived ? (
+          <Button variant="outline" onClick={onTransfer}>
+            {account.kind === "liability" ? "还款" : "转账"}
+          </Button>
+        ) : null}
+      </div>
       {!isHidden && account.aliases.length ? (
         <p className="account-aliases">
           匹配别名：{account.aliases.join("、")}
@@ -210,19 +226,6 @@ export function AccountDetail({
           <p>此账户尚无校准记录。</p>
         )}
       </details>
-      <div className="account-actions">
-        <Button className="primary-button" onClick={onCalibrate}>
-          核对实际余额
-        </Button>
-        {!account.isArchived ? (
-          <Button variant="outline" onClick={onTransfer}>
-            {account.kind === "liability" ? "还款" : "转账"}
-          </Button>
-        ) : null}
-        <Button variant="subtle" onClick={onEdit}>
-          编辑账户
-        </Button>
-      </div>
       <Button
         variant="subtle"
         className="text-button archive-account"
@@ -238,9 +241,6 @@ export function AccountDetail({
       >
         {account.isArchived ? "恢复账户" : "归档账户"}
       </Button>
-      <p className="muted small">
-        归档保留历史账单和账户关联，可恢复；操作后可撤销。
-      </p>
       {archiveTarget ? (
         <Dialog
           title={archiveTarget.isArchived ? "恢复账户" : "归档账户"}

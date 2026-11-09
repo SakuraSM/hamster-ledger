@@ -37,6 +37,29 @@
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
+.entry-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: var(--bg);
+  padding-bottom: 4px;
+}
+.entry-form-footer .dialog-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.quick-entry-templates {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+.quick-entry-templates button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
 .detail-hero {
   display: flex;
   align-items: center;
