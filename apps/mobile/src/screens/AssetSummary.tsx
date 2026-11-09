@@ -32,9 +32,9 @@ export function AssetSummary({
   return (
     <>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerTitle}>
           <Text
-            variant="headlineLarge"
+            variant="headlineMedium"
             accessibilityRole="header"
             style={styles.strong}
           >
@@ -136,7 +136,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
-  summary: { gap: 8 },
+  headerTitle: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
+  summary: { gap: 4 },
   summaryHeading: {
     flexDirection: "row",
     alignItems: "center",
@@ -147,10 +148,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 16,
-    paddingVertical: 18,
+    paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  metric: { flexGrow: 1, gap: 6 },
+  metric: { flexGrow: 1, gap: 2 },
   strong: { fontWeight: "700" },
   touch: { minHeight: 48 },
 });

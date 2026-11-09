@@ -124,6 +124,7 @@ export function SimpleEntryEditor({
       <form onSubmit={submit}>
         <Button
           variant="subtle"
+          type="button"
           onClick={() =>
             onAdvanced?.({
               amount,

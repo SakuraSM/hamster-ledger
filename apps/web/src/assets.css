@@ -602,6 +602,16 @@
   color: var(--muted);
   font-size: 13px;
 }
+.asset-date-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .asset-add-button {
   color: var(--ink);
   background: var(--sidebar);

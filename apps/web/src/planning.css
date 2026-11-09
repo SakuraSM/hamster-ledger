@@ -259,6 +259,25 @@
 .tools-shortcuts {
   margin-bottom: 24px;
 }
+@media (min-width: 981px) {
+  .tools-shortcuts {
+    display: none;
+  }
+}
+.tools-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.tools-categories button {
+  min-height: 48px;
+  justify-content: flex-start;
+}
+@media (max-width: 480px) {
+  .tools-categories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 :root[data-theme="sage"] {
   --primary: #42654e;
   --apricot: #e3ecdd;
@@ -596,6 +615,31 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 14px;
+}
+.report-range-toggle {
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.report-range-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+@media (min-width: 380px) and (max-width: 700px) {
+  .planning-page .report-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .planning-page .report-summary > div:first-child {
+    grid-column: auto;
+  }
+  .planning-page .report-summary strong,
+  .planning-page .report-summary > div:first-child strong {
+    font-size: 19px;
+    overflow-wrap: anywhere;
+  }
 }
 .report-range-shortcuts button,
 .cashflow-selection button,

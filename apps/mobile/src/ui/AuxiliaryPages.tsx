@@ -54,10 +54,10 @@ export function AuxiliaryPages({
         onReports={() => onOpen("reports-home")}
         storageDescription={
           controller.network?.isConnected
-            ? "家庭联网账本：修改保存在服务器；断网时仅可查看本机缓存。"
+            ? "家庭联网账本 · 断网时仅可查看缓存"
             : sync.link
-              ? "个人同步账本：本机可离线编辑，应用在前台时尝试自动同步；冲突时保留双方版本。"
-              : "本机账本：数据保存在此设备，可离线编辑；尚未连接云端同步。"
+              ? "个人同步账本 · 前台尝试同步"
+              : "本机账本 · 未连接同步"
         }
       />
     );

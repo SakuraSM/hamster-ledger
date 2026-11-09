@@ -3,12 +3,10 @@ import { LedgerSnackbar } from "./ui/LedgerSnackbar";
 import { LedgerViewBoundary } from "./ui/LedgerViewBoundary";
 import { useNativeSync } from "./hooks/useNativeSync";
 import { usePlanningNotifications } from "./hooks/usePlanningNotifications";
-const FLOATING_GAP = 16;
-const MIN_NOTICE_HEIGHT = 48;
 import { useEffect, useState, useCallback } from "react";
 import { BackHandler, View } from "react-native";
 import { useSystemFontScale } from "./hooks/useSystemFontScale";
-import { FAB, Banner } from "react-native-paper";
+import { Banner } from "react-native-paper";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -29,7 +27,6 @@ import {
 } from "./ui/AppNavigation";
 import { SystemBars } from "./ui/SystemBars";
 import { useReducedMotion } from "./hooks/useReducedMotion";
-import { useKeyboardVisibility } from "./hooks/useKeyboardVisibility";
 import type { BillRecord } from "@hamster-ledger/core";
 import { useLedger } from "./hooks/useLedger";
 import { useNetworkController } from "./hooks/useNetworkController";
@@ -39,7 +36,6 @@ import { AuxiliaryPages, auxiliaryPageTitle } from "./ui/AuxiliaryPages";
 import { useNativeAccount } from "./auth/NativeAccount";
 import { AccountScreen } from "./screens/AccountScreen";
 const ASSET_INDEX = APP_ROUTES.findIndex(({ key }) => key === "assets");
-const RECORDS_INDEX = APP_ROUTES.findIndex(({ key }) => key === "records");
 export function AppShell(): React.JSX.Element {
   const fontScale = useSystemFontScale();
   const local = useLedger();
@@ -47,8 +43,6 @@ export function AppShell(): React.JSX.Element {
   const account = useNativeAccount();
   const sync = useNativeSync(controller);
   const insets = useSafeAreaInsets();
-  const isKeyboardVisible = useKeyboardVisibility();
-  const [noticeHeight, setNoticeHeight] = useState(MIN_NOTICE_HEIGHT);
   const [index, setIndex] = useState(0);
   const toolHistory = useToolHistory();
   const {
@@ -149,7 +143,9 @@ export function AppShell(): React.JSX.Element {
           onBooks={hasNavigation ? () => openTool("books") : undefined}
           onTools={hasNavigation ? () => openTool("tools-home") : undefined}
           onBack={tool && canUseApp ? closeTool : undefined}
-          onAdd={isReportPage && canUseApp ? openEntry : undefined}
+          onAdd={
+            canUseApp && (hasNavigation || isReportPage) ? openEntry : undefined
+          }
         />
         <SafeAreaView
           edges={
@@ -232,28 +228,8 @@ export function AppShell(): React.JSX.Element {
             </LedgerViewBoundary>
           )}
         </SafeAreaView>
-        {hasNavigation && index === RECORDS_INDEX && !isKeyboardVisible ? (
-          <FAB
-            icon="plus"
-            label="记一笔"
-            accessibilityLabel="记一笔"
-            onPress={openEntry}
-            style={{
-              position: "absolute",
-              right: Math.max(FLOATING_GAP, insets.right + FLOATING_GAP),
-              bottom:
-                navigationHeight +
-                FLOATING_GAP +
-                (controller.notice ? noticeHeight + FLOATING_GAP : 0),
-            }}
-          />
-        ) : null}
         {canUseApp ? (
-          <LedgerSnackbar
-            controller={controller}
-            bottom={navigationHeight}
-            onHeight={setNoticeHeight}
-          />
+          <LedgerSnackbar controller={controller} bottom={navigationHeight} />
         ) : null}
         {canUseApp ? (
           <AppEditors

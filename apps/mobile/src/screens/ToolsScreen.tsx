@@ -1,4 +1,4 @@
-import { pendingReviewCount, type Ledger } from "@hamster-ledger/core";
+import { type Ledger } from "@hamster-ledger/core";
 import { List, Text } from "react-native-paper";
 import { Screen } from "../ui/Screen";
 export const TOOLS = [
@@ -117,9 +117,6 @@ export function ToolsScreen({
 }): React.JSX.Element {
   return (
     <Screen>
-      <Text variant="headlineSmall" accessibilityRole="header">
-        更多功能
-      </Text>
       <Text>{storageDescription}</Text>
       <List.Item
         title="收支总览"
@@ -138,27 +135,6 @@ export function ToolsScreen({
           left={(props) => <List.Icon {...props} icon="wallet-outline" />}
         />
       )}
-      <Text variant="titleMedium" accessibilityRole="header">
-        待处理
-      </Text>
-      <List.Item
-        title={`账单核对 · ${pendingReviewCount(ledger)}`}
-        onPress={() => onSelect("review")}
-        left={(props) => <List.Icon {...props} icon="content-duplicate" />}
-      />
-      <List.Item
-        title={`AI 草稿 · ${ledger.aiDrafts?.filter((item) => item.state === "pending").length ?? 0}`}
-        onPress={() => onSelect("ai")}
-        left={(props) => (
-          <List.Icon {...props} icon="text-box-search-outline" />
-        )}
-      />
-      <List.Item
-        title="支付通知待确认"
-        description="打开本机收件箱查看"
-        onPress={() => onSelect("payment-inbox")}
-        left={(props) => <List.Icon {...props} icon="message-text-outline" />}
-      />
       {[
         {
           title: "记录与核对",
@@ -179,7 +155,6 @@ export function ToolsScreen({
               <List.Item
                 key={tool.key}
                 title={tool.title}
-                description={tool.description}
                 onPress={() => onSelect(tool.key)}
                 left={(props) => <List.Icon {...props} icon={tool.icon} />}
                 right={(props) => <List.Icon {...props} icon="chevron-right" />}
@@ -187,9 +162,6 @@ export function ToolsScreen({
             ))}
         </List.Section>
       ))}
-      <Text variant="bodySmall">
-        账本在本机的加密数据库中保存。删除应用会移除本机数据，请定期导出备份。
-      </Text>
     </Screen>
   );
 }

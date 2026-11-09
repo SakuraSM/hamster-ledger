@@ -107,3 +107,38 @@ it("does not expose saved checkpoint notes when amounts are hidden", () => {
   fireEvent.click(screen.getByText(/余额基准与历史/));
   expect(container.innerHTML).not.toContain(sensitive);
 });
+it("offers balance calibration and transfer before a potentially long history", () => {
+  const onCalibrate = vi.fn(),
+    onTransfer = vi.fn();
+  render(
+    <AccountDetail
+      account={account}
+      ledger={ledger}
+      through="2026-11-07 23:59:59"
+      isHidden={false}
+      recordRequest={0}
+      traceRequest={0}
+      onBack={vi.fn()}
+      onEdit={vi.fn()}
+      onCalibrate={onCalibrate}
+      onTransfer={onTransfer}
+      onArchive={vi.fn()}
+      onRecord={vi.fn()}
+    />,
+  );
+  const calibrate = screen.getByRole("button", { name: "核对实际余额" });
+  expect(document.activeElement).toBe(
+    screen.getByRole("heading", { name: "现金" }),
+  );
+  const history = screen.getByRole("button", {
+    name: "查看支付成功12.34元账单详情",
+  });
+  expect(
+    calibrate.compareDocumentPosition(history) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  fireEvent.click(calibrate);
+  fireEvent.click(screen.getByRole("button", { name: "转账" }));
+  expect(onCalibrate).toHaveBeenCalledOnce();
+  expect(onTransfer).toHaveBeenCalledOnce();
+});

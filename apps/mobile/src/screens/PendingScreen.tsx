@@ -67,20 +67,26 @@ export function PendingScreen({
             <Text variant="headlineMedium" accessibilityRole="header">
               待处理
             </Text>
-            <Text variant="bodySmall">核对后才会入账</Text>
+            <Text variant="bodySmall">账单与草稿 · 核对后入账</Text>
           </View>
-          <Text variant="displaySmall" style={{ color: theme.colors.primary }}>
+          <Text
+            variant="displaySmall"
+            accessibilityLabel={`${drafts.length + reviews} 项账单和草稿待处理`}
+            style={{ color: theme.colors.primary }}
+          >
             {String(drafts.length + reviews).padStart(2, "0")}
           </Text>
         </View>
         <View style={styles.filters}>
-          <Button mode="contained-tonal" onPress={onAi}>
+          <Button mode="outlined" onPress={onAi}>
             AI 草稿 {drafts.length}
           </Button>
           <Button mode="outlined" onPress={onReview}>
             账单核对 {reviews}
           </Button>
-          <Button onPress={onPayment}>支付通知</Button>
+          <Button mode="outlined" onPress={onPayment}>
+            支付通知
+          </Button>
         </View>
         {hasPending ? (
           <ImageBackground
@@ -108,9 +114,6 @@ export function PendingScreen({
               <Text>存在待核对的账单</Text>
             )}
             {!isHidden && date ? <Text>{date}</Text> : null}
-            <View style={styles.note}>
-              <Text>核对金额、分类和账户后，再确认入账。</Text>
-            </View>
             {!isHidden && (draft || record) ? (
               <>
                 <Text>
@@ -127,9 +130,6 @@ export function PendingScreen({
             <Text>导入账单或添加凭证后，可以在这里查看。</Text>
           </View>
         )}
-        <Text variant="bodySmall">
-          支付通知在本机收件箱核对，未读取时不计入上方数量。
-        </Text>
       </Screen>
       <View
         style={[styles.actions, { backgroundColor: theme.colors.background }]}
@@ -143,7 +143,7 @@ export function PendingScreen({
         >
           {hasPending ? (draft ? "核对并入账" : "核对这笔账单") : "导入账单"}
         </Button>
-        {hasPending ? <Button onPress={onLater}>稍后处理</Button> : null}
+        {hasPending ? <Button onPress={onLater}>查看总览</Button> : null}
       </View>
     </View>
   );
@@ -160,15 +160,14 @@ const styles = StyleSheet.create({
   },
   filters: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   paper: {
-    minHeight: 340,
+    minHeight: 270,
     paddingHorizontal: 26,
     paddingTop: 26,
     paddingBottom: 42,
-    gap: 12,
+    gap: 10,
     borderRadius: 10,
   },
   amount: { fontVariant: ["tabular-nums"] },
-  note: { marginTop: 12, padding: 14, borderRadius: 8 },
   empty: {
     minHeight: 240,
     alignItems: "center",
