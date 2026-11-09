@@ -1,20 +1,18 @@
 import { memo } from "react";
-import { AmountText, useAmountColors } from "../ui/AmountText";
+import { AmountText } from "../ui/AmountText";
 import { ExtendedReports } from "./ExtendedReports";
 import { NetWorthReport } from "./NetWorthReport";
-import { ReportRangePresets } from "../ui/ReportRangePresets";
+import { ReportDistribution } from "./ReportDistribution";
+import { CashFlowChart } from "./CashFlowChart";
+import { ReportDateControls } from "../ui/ReportDateControls";
 import { DATE_KEY_LENGTH, MONTH_KEY_LENGTH } from "../constants";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { View } from "react-native";
-import {
-  Button,
-  Text,
-  SegmentedButtons,
-  ProgressBar,
-} from "react-native-paper";
+import { Button, Text, SegmentedButtons } from "react-native-paper";
 import {
   reportGroups,
-  reportTrend,
+  addDays,
+  cycleRange,
   summarize,
   money,
   reimbursementReport,
@@ -22,42 +20,57 @@ import {
   type Ledger,
 } from "@hamster-ledger/core";
 import { Screen, Section } from "../ui/Screen";
-import { DateField } from "../ui/DateField";
 import { localNow } from "../platform/runtime";
 interface ReportsScreenProps {
   ledger: Ledger;
+  month?: string;
   bookId?: string;
   onRecord?: (record: BillRecord) => void;
   onReimburse?: (record: BillRecord) => void;
 }
 export const ReportsScreen = memo(function ReportsScreen({
   ledger,
+  month,
   bookId,
   onRecord,
   onReimburse,
 }: ReportsScreenProps): React.JSX.Element {
-  const colors = useAmountColors();
   const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const amount = (value: number): string =>
     isAmountHidden ? "••••" : `¥${money(value)}`;
   const reimbursementAmount = (value: number | null): string =>
     value === null ? "数据状态需核对" : amount(value);
+  const initialCycle = month
+    ? cycleRange(month, ledger.preferences?.cycleStartDay ?? 1)
+    : null;
   const [start, setStart] = useState(
-    localNow().slice(0, MONTH_KEY_LENGTH) + "-01",
+    initialCycle?.start ?? localNow().slice(0, MONTH_KEY_LENGTH) + "-01",
   );
-  const [end, setEnd] = useState(localNow().slice(0, DATE_KEY_LENGTH));
+  const [end, setEnd] = useState(
+    initialCycle
+      ? addDays(initialCycle.end, -1)
+      : localNow().slice(0, DATE_KEY_LENGTH),
+  );
   const [dimension, setDimension] = useState<"category" | "tag">("category");
   const [kind, setKind] = useState<"支出" | "收入">("支出");
-  const records = ledger.records.filter(
-    (record) =>
-      record.date.slice(0, DATE_KEY_LENGTH) >= start &&
-      record.date.slice(0, DATE_KEY_LENGTH) <= end,
+  const records = useMemo(
+    () =>
+      ledger.records.filter(
+        (record) =>
+          record.date.slice(0, DATE_KEY_LENGTH) >= start &&
+          record.date.slice(0, DATE_KEY_LENGTH) <= end,
+      ),
+    [ledger.records, start, end],
   );
-  const groups = reportGroups({ records, dimension, kind });
-  const maximum = Math.max(1, ...groups.map((group) => group.amount));
-  const totals = summarize(records);
-  const trend = start <= end ? reportTrend({ records, start, end }) : [];
-  const reimbursement = reimbursementReport({ ledger, start, end });
+  const groups = useMemo(
+    () => reportGroups({ records, dimension, kind }),
+    [records, dimension, kind],
+  );
+  const totals = useMemo(() => summarize(records), [records]);
+  const reimbursement = useMemo(
+    () => reimbursementReport({ ledger, start, end }),
+    [ledger, start, end],
+  );
   function changeRange(nextStart: string, nextEnd: string): void {
     setStart(nextStart);
     setEnd(nextEnd);
@@ -72,14 +85,12 @@ export const ReportsScreen = memo(function ReportsScreen({
         花在了哪里
       </Text>
       <Text>仅统计已确认收支，转账不计入。</Text>
-      <ReportRangePresets
+      <ReportDateControls
         today={localNow().slice(0, DATE_KEY_LENGTH)}
         start={start}
         end={end}
         onChange={changeRange}
       />
-      <DateField label="开始日期" value={start} onChange={setStart} />
-      <DateField label="结束日期" value={end} onChange={setEnd} />
       {start > end ? (
         <Text accessibilityLiveRegion="polite">结束日期不能早于开始日期。</Text>
       ) : (
@@ -129,45 +140,35 @@ export const ReportsScreen = memo(function ReportsScreen({
               { value: "tag", label: "按标签" },
             ]}
           />
-          <Section title="金额分布">
-            {!isAmountHidden
-              ? groups.map((group) => (
-                  <View key={group.name} style={{ gap: 8 }}>
-                    <Text>
-                      {group.name} ·{" "}
-                      <AmountText
-                        amount={group.amount}
-                        tone={kind === "支出" ? "expense" : "income"}
-                      >
-                        ¥{money(group.amount)}
-                      </AmountText>
-                    </Text>
-                    <ProgressBar
-                      color={kind === "支出" ? colors.expense : colors.income}
-                      progress={Math.max(0, group.amount / maximum)}
-                    />
-                  </View>
-                ))
-              : null}
-          </Section>
-          <Section title="每日收支">
-            {!isAmountHidden
-              ? trend
-                  .filter((day) => day.expense || day.income)
-                  .map((day) => (
-                    <Text key={day.date}>
-                      {day.date} · 支出{" "}
-                      <AmountText amount={day.expense} tone="expense">
-                        ¥{money(day.expense)}
-                      </AmountText>{" "}
-                      · 收入{" "}
-                      <AmountText amount={day.income} tone="income">
-                        ¥{money(day.income)}
-                      </AmountText>
-                    </Text>
-                  ))
-              : null}
-          </Section>
+          {isAmountHidden ? (
+            <Text>金额已隐藏，图表和明细暂不展示。</Text>
+          ) : (
+            <>
+              <ReportDistribution
+                key={`${kind}:${dimension}:${start}:${end}`}
+                groups={groups}
+                records={records}
+                dimension={dimension}
+                kind={kind}
+                onRecord={onRecord}
+              />
+              <CashFlowChart
+                key={`${start}:${end}`}
+                records={records}
+                start={start}
+                end={end}
+                onRecord={onRecord}
+              />
+            </>
+          )}
+          {!isAmountHidden ? (
+            <NetWorthReport
+              key={`${start}:${end}`}
+              ledger={ledger}
+              start={start}
+              end={end}
+            />
+          ) : null}
           <Section title="回款与分摊">
             <Text>
               统计 {start} 至 {end}{" "}
@@ -263,16 +264,6 @@ export const ReportsScreen = memo(function ReportsScreen({
               <Text>当前范围没有可报销支出。</Text>
             ) : null}
           </Section>
-          {!isAmountHidden ? (
-            <NetWorthReport
-              key={`${start}:${end}`}
-              ledger={ledger}
-              start={start}
-              end={end}
-            />
-          ) : (
-            <Text>金额已隐藏，图表和明细暂不展示。</Text>
-          )}
           {!isAmountHidden ? (
             <ExtendedReports
               ledger={ledger}

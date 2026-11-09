@@ -1,14 +1,6 @@
 import { useState } from "react";
+import { NetWorthVisualization } from "./NetWorthVisualization";
 import { Button } from "@mantine/core";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import {
   categoryBreakdown,
   memberExpenses,
@@ -19,8 +11,6 @@ import {
 } from "@hamster-ledger/core";
 import { useBookMembers, useReportData } from "@hamster-ledger/ledger-react";
 import { useNetworkClient } from "../../hooks/useNetworkController";
-const MINOR_PER_YUAN = 100;
-const MONEY_PRECISION = 2;
 
 export function ExtendedReports({
   ledger,
@@ -55,6 +45,22 @@ export function ExtendedReports({
   const reimbursement = reimbursementReport({ ledger, start, end });
   return (
     <div className="report-extra">
+      <section className="panel">
+        <h2>净资产曲线</h2>
+        <p className="muted">
+          按各期末及所选起止日估值；账户按估值日期的归档状态统计。
+        </p>
+        {report.error ? <p role="alert">{report.error}</p> : null}
+        {report.isLoading ? (
+          <p role="status">正在查询各估值日的参考汇率…</p>
+        ) : null}
+        <NetWorthVisualization
+          key={`${start}:${end}`}
+          rows={report.rows}
+          isHidden={isHidden}
+          hasAccounts={ledger.accounts.length > 0}
+        />
+      </section>
       <section className="panel" aria-label="回款与分摊">
         <h2>回款与分摊</h2>
         <p className="muted">
@@ -158,67 +164,6 @@ export function ExtendedReports({
           </div>
         ))}
         {!reimbursement.rows.length ? <p>当前范围没有可报销支出。</p> : null}
-      </section>
-      <section className="panel">
-        <h2>净资产曲线</h2>
-        <p className="muted">
-          按各期末及所选起止日估值；人民币记账金额保持历史汇率，账户按估值日期的归档状态统计。
-        </p>
-        {report.error ? <p role="alert">{report.error}</p> : null}
-        {report.isLoading ? (
-          <p role="status">正在查询各估值日的参考汇率…</p>
-        ) : null}
-        {report.rows.some((row) => row.amount === null) && !report.isLoading ? (
-          <p role="status">部分日期缺少有效汇率，图中保留空缺。</p>
-        ) : null}
-        {isHidden ? (
-          <p className="empty-panel">金额已隐藏，净资产曲线与明细暂不展示。</p>
-        ) : (
-          <>
-            <div
-              className="report-chart trend"
-              role="group"
-              aria-label="净资产曲线，金额明细见下方列表"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={report.rows.map((row) => ({
-                    ...row,
-                    value:
-                      row.amount === null ? null : row.amount / MINOR_PER_YUAN,
-                  }))}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis width={65} />
-                  <Tooltip
-                    formatter={(value) =>
-                      `¥${Number(value).toFixed(MONEY_PRECISION)}`
-                    }
-                  />
-                  <Line
-                    dataKey="value"
-                    name="净资产"
-                    stroke="#a96140"
-                    isAnimationActive={false}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <details>
-              <summary>查看净资产明细</summary>
-              {report.rows.map((row) => (
-                <p key={row.date}>
-                  {row.date} ·{" "}
-                  {row.amount === null
-                    ? `未估值：缺少 ${row.missing.join("、")} 汇率`
-                    : `¥${money(row.amount)}`}
-                </p>
-              ))}
-            </details>
-          </>
-        )}
       </section>
       <div className="report-grid">
         <section className="panel">

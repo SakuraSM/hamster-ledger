@@ -126,7 +126,12 @@ export function netWorthSeries(
   ledger: Ledger,
   dates: string[],
   rates: Record<string, ExchangeRate[]>,
-): Array<{ date: string; amount: number | null; missing: string[] }> {
+): Array<{
+  date: string;
+  amount: number | null;
+  missing: string[];
+  missingBaselines: string[];
+}> {
   return dates.map((date) => {
     const value = summarizeAssets({
       ledger,
@@ -135,8 +140,12 @@ export function netWorthSeries(
     });
     return {
       date,
-      amount: value.missingCurrencies.length ? null : value.netAssets,
+      amount:
+        value.missingCurrencies.length || value.missingBaselines.length
+          ? null
+          : value.netAssets,
       missing: value.missingCurrencies,
+      missingBaselines: value.missingBaselines,
     };
   });
 }

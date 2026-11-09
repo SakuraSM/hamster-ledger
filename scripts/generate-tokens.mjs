@@ -26,6 +26,17 @@ const css =
   Object.entries(names)
     .map(([key, name]) => `  --${name}: ${tokens.color[key]};`)
     .join("\n") +
+  `\n  --chart-income: ${tokens.chart.income};\n  --chart-income-muted: ${tokens.chart.incomeMuted};` +
+  `\n  --chart-expense: ${tokens.chart.expense};\n  --chart-expense-muted: ${tokens.chart.expenseMuted};` +
+  tokens.chart.categories
+    .map((color, index) => `\n  --chart-category-${index + 1}: ${color};`)
+    .join("") +
+  '\n}\n:root[data-theme="night"] {' +
+  `\n  --chart-income: ${tokens.chart.incomeDark};\n  --chart-income-muted: ${tokens.chart.incomeMutedDark};` +
+  `\n  --chart-expense: ${tokens.chart.expenseDark};\n  --chart-expense-muted: ${tokens.chart.expenseMutedDark};` +
+  tokens.chart.categoriesDark
+    .map((color, index) => `\n  --chart-category-${index + 1}: ${color};`)
+    .join("") +
   "\n}\n";
 if (process.argv.includes("--check")) {
   if (readFileSync(target, "utf8") !== css)
