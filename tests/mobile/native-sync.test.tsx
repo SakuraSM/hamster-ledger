@@ -110,6 +110,13 @@ async function setup() {
 }
 it("pulls a remote-only change while foregrounded without opening the sync screen", async () => {
   const { value, hook } = await setup();
+  let releaseUpdate: (() => void) | undefined;
+  vi.mocked(value.updateBooks).mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        releaseUpdate = resolve;
+      }),
+  );
   await waitFor(
     () =>
       expect(value.commit).toHaveBeenCalledWith(
@@ -121,10 +128,17 @@ it("pulls a remote-only change while foregrounded without opening the sync scree
       ),
     { timeout: 3000 },
   );
-  expect(value.updateBooks).toHaveBeenCalledWith([
-    { id: "personal", name: "云端账本" },
-  ]);
-  expect(hook.result.current.link?.revision).toBe(2);
+  await waitFor(() =>
+    expect(value.updateBooks).toHaveBeenCalledWith([
+      { id: "personal", name: "云端账本" },
+    ]),
+  );
+  expect(hook.result.current.link?.revision).toBe(1);
+  await act(async () => {
+    if (!releaseUpdate) throw new Error("账本目录写入尚未开始");
+    releaseUpdate();
+  });
+  await waitFor(() => expect(hook.result.current.link?.revision).toBe(2));
   expect(fixture.client.save).not.toHaveBeenCalled();
 });
 it("does not pull while backgrounded and checks immediately on foreground", async () => {
