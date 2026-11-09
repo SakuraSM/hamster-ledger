@@ -2,6 +2,7 @@ import { ReceiptAction } from "./ReceiptAction";
 import type { EntryDraft } from "@hamster-ledger/ledger-react";
 import { CENTS_PER_YUAN } from "../constants";
 import { useMemo, useState } from "react";
+import { ScrollView } from "react-native";
 import {
   Button,
   SegmentedButtons,
@@ -168,25 +169,29 @@ export function SimpleEntryEditor({
       </Button>
       {!record && templates.length > 0 && (
         <>
-          <Text variant="labelLarge">常用交易快捷填入</Text>
-          {templates.map((item) => (
-            <Button
-              key={item.id}
-              onPress={() => {
-                setAmount(String(item.amount / CENTS_PER_YUAN));
-                setMerchant(item.merchant);
-                setKind(item.kind);
-                setCategory(item.category);
-                setAccountId(
-                  resolveAssetAccount(item, ledger.accounts)?.id ?? "",
-                );
-                setDescription(item.description);
-                setTags(item.tags?.join("，") ?? "");
-              }}
-            >
-              {item.merchant}
-            </Button>
-          ))}
+          <Text variant="labelLarge">常用交易</Text>
+          <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>
+            {templates.map((item) => (
+              <Button
+                key={item.id}
+                mode="outlined"
+                contentStyle={{ minHeight: 48 }}
+                onPress={() => {
+                  setAmount(String(item.amount / CENTS_PER_YUAN));
+                  setMerchant(item.merchant);
+                  setKind(item.kind);
+                  setCategory(item.category);
+                  setAccountId(
+                    resolveAssetAccount(item, ledger.accounts)?.id ?? "",
+                  );
+                  setDescription(item.description);
+                  setTags(item.tags?.join("，") ?? "");
+                }}
+              >
+                {item.merchant}
+              </Button>
+            ))}
+          </ScrollView>
         </>
       )}
       <SegmentedButtons

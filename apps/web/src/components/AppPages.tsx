@@ -1,7 +1,7 @@
 import type { CloudController } from "../hooks/useCloudSync";
 import { Button } from "@mantine/core";
 import { useMemo } from "react";
-import type { PageId } from "../app-config";
+import type { PageId, ToolDestination } from "../app-config";
 import type { LedgerController } from "../hooks/useLedger";
 import { localNow, newEntityId } from "../platform/browser/runtime";
 import { createDemoAccounts } from "../data/demo-accounts";
@@ -38,6 +38,8 @@ interface Props {
   onFilter: (filter: BillFilter) => void;
   onMonth: (month: string) => void;
   onNavigate: (page: PageId) => void;
+  toolDestination?: ToolDestination;
+  onOpenBooks?: () => void;
   onSelect: (record: BillRecord) => void;
   onReimburse?: (record: BillRecord) => void;
   onPreview: (record: BillRecord) => void;
@@ -58,6 +60,8 @@ export function AppPages(props: Props): React.JSX.Element {
     onFilter,
     onMonth,
     onNavigate,
+    toolDestination,
+    onOpenBooks,
     onSelect,
     onReimburse,
     onPreview,
@@ -202,7 +206,11 @@ export function AppPages(props: Props): React.JSX.Element {
             <h1>账单放进来，收支理清楚</h1>
             <p>当前不能从示例账本导入，请先在账本管理中切换到可用账本。</p>
           </div>
-          <Button onClick={() => onNavigate("tools")}>进入账本管理</Button>
+          <Button
+            onClick={() => (onOpenBooks ? onOpenBooks() : onNavigate("tools"))}
+          >
+            进入账本管理
+          </Button>
         </section>
       ) : (
         <ImportPage
@@ -257,6 +265,7 @@ export function AppPages(props: Props): React.JSX.Element {
         controller={controller}
         onNavigate={onNavigate}
         onMonth={onMonth}
+        destination={toolDestination}
       />
     ),
   };

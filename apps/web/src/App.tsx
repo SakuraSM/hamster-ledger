@@ -11,7 +11,7 @@ import { usePreferences } from "./hooks/usePreferences";
 import { useAppIdentityScope } from "./hooks/useAppIdentityScope";
 import { AppHeader } from "./components/AppHeader";
 import { IdentityBlockedRecovery } from "./components/IdentityBlockedRecovery";
-import { DEFAULT_MONTH, type PageId } from "./app-config";
+import { DEFAULT_MONTH, type PageId, type ToolDestination } from "./app-config";
 const MONTH_KEY_LENGTH = 7;
 import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
@@ -43,6 +43,10 @@ export function App(): React.JSX.Element {
       : "inbox",
   );
   const [month, setMonth] = useState(DEFAULT_MONTH);
+  const [toolDestination, setToolDestination] = useState<ToolDestination>({
+    section: null,
+    serial: 0,
+  });
   const [recordMonth, setRecordMonth] = useState(DEFAULT_MONTH);
   useEffect(() => {
     const selected =
@@ -81,9 +85,18 @@ export function App(): React.JSX.Element {
     .reverse();
   function navigate(next: PageId): void {
     if (next === "transactions") setRecordMonth(month);
+    if (next === "tools")
+      setToolDestination((current) => ({
+        section: null,
+        serial: current.serial + 1,
+      }));
     setPage(next);
     setFilter({ source: "", category: "" });
     window.scrollTo({ top: 0 });
+  }
+  function openTools(section: "books" | "account"): void {
+    navigate("tools");
+    setToolDestination((current) => ({ section, serial: current.serial + 1 }));
   }
   function showSource(source: Source): void {
     setRecordMonth(month);
@@ -132,6 +145,7 @@ export function App(): React.JSX.Element {
         onNavigate={navigate}
         onSource={showSource}
         onSettings={() => navigate("tools")}
+        onBooks={() => openTools("books")}
       />
       <main id="main-content" className="main-content" tabIndex={-1}>
         <AppHeader
@@ -141,6 +155,8 @@ export function App(): React.JSX.Element {
           month={page === "transactions" ? recordMonth : month}
           onMonth={page === "transactions" ? setRecordMonth : setMonth}
           onSettings={() => navigate("tools")}
+          onBooks={() => openTools("books")}
+          onAccount={() => openTools("account")}
           bookName={bookName ?? "账本"}
           onAdd={() => setEditor({})}
           onImport={() => navigate("import")}
@@ -178,6 +194,8 @@ export function App(): React.JSX.Element {
             onFilter={setFilter}
             onMonth={setMonth}
             onNavigate={navigate}
+            toolDestination={toolDestination}
+            onOpenBooks={() => openTools("books")}
             onSelect={setSelected}
             onReimburse={(record) =>
               setEditor({

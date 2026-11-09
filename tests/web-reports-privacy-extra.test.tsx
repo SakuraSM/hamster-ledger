@@ -73,6 +73,19 @@ function assertSensitiveTextAbsent(): void {
     expect(document.body.innerHTML).not.toContain(value);
   }
 }
+it("keeps the selected range visible and opens custom date controls on request", () => {
+  render(<ReportsPage ledger={ledger} month="2026-10" />);
+  expect(screen.queryByLabelText(/开始日期/)).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "全年" }));
+  const toggle = screen.getByRole("button", {
+    name: /2026-01-01 至 2026-12-31 · 自定义日期/,
+  });
+  expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  fireEvent.click(toggle);
+  expect(toggle.getAttribute("aria-expanded")).toBe("true");
+  expect(screen.getByLabelText(/开始日期/)).toBeTruthy();
+  expect(screen.getByLabelText(/结束日期/)).toBeTruthy();
+});
 it("masks custom category and member names in DOM and accessibility while preserving category drilldown", () => {
   const view = render(<ReportsPage ledger={ledger} month="2026-10" />);
   assertSensitiveTextAbsent();

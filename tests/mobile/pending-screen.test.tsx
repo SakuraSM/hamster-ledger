@@ -162,7 +162,7 @@ it("lets a pending record be handled later without changing its status", () => {
       onLater={later}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "稍后处理" }));
+  fireEvent.click(screen.getByRole("button", { name: "查看总览" }));
   expect(later).toHaveBeenCalledOnce();
   expect(book.records[0]?.status).toBe("pending");
 });

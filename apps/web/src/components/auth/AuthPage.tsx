@@ -13,8 +13,8 @@ export function AuthPage({
 }): React.JSX.Element {
   const auth = useAuth();
   const closed = mode === "register" && !auth.policy.allowRegistration;
-  return (
-    <AuthLayout>
+  const account = (
+    <div key="account" className="auth-account">
       {closed ? (
         <div className="auth-heading">
           <h1>{auth.isOffline ? "暂时无法创建账号" : "注册尚未开放"}</h1>
@@ -25,7 +25,7 @@ export function AuthPage({
           </p>
           <Button
             variant="filled"
-            type="submit"
+            type="button"
             className="primary-button"
             onClick={() => navigateAuth(loginPath("login", "/"))}
           >
@@ -35,28 +35,38 @@ export function AuthPage({
       ) : (
         <AuthForm key={mode} mode={mode} />
       )}
-      <div className="auth-local">
-        <span>也可以暂时不登录</span>
-        <Button
-          variant="outline"
-          type="submit"
-          className="secondary-button"
-          onClick={auth.continueLocal}
-        >
-          仅在本机使用
-        </Button>
-        <p>账本留在当前浏览器，登录后可自行选择同步。</p>
-      </div>
+    </div>
+  );
+  const local = (
+    <div
+      key="local"
+      className={`auth-local${auth.isOffline ? " auth-local-first" : ""}`}
+    >
+      <span>{auth.isOffline ? "同步服务暂时不可用" : "也可以暂时不登录"}</span>
+      <Button
+        variant={auth.isOffline ? "filled" : "outline"}
+        type="button"
+        className={auth.isOffline ? "primary-button" : "secondary-button"}
+        onClick={auth.continueLocal}
+      >
+        仅在本机使用
+      </Button>
+      <p>账本留在当前浏览器，登录后可自行选择同步。</p>
       {auth.isOffline ? (
         <Button
           variant="subtle"
-          type="submit"
+          type="button"
           className="text-button auth-retry"
           onClick={() => void auth.refresh()}
         >
           重新连接同步服务
         </Button>
       ) : null}
+    </div>
+  );
+  return (
+    <AuthLayout>
+      {auth.isOffline ? [local, account] : [account, local]}
     </AuthLayout>
   );
 }

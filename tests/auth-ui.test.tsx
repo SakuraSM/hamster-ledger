@@ -93,6 +93,31 @@ it("does not present a registration form when the server disables registration",
   expect(screen.getByText("注册尚未开放")).toBeTruthy();
   expect(screen.queryByLabelText("账号")).toBeNull();
 });
+it("prioritizes local use offline and keeps a typed account when connectivity changes", () => {
+  const online = controller();
+  const view = render(
+    <AuthContext.Provider value={online}>
+      <AuthPage mode="login" />
+    </AuthContext.Provider>,
+  );
+  fireEvent.change(screen.getByLabelText("账号"), {
+    target: { value: "test.user" },
+  });
+  const offline = { ...online, isOffline: true };
+  view.rerender(
+    <AuthContext.Provider value={offline}>
+      <AuthPage mode="login" />
+    </AuthContext.Provider>,
+  );
+  const local = screen.getByRole("button", { name: "仅在本机使用" });
+  const username = screen.getByLabelText("账号") as HTMLInputElement;
+  expect(
+    local.compareDocumentPosition(username) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  expect(username.value).toBe("test.user");
+  fireEvent.click(local);
+  expect(offline.continueLocal).toHaveBeenCalledOnce();
+});
 it("honors Retry-After before enabling another login attempt", async () => {
   vi.useFakeTimers();
   mount("login", controller({ retryAfter: 2, error: "尝试次数过多" }));

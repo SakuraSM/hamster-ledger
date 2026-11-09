@@ -96,8 +96,17 @@ vi.mock("../../apps/mobile/src/ui/AuxiliaryPages", () => ({
   auxiliaryPageTitle: () => "工具",
 }));
 vi.mock("../../apps/mobile/src/ui/AppHeader", () => ({
-  AppHeader: ({ bookName }: { bookName?: string }) => (
-    <header>{bookName}</header>
+  AppHeader: ({
+    bookName,
+    onAdd,
+  }: {
+    bookName?: string;
+    onAdd?: () => void;
+  }) => (
+    <header>
+      {bookName}
+      {onAdd ? <button onClick={onAdd}>记一笔</button> : null}
+    </header>
   ),
 }));
 vi.mock("../../apps/mobile/src/ui/AppScenes", () => ({
@@ -126,6 +135,7 @@ vi.mock("../../apps/mobile/src/ui/AppNavigation", () => ({
   }) => (
     <>
       <button onClick={() => onIndexChange(1)}>账单页</button>
+      <button onClick={() => onIndexChange(2)}>资产页</button>
       {renderScene({ route: { key: index === 1 ? "records" : "overview" } })}
     </>
   ),
@@ -310,6 +320,18 @@ function openModal(kind: "detail" | "metadata" | "editor"): void {
     fireEvent.click(screen.getByRole("button", { name: "编辑当前账单" }));
 }
 describe("AppShell identity isolation", () => {
+  it("offers one entry action on each primary page and hides it at the account gate", () => {
+    const view = render(<AppShell />);
+    expect(screen.getAllByRole("button", { name: "记一笔" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "账单页" }));
+    expect(screen.getAllByRole("button", { name: "记一笔" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "资产页" }));
+    fireEvent.click(screen.getByRole("button", { name: "记一笔" }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    activeAccount = { ...activeAccount, needsEntry: true };
+    view.rerender(<AppShell />);
+    expect(screen.queryByRole("button", { name: "记一笔" })).toBeNull();
+  });
   it.each(["user", "server", "cloudId", "cloudUser", "cloudServer"] as const)(
     "does not expose old modals on the first committed frame after %s changes",
     (field) => {

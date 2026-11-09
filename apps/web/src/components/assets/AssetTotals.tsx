@@ -8,7 +8,6 @@ interface AssetTotalsProps {
   comparison: ReturnType<typeof compareAssets>;
   isDemo: boolean;
   isHidden: boolean;
-  through: string;
   onToggleAmounts: () => void;
 }
 
@@ -17,7 +16,6 @@ export function AssetTotals({
   comparison,
   isDemo,
   isHidden,
-  through,
   onToggleAmounts,
 }: AssetTotalsProps): React.JSX.Element {
   const isPartial = Boolean(
@@ -93,9 +91,7 @@ export function AssetTotals({
           缺少月初以前的余额基准，无法比较。
         </p>
       ) : null}
-      <p className="asset-total-caption">
-        净资产 = 总资产 − 总负债 · 截至 {through} · 按该日期的账户归档状态统计
-      </p>
+      <p className="asset-total-caption">按所选日期的账户归档状态统计。</p>
     </>
   );
 }

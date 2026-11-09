@@ -198,10 +198,20 @@
   text-align: center;
   line-height: 1.8;
 }
-.auth-local > .secondary-button {
+.auth-local > .secondary-button,
+.auth-local > .primary-button {
   width: 100%;
   font-size: 14px;
   min-height: 45px;
+}
+.auth-local-first {
+  margin: 0 0 24px;
+  padding: 0 0 24px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line);
+}
+.auth-local-first .auth-retry {
+  margin: 0;
 }
 .auth-footer {
   font-size: 12px;
