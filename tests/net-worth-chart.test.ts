@@ -62,6 +62,12 @@ describe("native net worth chart", () => {
     expect(chart.ticks[2].amount).toBeLessThan(0);
     expect(netWorthChange(rows)).toBe(20000);
     expect(netWorthChange([...rows].reverse())).toBe(-20000);
+    expect(
+      netWorthChange([
+        row("2026-01-01", -Number.MAX_SAFE_INTEGER),
+        row("2026-01-31", Number.MAX_SAFE_INTEGER),
+      ]),
+    ).toBeNull();
   });
   it("renders unchanged balances as a horizontal line and reports zero change", () => {
     const rows = [row("2026-10-01", 12455770), row("2026-10-11", 12455770)];

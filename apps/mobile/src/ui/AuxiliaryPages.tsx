@@ -78,6 +78,7 @@ export function AuxiliaryPages({
       <ReportsScreen
         key={controller.mode}
         ledger={controller.ledger}
+        month={month}
         onRecord={onRecord}
         onReimburse={onReimburse}
         bookId={

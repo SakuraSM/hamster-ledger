@@ -1,9 +1,14 @@
-import { money } from "@hamster-ledger/core";
+import {
+  formatChartTick,
+  money,
+  netWorthGapDescription,
+} from "@hamster-ledger/core";
 
 export interface NetWorthRow {
   date: string;
   amount: number | null;
   missing: string[];
+  missingBaselines?: string[];
 }
 export interface TrendPoint extends NetWorthRow {
   x: number;
@@ -26,8 +31,6 @@ export const CHART_LAYOUT = {
   flatPadding: 0.01,
   minimumPadding: 100,
 } as const;
-const MINOR_PER_WAN = 1_000_000;
-const MINOR_PER_YUAN = 100;
 const NICE_STEPS = Object.values({
   unit: 1,
   double: 2,
@@ -36,7 +39,6 @@ const NICE_STEPS = Object.values({
 });
 const DECIMAL_BASE = 10;
 const PAIR_SIZE = 2;
-const MONEY_PRECISION = 2;
 
 function chartDomain(values: number[]): { lower: number; upper: number } {
   const minimum = Math.min(...values),
@@ -152,19 +154,17 @@ export function nearestTrendPoint(
 }
 
 export function formatTrendTick(amount: number): string {
-  if (Math.abs(amount) >= MINOR_PER_WAN)
-    return `${Number((amount / MINOR_PER_WAN).toFixed(MONEY_PRECISION))}万`;
-  return String(Number((amount / MINOR_PER_YUAN).toFixed(MONEY_PRECISION)));
+  return formatChartTick(amount);
 }
 
 export function netWorthChange(rows: NetWorthRow[]): number | null {
   const first = rows[0]?.amount,
     last = rows[rows.length - 1]?.amount;
-  return first == null || last == null || rows.length < PAIR_SIZE
-    ? null
-    : last - first;
+  if (first == null || last == null || rows.length < PAIR_SIZE) return null;
+  const change = last - first;
+  return Number.isSafeInteger(change) ? change : null;
 }
 
 export function netWorthLabel(row: NetWorthRow): string {
-  return `${row.date}，${row.amount === null ? `缺少 ${row.missing.join("、")} 汇率` : `净资产 ¥${money(row.amount)}`}`;
+  return `${row.date}，${row.amount === null ? netWorthGapDescription(row) : `净资产 ¥${money(row.amount)}`}`;
 }

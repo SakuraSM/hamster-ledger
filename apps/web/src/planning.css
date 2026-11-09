@@ -541,6 +541,26 @@
   .planning-page .report-summary > div:first-child strong {
     font-size: 28px;
   }
+  .planning-page .report-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .planning-page .report-summary > div:first-child {
+    grid-column: 1 / -1;
+  }
+  .planning-page .report-summary strong {
+    font-size: clamp(18px, 5vw, 23px);
+    overflow-wrap: anywhere;
+  }
+}
+@media (max-width: 360px) {
+  .planning-page .inline-form > .mantine-InputWrapper-root {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .planning-page .inline-form label {
+    min-width: 0;
+  }
 }
 :root[data-theme="night"] .planning-page .calendar-day[data-heat="1"] {
   background: #30372a;
@@ -568,4 +588,304 @@
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
+}
+
+/* Analytics controls and charts share the existing warm ledger palette. */
+.report-range-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.report-range-shortcuts button,
+.cashflow-selection button,
+.report-group-detail .section-heading button {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 999px;
+  min-height: 40px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.report-range-shortcuts button:hover,
+.cashflow-selection button:not(:disabled):hover,
+.report-group-detail .section-heading button:hover {
+  background: var(--sidebar);
+}
+.report-range-shortcuts button[aria-pressed="true"] {
+  background: var(--sidebar);
+  border-color: var(--primary);
+}
+.report-range-shortcuts button:focus-visible,
+.cashflow-selection button:focus-visible,
+.report-group-row:focus-visible,
+.report-record:focus-visible,
+.report-group-detail .section-heading button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.report-distribution-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.report-distribution-heading h2 {
+  margin-bottom: 3px;
+}
+.report-distribution-heading p {
+  margin: 0;
+}
+.report-donut-wrap {
+  position: relative;
+  width: min(100%, 290px);
+  height: 252px;
+  margin: 8px auto 10px;
+}
+.report-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  gap: 6px;
+}
+.report-donut-center span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.report-donut-center strong {
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.report-group-list {
+  border-top: 1px solid var(--line);
+}
+.report-group-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.report-group-row[aria-pressed="true"] {
+  background: var(--sidebar);
+}
+.report-group-row:disabled {
+  cursor: default;
+}
+.report-group-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.report-group-name i,
+.cashflow-heading i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.report-group-share {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.report-group-row strong {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.report-group-detail {
+  margin-top: 16px;
+}
+.report-group-detail .section-heading h3 {
+  margin: 0;
+}
+.report-record {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.report-record span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.report-record small {
+  color: var(--muted);
+}
+.report-record > strong {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cashflow-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.cashflow-heading i {
+  margin: 0 5px 0 10px;
+}
+.cashflow-heading .income-dot {
+  background: var(--chart-income);
+}
+.cashflow-heading .expense-dot {
+  background: var(--chart-expense);
+}
+.cashflow-selection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--sidebar);
+}
+.cashflow-selection button {
+  width: 40px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+.cashflow-selection button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cashflow-selection div {
+  display: grid;
+  text-align: center;
+  gap: 4px;
+  min-width: 0;
+}
+.cashflow-selection span {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.cashflow-details {
+  margin-top: 14px;
+}
+.cashflow-details summary {
+  cursor: pointer;
+  color: var(--ink);
+}
+@media (max-width: 700px) {
+  .report-donut-wrap {
+    height: 220px;
+  }
+  .report-group-row {
+    gap: 8px;
+  }
+  .cashflow-selection {
+    gap: 6px;
+  }
+}
+.net-worth-ranges,
+.net-worth-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.net-worth-ranges button,
+.net-worth-controls button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+}
+.net-worth-ranges button[aria-pressed="true"] {
+  background: var(--sidebar);
+  border-color: var(--primary);
+}
+.net-worth-ranges button:focus-visible,
+.net-worth-controls button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.net-worth-controls {
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.net-worth-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.net-worth-selection {
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+}
+.net-worth-selection span,
+.net-worth-selection small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.net-worth-selection strong {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+.net-worth-details {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.net-worth-details summary {
+  color: var(--ink);
+  cursor: pointer;
+}
+.report-record-pages {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.report-record-pages button {
+  min-height: 40px;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+}
+.report-record-pages button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.report-record-pages button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }

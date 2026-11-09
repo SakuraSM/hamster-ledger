@@ -16,6 +16,7 @@ import { AssetsScreen } from "../../apps/mobile/src/screens/AssetsScreen";
 
 vi.mock("react-native", () => ({
   Alert: { alert: vi.fn() },
+  View: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StyleSheet: { create: <Styles,>(styles: Styles): Styles => styles },
 }));
 vi.mock("react-native-paper", () => ({

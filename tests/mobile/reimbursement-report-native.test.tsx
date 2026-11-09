@@ -123,8 +123,17 @@ vi.mock("../../apps/mobile/src/ui/DateField", () => ({
 vi.mock("../../apps/mobile/src/ui/ReportRangePresets", () => ({
   ReportRangePresets: () => null,
 }));
+vi.mock("../../apps/mobile/src/ui/ReportDateControls", () => ({
+  ReportDateControls: () => null,
+}));
 vi.mock("../../apps/mobile/src/screens/NetWorthReport", () => ({
   NetWorthReport: () => null,
+}));
+vi.mock("../../apps/mobile/src/screens/ReportDistribution", () => ({
+  ReportDistribution: () => null,
+}));
+vi.mock("../../apps/mobile/src/screens/CashFlowChart", () => ({
+  CashFlowChart: () => null,
 }));
 vi.mock("../../apps/mobile/src/auth/NativeAccount", () => ({
   useNativeAccount: () => ({ client }),
