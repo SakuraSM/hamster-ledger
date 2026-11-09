@@ -91,11 +91,6 @@ export function AssetAccountContext({
       {account.type === "投资" ? (
         <Text>投资余额按已确认的基准和关联流水计算，不自动更新市场估值。</Text>
       ) : null}
-      {account.type === "银行卡" ? (
-        <Text>
-          银行卡通过账户名称或别名识别，更名后历史记录仍保留原账户关联。
-        </Text>
-      ) : null}
       {account.type === "网络钱包" ? (
         <Text>
           仅已关联本账户的流水影响余额，不会根据支付平台推断资金账户。

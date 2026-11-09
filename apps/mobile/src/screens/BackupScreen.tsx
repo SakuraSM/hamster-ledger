@@ -65,6 +65,7 @@ export function BackupScreen({
         完整归档包含账本、草稿和附件凭证，支持在 Web
         与安卓之间恢复。可选密码加密；密码不会保存，忘记后无法恢复加密文件。
       </Text>
+      <Text variant="bodySmall">删除应用会移除本机数据，请定期导出备份。</Text>
       <Checkbox.Item
         label="使用密码加密备份"
         status={encrypted ? "checked" : "unchecked"}

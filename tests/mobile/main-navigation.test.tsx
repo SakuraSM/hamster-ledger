@@ -63,3 +63,25 @@ it("keeps overview and reports accessible through tools", () => {
   expect(overview).toHaveBeenCalledOnce();
   expect(reports).toHaveBeenCalledOnce();
 });
+it("lists each pending workflow only once and opens it", () => {
+  const select = vi.fn();
+  render(
+    <ToolsScreen
+      ledger={createDemoLedger()}
+      storageDescription="本机账本"
+      onAssets={vi.fn()}
+      onSelect={select}
+      onOverview={vi.fn()}
+      onReports={vi.fn()}
+    />,
+  );
+  for (const name of ["AI 记账与凭证", "支付消息记账", "重复核对"]) {
+    expect(screen.getAllByRole("button", { name })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name }));
+  }
+  expect(select.mock.calls.map(([page]) => page)).toEqual([
+    "ai",
+    "payment-inbox",
+    "review",
+  ]);
+});

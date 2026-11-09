@@ -63,6 +63,13 @@ function renderAssets(
 }
 
 describe("asset account flows", () => {
+  it("opens the existing valuation date control from the asset heading", () => {
+    renderAssets({ ...EMPTY_LEDGER, accounts: [bank] });
+    fireEvent.click(screen.getByRole("button", { name: /设置资产估值日期/ }));
+    const date = screen.getByLabelText("资产估值日") as HTMLInputElement;
+    expect(date.closest("details")?.open).toBe(true);
+    expect(document.activeElement).toBe(date);
+  });
   it("requires an explicit funding account for repayment and records a transfer", async () => {
     const ledger = { ...EMPTY_LEDGER, accounts: [bank, card] };
     const onCommit = vi.fn().mockResolvedValue(undefined);

@@ -85,10 +85,6 @@ export function InboxPage({
                 <p>存在待核对的账单</p>
               )}
               {!isHidden && date ? <p className="inbox-date">{date}</p> : null}
-              <div className="inbox-evidence">
-                <Icons.Shield size={21} />
-                <span>核对金额、分类和账户后，再确认入账。</span>
-              </div>
               {!isHidden && (draft || record) ? (
                 <dl>
                   <div>
@@ -139,7 +135,7 @@ export function InboxPage({
         )}
         {canReview ? (
           <button type="button" className="inbox-later" onClick={onLater}>
-            稍后处理
+            查看总览
           </button>
         ) : null}
       </div>

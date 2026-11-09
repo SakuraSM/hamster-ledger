@@ -128,7 +128,10 @@ export function AssetsPage({
               isHidden={isHidden}
               recordRequest={recordRequest}
               traceRequest={traceRequest}
-              onBack={() => setSelectedId(null)}
+              onBack={() => {
+                setSelectedId(null);
+                setFocusAccounts(true);
+              }}
               onEdit={() => setEditor({ account: selected })}
               onCalibrate={() =>
                 setEditor({ account: selected, isCalibration: true })
@@ -171,6 +174,7 @@ export function AssetsPage({
               onShowArchived={setShowArchived}
               onShowTrend={setShowTrend}
               onDate={setValuationDate}
+              onOpenDate={() => setSettingsTarget("date")}
             />
           )}
         </div>

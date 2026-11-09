@@ -39,6 +39,7 @@ export function ReportsPage({
   const currentEnd = addDays(currentCycle.end, -1);
   const [start, setStart] = useState(currentCycle.start);
   const [end, setEnd] = useState(currentEnd);
+  const [showCustomRange, setShowCustomRange] = useState(false);
   const [kind, setKind] = useState<"支出" | "收入">("支出");
   const [dimension, setDimension] = useState<"category" | "tag">("category");
   const records = useMemo(
@@ -114,25 +115,35 @@ export function ReportsPage({
           }
           onClick={selectYear}
         >
-          查看全年
+          全年
         </button>
       </div>
-      <div className="report-controls">
-        <DateField
-          label={<>开始日期</>}
-          type="date"
-          required
-          value={start}
-          onChange={(value) => value && setStart(value)}
-        />
-        <DateField
-          label={<>结束日期</>}
-          type="date"
-          required
-          value={end}
-          onChange={(value) => value && setEnd(value)}
-        />
-      </div>
+      <button
+        type="button"
+        className="report-range-toggle"
+        aria-expanded={showCustomRange}
+        onClick={() => setShowCustomRange(!showCustomRange)}
+      >
+        {start} 至 {end} · 自定义日期
+      </button>
+      {showCustomRange ? (
+        <div className="report-controls">
+          <DateField
+            label={<>开始日期</>}
+            type="date"
+            required
+            value={start}
+            onChange={(value) => value && setStart(value)}
+          />
+          <DateField
+            label={<>结束日期</>}
+            type="date"
+            required
+            value={end}
+            onChange={(value) => value && setEnd(value)}
+          />
+        </div>
+      ) : null}
       {start > end ? (
         <p role="alert" className="error-message">
           结束日期应晚于开始日期。

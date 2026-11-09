@@ -25,6 +25,7 @@ interface SidebarProps {
   onNavigate: (page: PageId) => void;
   onSource: (source: Source) => void;
   onSettings: () => void;
+  onBooks: () => void;
 }
 export function Sidebar({
   bookName,
@@ -35,6 +36,7 @@ export function Sidebar({
   onNavigate,
   onSource,
   onSettings,
+  onBooks,
 }: SidebarProps): React.JSX.Element {
   return (
     <aside className="sidebar">
@@ -49,7 +51,7 @@ export function Sidebar({
         type="button"
         className="sidebar-book"
         aria-label={`切换账本：${bookName}`}
-        onClick={onSettings}
+        onClick={onBooks}
       >
         <Icons.Book size={21} />
         <strong>{bookName}</strong>

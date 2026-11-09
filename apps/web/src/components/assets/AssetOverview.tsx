@@ -40,6 +40,7 @@ interface AssetOverviewProps {
   onShowArchived: (value: boolean) => void;
   onShowTrend: (value: boolean) => void;
   onDate: (value: string) => void;
+  onOpenDate: () => void;
 }
 
 export function AssetOverview({
@@ -66,6 +67,7 @@ export function AssetOverview({
   onShowArchived,
   onShowTrend,
   onDate,
+  onOpenDate,
 }: AssetOverviewProps): React.JSX.Element {
   const accountsRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDetailsElement>(null);
@@ -123,7 +125,14 @@ export function AssetOverview({
       <div className="page-heading heading-with-action asset-heading">
         <div>
           <h1>资产</h1>
-          <p>截至 {valuationDate}</p>
+          <UnstyledButton
+            type="button"
+            className="asset-date-button"
+            aria-label={`设置资产估值日期，截至 ${valuationDate}`}
+            onClick={onOpenDate}
+          >
+            <Icons.Calendar size={16} aria-hidden="true" /> 截至 {valuationDate}
+          </UnstyledButton>
         </div>
         <Button className="asset-add-button" variant="subtle" onClick={onAdd}>
           <Icons.Plus size={19} /> 添加账户
@@ -134,7 +143,6 @@ export function AssetOverview({
         comparison={comparison}
         isDemo={isDemo}
         isHidden={isHidden}
-        through={through}
         onToggleAmounts={onToggleAmounts}
       />
       <div ref={accountsRef} tabIndex={-1} className="asset-accounts-focus">

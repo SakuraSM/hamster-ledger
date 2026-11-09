@@ -73,13 +73,6 @@ export function AssetAccountDetail({
     : "尚无余额基准";
   return (
     <FormSheet title={accountLabel} onClose={onClose}>
-      <Text
-        variant="headlineLarge"
-        accessibilityRole="header"
-        style={styles.strong}
-      >
-        {accountLabel}
-      </Text>
       <Text style={{ color: theme.colors.onSurfaceVariant }}>
         {account.kind === "asset" ? "资产" : "负债"} · {account.type} ·{" "}
         {currency} / 截至 {through.slice(0, DATE_KEY_LENGTH)}
@@ -132,29 +125,8 @@ export function AssetAccountDetail({
         variant="bodySmall"
         style={{ color: theme.colors.onSurfaceVariant }}
       >
-        余额来自基准之后的已确认流水。待确认、重复及基准以前的账单不会重复累计。
+        仅计入基准之后的已确认流水，不重复累计。
       </Text>
-      {isAmountHidden ? (
-        <Button contentStyle={styles.touch} onPress={onReveal}>
-          显示资产金额后查看明细
-        </Button>
-      ) : null}
-      <AccountRecordList
-        ledger={ledger}
-        account={account}
-        through={through}
-        initialMode={initialHistoryMode}
-        isAmountHidden={isAmountHidden}
-        onRecord={onRecord}
-      />
-      <Button
-        icon="history"
-        mode="outlined"
-        contentStyle={styles.touch}
-        onPress={() => setHistoryOpen(true)}
-      >
-        余额基准与历史
-      </Button>
       {!account.isArchived && account.kind === "liability" ? (
         <Button
           mode="contained"
@@ -182,6 +154,27 @@ export function AssetAccountDetail({
       ) : null}
       <Button contentStyle={styles.touch} onPress={onEdit}>
         编辑账户
+      </Button>
+      {isAmountHidden ? (
+        <Button contentStyle={styles.touch} onPress={onReveal}>
+          显示资产金额后查看明细
+        </Button>
+      ) : null}
+      <AccountRecordList
+        ledger={ledger}
+        account={account}
+        through={through}
+        initialMode={initialHistoryMode}
+        isAmountHidden={isAmountHidden}
+        onRecord={onRecord}
+      />
+      <Button
+        icon="history"
+        mode="outlined"
+        contentStyle={styles.touch}
+        onPress={() => setHistoryOpen(true)}
+      >
+        余额基准与历史
       </Button>
       <Text variant="bodySmall">
         匹配别名：

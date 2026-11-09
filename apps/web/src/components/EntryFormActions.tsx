@@ -13,7 +13,7 @@ export function EntryFormActions({
   busy: boolean;
 }): React.JSX.Element {
   return (
-    <>
+    <div className="entry-form-footer">
       {error ? (
         <p role="alert" className="error-message">
           {error}
@@ -50,6 +50,6 @@ export function EntryFormActions({
           {busy ? "保存中…" : "保存账单"}
         </Button>
       </div>
-    </>
+    </div>
   );
 }

@@ -156,18 +156,20 @@ export function AdvancedEntryEditor({
           members={members}
           hideAmounts={Boolean(ledger.preferences?.hideAmounts)}
         />
-        {form.error ? (
-          <Alert color="red" role="alert">
-            {form.error}
-          </Alert>
-        ) : null}
-        <div className="dialog-actions">
-          <Button variant="outline" onClick={onClose}>
-            取消
-          </Button>
-          <Button type="submit" loading={form.isBusy}>
-            保存完整交易
-          </Button>
+        <div className="entry-form-footer">
+          {form.error ? (
+            <Alert color="red" role="alert">
+              {form.error}
+            </Alert>
+          ) : null}
+          <div className="dialog-actions">
+            <Button variant="outline" type="button" onClick={onClose}>
+              取消
+            </Button>
+            <Button type="submit" loading={form.isBusy}>
+              保存完整交易
+            </Button>
+          </div>
         </div>
       </form>
     </Dialog>

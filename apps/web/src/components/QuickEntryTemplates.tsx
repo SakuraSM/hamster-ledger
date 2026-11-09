@@ -15,9 +15,18 @@ export function QuickEntryTemplates({
   const templates = useMemo(() => quickEntryTemplates(ledger), [ledger]);
   if (!templates.length) return null;
   return (
-    <div className="button-row" aria-label="常用交易快捷填入">
+    <div
+      className="quick-entry-templates"
+      role="group"
+      aria-label="常用交易快捷填入"
+    >
       {templates.map((item) => (
-        <Button key={item.id} variant="subtle" onClick={() => onSelect(item)}>
+        <Button
+          key={item.id}
+          variant="subtle"
+          type="button"
+          onClick={() => onSelect(item)}
+        >
           {item.merchant}
         </Button>
       ))}
