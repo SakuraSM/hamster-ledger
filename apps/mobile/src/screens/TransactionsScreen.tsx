@@ -22,7 +22,12 @@ import {
   Checkbox,
   Button,
 } from "react-native-paper";
-import { money, type Source, type BillRecord } from "@hamster-ledger/core";
+import {
+  dailyTotals,
+  money,
+  type Source,
+  type BillRecord,
+} from "@hamster-ledger/core";
 import { RecordRow } from "./RecordRow";
 import { ChoiceField } from "../ui/ChoiceField";
 interface TransactionsScreenProps {
@@ -81,6 +86,7 @@ export function TransactionsScreen({
   );
   const result = useTransactionQuery(ledger, queryFilter);
   const records = result.records;
+  const byDay = useMemo(() => dailyTotals(records), [records]);
   const batch = useBatchRecords(controller, records);
   const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const amount = (value: number): string =>
@@ -106,8 +112,20 @@ export function TransactionsScreen({
   const selectedIds = useMemo(() => new Set(batch.selected), [batch.selected]);
   const toggleRecord = batch.toggle;
   const renderRecord = useCallback(
-    ({ item }: ListRenderItemInfo<BillRecord>) => (
+    ({ item, index }: ListRenderItemInfo<BillRecord>) => (
       <View>
+        {item.date.slice(0, 10) !== records[index - 1]?.date.slice(0, 10) && (
+          <Text variant="labelMedium" accessibilityRole="header">
+            {item.date.slice(0, 10)}　收入{" "}
+            {isAmountHidden
+              ? "••••"
+              : money(byDay.get(item.date.slice(0, 10))!.income)}
+            　支出{" "}
+            {isAmountHidden
+              ? "••••"
+              : money(byDay.get(item.date.slice(0, 10))!.expense)}
+          </Text>
+        )}
         {batchOpen && !item.isDeleted ? (
           <Checkbox.Item
             label={
@@ -126,7 +144,15 @@ export function TransactionsScreen({
         />
       </View>
     ),
-    [batchOpen, selectedIds, toggleRecord, onRecord, isAmountHidden],
+    [
+      batchOpen,
+      selectedIds,
+      toggleRecord,
+      onRecord,
+      isAmountHidden,
+      records,
+      byDay,
+    ],
   );
   return (
     <View style={{ flex: 1, paddingHorizontal: 16 }}>

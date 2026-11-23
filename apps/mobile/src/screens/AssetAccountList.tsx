@@ -1,3 +1,5 @@
+import { accountIcon } from "@hamster-ledger/core";
+import { accountGlyphs } from "./account-glyphs";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Checkbox, List, Text, TextInput, useTheme } from "react-native-paper";
@@ -35,6 +37,7 @@ export function AssetAccountList({
   return (
     <View style={styles.groups}>
       <TextInput
+        dense
         mode="outlined"
         label="查找账户"
         accessibilityLabel="查找账户"
@@ -81,7 +84,7 @@ export function AssetAccountList({
                     ? `预存 ${amount(Math.abs(projection.balance))}`
                     : amount(projection.balance)
                 : "尚无余额基准";
-              const description = `${account.type} · ${account.currency ?? "CNY"}${account.isArchived ? " · 已归档" : ""}\n${change == null ? "暂无月初基准" : `本月 ${!isAmountHidden && change >= 0 ? "+" : ""}${amount(change)}`}`;
+              const description = `${account.type} · ${account.currency ?? "CNY"}${account.isArchived ? " · 已归档" : ""} · ${change == null ? "暂无月初基准" : `本月 ${!isAmountHidden && change >= 0 ? "+" : ""}${amount(change)}`}`;
               return (
                 <List.Item
                   key={account.id}
@@ -89,7 +92,8 @@ export function AssetAccountList({
                   titleStyle={styles.strong}
                   titleNumberOfLines={2}
                   description={description}
-                  descriptionNumberOfLines={3}
+                  descriptionNumberOfLines={2}
+                  descriptionStyle={{ fontSize: 12 }}
                   onPress={() => onSelect(account.id)}
                   accessibilityLabel={`${accountLabel}，${description.replace("\n", "，")}，${value}`}
                   style={[
@@ -99,11 +103,12 @@ export function AssetAccountList({
                   left={(props) => (
                     <List.Icon
                       {...props}
-                      icon={
-                        kind === "asset"
-                          ? "wallet-outline"
-                          : "credit-card-outline"
-                      }
+                      icon={({ size, color }) => {
+                        const Glyph = accountGlyphs[accountIcon(account)];
+                        return (
+                          <Glyph size={size} color={color} weight="duotone" />
+                        );
+                      }}
                     />
                   )}
                   right={() => (
@@ -132,7 +137,7 @@ export function AssetAccountList({
   );
 }
 const styles = StyleSheet.create({
-  groups: { gap: 20 },
+  groups: { gap: 6 },
   group: { gap: 4 },
   groupHeader: {
     flexDirection: "row",
@@ -143,7 +148,8 @@ const styles = StyleSheet.create({
   item: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 0,
-    minHeight: 72,
+    paddingVertical: 0,
+    minHeight: 52,
   },
   value: { flexDirection: "row", alignItems: "center", flexShrink: 1 },
   strong: { fontWeight: "700" },

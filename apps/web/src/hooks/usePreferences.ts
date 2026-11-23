@@ -14,9 +14,11 @@ export function usePreferences(input: {
   const { setColorScheme } = useMantineColorScheme();
   const preferences = input.ledger.preferences ?? DEFAULT_PREFERENCES;
   useEffect(() => {
+    document.documentElement.dataset.atlasMotion =
+      preferences.atlasMotion === false ? "off" : "on";
     document.documentElement.dataset.theme = preferences.theme;
     setColorScheme(preferences.theme === "night" ? "dark" : "light");
-  }, [preferences.theme, setColorScheme]);
+  }, [preferences.theme, preferences.atlasMotion, setColorScheme]);
   useEffect(() => {
     if (!preferences.reminderEnabled) return;
     let reminded = "";

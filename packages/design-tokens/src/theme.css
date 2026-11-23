@@ -1,26 +1,26 @@
 /* Generated from tokens.json. Run npm run tokens:generate. */
 :root {
-  --bg: #f5f3ed;
-  --sidebar: #eeede4;
-  --ink: #24251f;
-  --muted: #666b5d;
-  --primary: #a94c2c;
-  --primary-hover: #863c24;
-  --action: #ec8051;
-  --action-ink: #38291e;
-  --line: #dedfd5;
-  --apricot: #e4e8c8;
+  --bg: #f7f6f3;
+  --sidebar: #eeebed;
+  --ink: #282336;
+  --muted: #645f6d;
+  --primary: #65476c;
+  --primary-hover: #503453;
+  --action: #44334e;
+  --action-ink: #ffffff;
+  --line: #e0dce1;
+  --apricot: #ebe3ef;
   --positive: #57642e;
   --chart-income: #566c3a;
   --chart-income-muted: #a0ad88;
   --chart-expense: #a94c2c;
   --chart-expense-muted: #dfaa91;
-  --chart-category-1: #a85032;
-  --chart-category-2: #d9875f;
-  --chart-category-3: #b3a15f;
-  --chart-category-4: #718163;
-  --chart-category-5: #9a7990;
-  --chart-category-6: #738f9b;
+  --chart-category-1: #8976cf;
+  --chart-category-2: #669575;
+  --chart-category-3: #e09363;
+  --chart-category-4: #509899;
+  --chart-category-5: #b89c62;
+  --chart-category-6: #b2667e;
 }
 :root[data-theme="night"] {
   --chart-income: #94d1ad;

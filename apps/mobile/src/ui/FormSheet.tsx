@@ -1,3 +1,4 @@
+import { AtlasGlass } from "./AtlasGlass";
 import { MIN_TOUCH_TARGET } from "../constants";
 import type { ReactNode } from "react";
 import { Modal, View, Keyboard, Alert } from "react-native";
@@ -46,20 +47,22 @@ export function FormSheet({
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
-        <Appbar.Header
-          key={fontScale}
-          mode="small"
-          statusBarHeight={0}
-          style={{ backgroundColor: theme.colors.background }}
-        >
-          <Appbar.Action
-            style={{ width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET }}
-            icon="arrow-left"
-            onPress={requestClose}
-            accessibilityLabel="返回"
-          />
-          <Appbar.Content title={title} />
-        </Appbar.Header>
+        <AtlasGlass>
+          <Appbar.Header
+            key={fontScale}
+            mode="small"
+            statusBarHeight={0}
+            style={{ backgroundColor: "transparent" }}
+          >
+            <Appbar.Action
+              style={{ width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET }}
+              icon="arrow-left"
+              onPress={requestClose}
+              accessibilityLabel="返回"
+            />
+            <Appbar.Content title={title} />
+          </Appbar.Header>
+        </AtlasGlass>
         <View style={{ flex: 1 }}>
           <Screen>{children}</Screen>
         </View>

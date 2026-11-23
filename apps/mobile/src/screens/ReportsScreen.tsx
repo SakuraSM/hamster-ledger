@@ -1,3 +1,5 @@
+import { cycleMonthForDate } from "@hamster-ledger/core";
+import { StatementPanel } from "./StatementPanel";
 import { memo } from "react";
 import { AmountText } from "../ui/AmountText";
 import { ExtendedReports } from "./ExtendedReports";
@@ -22,6 +24,7 @@ import {
 import { Screen, Section } from "../ui/Screen";
 import { localNow } from "../platform/runtime";
 interface ReportsScreenProps {
+  onBudget?: () => void;
   ledger: Ledger;
   month?: string;
   bookId?: string;
@@ -34,7 +37,9 @@ export const ReportsScreen = memo(function ReportsScreen({
   bookId,
   onRecord,
   onReimburse,
+  onBudget,
 }: ReportsScreenProps): React.JSX.Element {
+  const [billView, setBillView] = useState(false);
   const isAmountHidden = Boolean(ledger.preferences?.hideAmounts);
   const amount = (value: number): string =>
     isAmountHidden ? "••••" : `¥${money(value)}`;
@@ -85,6 +90,21 @@ export const ReportsScreen = memo(function ReportsScreen({
         花在了哪里
       </Text>
       <Text>仅统计已确认收支，转账不计入。</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+        <Button
+          mode={billView ? "text" : "contained-tonal"}
+          onPress={() => setBillView(false)}
+        >
+          收支分析
+        </Button>
+        <Button
+          mode={billView ? "contained-tonal" : "text"}
+          onPress={() => setBillView(true)}
+        >
+          收支账单
+        </Button>
+        {onBudget && <Button onPress={onBudget}>预算管理</Button>}
+      </View>
       <ReportDateControls
         today={localNow().slice(0, DATE_KEY_LENGTH)}
         start={start}
@@ -93,6 +113,18 @@ export const ReportsScreen = memo(function ReportsScreen({
       />
       {start > end ? (
         <Text accessibilityLiveRegion="polite">结束日期不能早于开始日期。</Text>
+      ) : billView ? (
+        <StatementPanel
+          ledger={ledger}
+          month={cycleMonthForDate(
+            start,
+            ledger.preferences?.cycleStartDay ?? 1,
+          )}
+          onMonth={(m) => {
+            const range = cycleRange(m, ledger.preferences?.cycleStartDay ?? 1);
+            changeRange(range.start, addDays(range.end, -1));
+          }}
+        />
       ) : (
         <>
           <Text>本期净支出</Text>

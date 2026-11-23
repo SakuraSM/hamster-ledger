@@ -83,6 +83,16 @@ export function PreferencesScreen({
         ]}
       />
       <List.Item
+        title="流光与透明效果"
+        right={() => (
+          <Switch
+            accessibilityLabel="流光与透明效果"
+            value={draft.atlasMotion !== false}
+            onValueChange={(v) => update({ atlasMotion: v })}
+          />
+        )}
+      />
+      <List.Item
         title="隐藏金额"
         description="隐藏首页、报表与列表中的金额"
         right={() => (

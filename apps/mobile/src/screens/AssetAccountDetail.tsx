@@ -61,9 +61,11 @@ export function AssetAccountDetail({
   const label =
     account.kind === "asset"
       ? "当前账户余额"
-      : balance.balance < 0
-        ? "预存余额"
-        : "剩余负债";
+      : isAmountHidden
+        ? "负债账户余额"
+        : balance.balance < 0
+          ? "预存余额"
+          : "剩余负债";
   const formattedBalance = balance.baseline
     ? amount(
         account.kind === "liability"

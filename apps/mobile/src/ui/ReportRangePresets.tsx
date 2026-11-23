@@ -1,3 +1,4 @@
+import { reportWeekStart } from "@hamster-ledger/core";
 import { DATE_KEY_LENGTH, MONTH_KEY_LENGTH } from "../constants";
 import { Button } from "react-native-paper";
 import { StyleSheet, View } from "react-native";
@@ -20,6 +21,7 @@ export function ReportRangePresets({
   quarter.setUTCDate(1);
   quarter.setUTCMonth(quarter.getUTCMonth() - QUARTER_MONTH_OFFSET);
   const presets = [
+    { label: "本周", start: reportWeekStart(today) },
     { label: "本月", start: today.slice(0, MONTH_KEY_LENGTH) + "-01" },
     { label: "近3月", start: quarter.toISOString().slice(0, DATE_KEY_LENGTH) },
     { label: "今年", start: today.slice(0, YEAR_KEY_LENGTH) + "-01-01" },

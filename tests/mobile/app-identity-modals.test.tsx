@@ -17,6 +17,10 @@ let activeAccount: {
 let confirmed: BillRecord;
 let pending: BillRecord;
 const observations = vi.fn();
+vi.mock("expo-blur", () => ({
+  BlurTargetView: () => null,
+  BlurView: () => null,
+}));
 vi.mock("../../apps/mobile/src/hooks/useLedger", () => ({
   useLedger: () => activeController,
 }));

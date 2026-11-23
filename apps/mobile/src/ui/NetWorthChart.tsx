@@ -26,6 +26,7 @@ import {
 } from "./net-worth-chart";
 
 interface NetWorthChartProps {
+  label?: string;
   rows: NetWorthRow[];
   selectedDate: string;
   onSelect: (date: string) => void;
@@ -41,6 +42,7 @@ const MONTH_DATE_OFFSET = 5;
 export function NetWorthChart({
   rows,
   selectedDate,
+  label = "净资产",
   onSelect,
 }: NetWorthChartProps): React.JSX.Element {
   const theme = useTheme(),
@@ -65,7 +67,9 @@ export function NetWorthChart({
       onPress={selectPoint}
       accessibilityRole="button"
       accessibilityLabel={
-        selected ? `资产趋势图，${netWorthLabel(selected)}` : "资产趋势图"
+        selected
+          ? `资产趋势图，${netWorthLabel(selected).replace("净资产", label)}`
+          : "资产趋势图"
       }
       accessibilityHint="点选曲线查看金额，也可使用下方的上一期、下一期按钮。"
     >

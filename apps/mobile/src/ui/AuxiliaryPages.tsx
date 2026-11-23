@@ -76,6 +76,7 @@ export function AuxiliaryPages({
   if (tool === "reports-home")
     return (
       <ReportsScreen
+        onBudget={() => onOpen("budgets")}
         key={controller.mode}
         ledger={controller.ledger}
         month={month}
@@ -89,6 +90,7 @@ export function AuxiliaryPages({
     );
   return (
     <ToolPage
+      month={month}
       key={`${controller.mode}:${tool}`}
       page={tool}
       sync={sync}

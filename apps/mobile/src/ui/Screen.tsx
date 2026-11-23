@@ -11,9 +11,11 @@ import { useSystemFontScale } from "../hooks/useSystemFontScale";
 export function Screen({
   children,
   bottomPadding,
+  compact = false,
 }: {
   children: ReactNode;
   bottomPadding?: number;
+  compact?: boolean;
 }): React.JSX.Element {
   const fontScale = useSystemFontScale();
   return (
@@ -25,6 +27,7 @@ export function Screen({
         key={fontScale}
         contentContainerStyle={[
           styles.content,
+          compact ? { padding: 12, gap: 6 } : undefined,
           bottomPadding === undefined
             ? undefined
             : { paddingBottom: bottomPadding },
@@ -65,7 +68,7 @@ export function ErrorMessage({
 }
 export const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { padding: 20, paddingBottom: 100, gap: 16 },
+  content: { padding: 16, paddingBottom: 40, gap: 12 },
   section: { gap: 12, marginBottom: 12 },
   row: {
     flexDirection: "row",

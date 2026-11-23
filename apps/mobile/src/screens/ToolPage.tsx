@@ -18,6 +18,7 @@ import { AccountScreen } from "./AccountScreen";
 import { SyncScreen } from "./SyncScreen";
 import { NetworkScreen } from "./NetworkScreen";
 interface ToolPageProps {
+  month?: string;
   page: ToolPageName;
   sync: NativeSyncController;
   controller: LedgerController;
@@ -27,6 +28,7 @@ interface ToolPageProps {
 }
 export function ToolPage({
   page,
+  month,
   sync,
   controller,
   onRecord,
@@ -59,7 +61,7 @@ export function ToolPage({
         onAdd={onAdd}
       />
     ),
-    budgets: <BudgetScreen controller={controller} />,
+    budgets: <BudgetScreen initialMonth={month} controller={controller} />,
     recurring: <RecurringScreen controller={controller} />,
     categories: <CategoriesScreen controller={controller} />,
     backup: <BackupScreen controller={controller} />,
