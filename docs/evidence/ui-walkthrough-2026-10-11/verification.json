@@ -30,31 +30,15 @@
       "priority": "P2",
       "expectedLinkedRows": 123,
       "strictIdRows": 0,
-      "screenshots": [
-        "03-record-detail.png",
-        "04-asset-detail.png"
-      ]
+      "screenshots": ["03-record-detail.png", "04-asset-detail.png"]
     },
     {
       "id": "B",
       "priority": "P2",
-      "nextBounds": [
-        712,
-        1836,
-        959,
-        1998
-      ],
-      "fabBounds": [
-        590,
-        1806,
-        1026,
-        1995
-      ],
+      "nextBounds": [712, 1836, 959, 1998],
+      "fabBounds": [590, 1806, 1026, 1995],
       "nextEnabled": "true",
-      "nextCenter": [
-        835,
-        1917
-      ],
+      "nextCenter": [835, 1917],
       "centerCovered": true,
       "screenshots": [
         "10-narrow-overlap.png",
@@ -68,10 +52,7 @@
       "beforeStart": "2026-09-01",
       "afterStart": "2026-10-01",
       "end": "2026-10-11",
-      "screenshots": [
-        "06-chart.png",
-        "09-range-reset.png"
-      ]
+      "screenshots": ["06-chart.png", "09-range-reset.png"]
     }
   ],
   "restored": true,

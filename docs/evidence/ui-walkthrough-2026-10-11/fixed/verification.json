@@ -33,22 +33,9 @@
     },
     "narrowReportActions": {
       "passed": true,
-      "nextBounds": [
-        712,
-        1847,
-        959,
-        2009
-      ],
-      "addBounds": [
-        682,
-        163,
-        844,
-        325
-      ],
-      "oldReproductionTap": [
-        835,
-        1917
-      ],
+      "nextBounds": [712, 1847, 959, 2009],
+      "addBounds": [682, 163, 844, 325],
+      "oldReproductionTap": [835, 1917],
       "floatingAddAbsent": true,
       "selectedDateAfterTap": "2026-10-11",
       "headerEntryOpensForm": true

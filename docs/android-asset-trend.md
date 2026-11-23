@@ -25,7 +25,7 @@
 
 | 状态                | 截图                                                                          |
 | ------------------- | ----------------------------------------------------------------------------- |
-| 原暖棕图表          | warm.png                             |
+| 原暖棕图表          | warm.png                                                                      |
 | 新暖棕图表          | [warm.png](evidence/android-asset-trend/after/warm.png)                       |
 | 选中起点            | [selected-start.png](evidence/android-asset-trend/after/selected-start.png)   |
 | 展开估值明细        | [details.png](evidence/android-asset-trend/after/details.png)                 |

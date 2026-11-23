@@ -29,11 +29,7 @@
     "syntheticOnly": true,
     "lightAndDark": "verified",
     "positiveAndNegativeChanges": "verified",
-    "incomeExpenseAndNetMinor": [
-      null,
-      null,
-      null
-    ]
+    "incomeExpenseAndNetMinor": [null, null, null]
   },
   "pixelVerification": {
     "overview_before_green_balance": 2402,
