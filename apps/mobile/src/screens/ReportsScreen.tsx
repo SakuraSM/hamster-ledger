@@ -87,7 +87,7 @@ export const ReportsScreen = memo(function ReportsScreen({
         accessibilityRole="header"
         style={{ fontWeight: "700" }}
       >
-        花在了哪里
+        {billView ? "收支账单" : "花在了哪里"}
       </Text>
       <Text>仅统计已确认收支，转账不计入。</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
