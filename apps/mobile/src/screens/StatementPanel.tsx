@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { View } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Button, Text, useTheme } from "react-native-paper";
 import {
   statementMonths,
   addMinor,
@@ -16,6 +16,9 @@ export function StatementPanel({
   month: string;
   onMonth: (m: string) => void;
 }) {
+  const { width, fontScale } = useWindowDimensions(),
+    theme = useTheme(),
+    stacked = width / fontScale < 330;
   const [annual, setAnnual] = useState(false),
     fmt = (v: number) =>
       ledger.preferences?.hideAmounts ? "••••" : "¥" + money(v);
@@ -53,21 +56,64 @@ export function StatementPanel({
           {fmt(summary.expense)}　结余 {fmt(summary.net)}
         </Text>
       )}
-      {rows.map((r) => (
-        <View key={r.month}>
-          <Button
-            onPress={() => {
-              onMonth(r.month);
-              setAnnual(false);
-            }}
-          >
-            {r.month}
-          </Button>
-          <Text>
-            收入 {fmt(r.income)}　支出 {fmt(r.expense)}　结余 {fmt(r.net)}
-          </Text>
+
+      {!stacked && (
+        <View style={styles.row}>
+          <Text style={styles.month}>月份</Text>
+          {["收入", "支出", "结余"].map((t) => (
+            <Text key={t} style={styles.cell}>
+              {t}
+            </Text>
+          ))}
         </View>
+      )}
+      {[...rows].reverse().map((r) => (
+        <Pressable
+          key={r.month}
+          accessibilityRole="button"
+          accessibilityLabel={
+            r.month +
+            " 收入 " +
+            fmt(r.income) +
+            " 支出 " +
+            fmt(r.expense) +
+            " 结余 " +
+            fmt(r.net)
+          }
+          onPress={() => {
+            onMonth(r.month);
+            setAnnual(false);
+          }}
+          style={[
+            styles.row,
+            {
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderColor: theme.colors.outlineVariant,
+            },
+            stacked && styles.stack,
+          ]}
+        >
+          <Text style={[styles.month, { color: theme.colors.primary }]}>
+            {Number(r.month.slice(5))}月
+          </Text>
+          {(["income", "expense", "net"] as const).map((key, i) => (
+            <Text key={key} style={stacked ? undefined : styles.cell}>
+              {stacked ? ["收入 ", "支出 ", "结余 "][i] : ""}
+              {fmt(r[key])}
+            </Text>
+          ))}
+        </Pressable>
       ))}
     </View>
   );
 }
+const styles = StyleSheet.create({
+  row: { minHeight: 44, alignItems: "center", flexDirection: "row", gap: 4 },
+  month: { minWidth: 40 },
+  cell: { flex: 1, textAlign: "right", fontVariant: ["tabular-nums"] },
+  stack: {
+    alignItems: "flex-start",
+    flexDirection: "column",
+    paddingVertical: 6,
+  },
+});

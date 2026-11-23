@@ -60,7 +60,7 @@ export function StatementPanel({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {[...rows].reverse().map((row) => (
             <tr key={row.month}>
               <th>
                 <button
