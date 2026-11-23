@@ -4,6 +4,9 @@ import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createDemoLedger } from "@hamster-ledger/fixtures";
 import { AssetAccountList } from "../../apps/mobile/src/screens/AssetAccountList";
+vi.mock("../../apps/mobile/src/screens/account-glyphs", () => ({
+  accountGlyphs: {},
+}));
 vi.mock("react-native", () => ({
   View: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StyleSheet: {

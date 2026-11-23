@@ -1,8 +1,9 @@
+import { EntryKeypad } from "./EntryKeypad";
 import { ReceiptAction } from "./ReceiptAction";
 import type { EntryDraft } from "@hamster-ledger/ledger-react";
 import { CENTS_PER_YUAN } from "../constants";
 import { useMemo, useState } from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
 import {
   Button,
   SegmentedButtons,
@@ -26,6 +27,13 @@ import { FormSheet } from "../ui/FormSheet";
 import { ChoiceField } from "../ui/ChoiceField";
 import { DateField } from "../ui/DateField";
 import { ErrorMessage } from "../ui/Screen";
+const categoryGlyphs: Record<string, string> = {
+  餐饮: "atlas-food",
+  交通: "atlas-transit",
+  居住: "home-outline",
+  购物: "atlas-cart",
+  工资: "atlas-work",
+};
 export interface EntryEditorProps {
   onAdvanced?: (draft: Partial<EntryDraft>) => void;
   ledger: Ledger;
@@ -42,6 +50,7 @@ export function SimpleEntryEditor({
   onClose,
   onSave,
 }: EntryEditorProps): React.JSX.Element {
+  const [keypad, setKeypad] = useState(false);
   const [baseline] = useState(record);
   const [keepOpen, setKeepOpen] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
@@ -207,6 +216,27 @@ export function SimpleEntryEditor({
           label: value,
         }))}
       />
+      {!record && (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+          {categoryNames(ledger, kind)
+            .slice(0, 12)
+            .map((c) => (
+              <Button
+                key={c}
+                compact
+                icon={categoryGlyphs[c] ?? "atlas-tag"}
+                accessibilityState={{ selected: c === category }}
+                mode={c === category ? "contained-tonal" : "text"}
+                onPress={() => {
+                  setCategory(c);
+                  setKeypad(true);
+                }}
+              >
+                {c}
+              </Button>
+            ))}
+        </View>
+      )}
       <TextInput
         accessibilityLabel="金额（元）"
         mode="outlined"
@@ -214,7 +244,7 @@ export function SimpleEntryEditor({
         keyboardType="decimal-pad"
         value={amount}
         onChangeText={setAmount}
-        autoFocus
+        autoFocus={Boolean(record)}
         selectTextOnFocus
       />
       <TextInput
@@ -288,6 +318,17 @@ export function SimpleEntryEditor({
       {record?.status === "pending" ? (
         <Text>这笔账单仍需重复核对，保存不会自动计入收支。</Text>
       ) : null}
+      {keypad && (
+        <EntryKeypad
+          category={category}
+          initial={amount}
+          onClose={() => setKeypad(false)}
+          onApply={(v) => {
+            setAmount(v);
+            setKeypad(false);
+          }}
+        />
+      )}
       <ReceiptAction
         loading={isBusy}
         disabled={isBusy}

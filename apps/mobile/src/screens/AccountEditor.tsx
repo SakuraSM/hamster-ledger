@@ -1,3 +1,4 @@
+import { AccountIconPicker } from "./AccountIconPicker";
 import { useRef, useState } from "react";
 import { Button, TextInput, Text } from "react-native-paper";
 import {
@@ -45,6 +46,7 @@ export function AccountEditor({
   const [expectedAccount] = useState(() => snapshotAccount(account));
   const [accountId] = useState(() => account?.id ?? newEntityId());
   const [expectedBookKey] = useState(() => assetBookKey(controller));
+  const [icon, setIcon] = useState<AssetAccount["icon"]>(expectedAccount?.icon);
   const [name, setName] = useState(account?.name ?? "");
   const [kind, setKind] = useState<AssetAccount["kind"]>(
     account?.kind ?? "asset",
@@ -76,6 +78,7 @@ export function AccountEditor({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const initial = useRef({
+    icon,
     name,
     kind,
     type,
@@ -89,6 +92,7 @@ export function AccountEditor({
     note,
   });
   const hasUnsavedChanges = Object.entries({
+    icon,
     name,
     kind,
     type,
@@ -119,6 +123,7 @@ export function AccountEditor({
         account: {
           ...expectedAccount,
           id: accountId,
+          icon,
           name,
           kind,
           type,
@@ -159,6 +164,7 @@ export function AccountEditor({
       onClose={onClose}
       hasUnsavedChanges={hasUnsavedChanges}
     >
+      <AccountIconPicker value={icon} onChange={setIcon} />
       <TextInput
         accessibilityLabel="账户名称"
         mode="outlined"

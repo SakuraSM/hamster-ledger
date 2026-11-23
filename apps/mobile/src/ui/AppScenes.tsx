@@ -10,9 +10,11 @@ export function AppScenes({
   controller,
   onRecord,
   onReview,
+  onBudget,
   onOpen,
 }: {
   route: { key: string };
+  onBudget: (month: string) => void;
   controller: LedgerController;
   onRecord: (record: BillRecord) => void;
   onReview: () => void;
@@ -38,6 +40,7 @@ export function AppScenes({
     ),
     assets: (
       <AssetsScreen
+        onBudget={onBudget}
         key={controller.mode}
         controller={controller}
         onRecord={onRecord}

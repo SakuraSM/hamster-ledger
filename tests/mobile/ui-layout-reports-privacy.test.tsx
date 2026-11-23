@@ -6,6 +6,7 @@ import { createDemoLedger } from "@hamster-ledger/fixtures";
 import { DEFAULT_PREFERENCES, type Ledger } from "@hamster-ledger/core";
 import { ReportsScreen } from "../../apps/mobile/src/screens/ReportsScreen";
 vi.mock("react-native", () => ({
+  StyleSheet: { create: <T,>(styles: T) => styles, hairlineWidth: 1 },
   View: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 vi.mock("react-native-paper", () => ({

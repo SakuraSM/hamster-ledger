@@ -73,7 +73,13 @@ function trendSegments(points: TrendPoint[], baseline: number): TrendSegment[] {
   return groups.map((group) => {
     const first = group[0],
       last = group[group.length - 1];
-    const line = group.map((point) => `${point.x},${point.y}`).join(" ");
+    const line = group
+      .flatMap((point, i) =>
+        i
+          ? [`${point.x},${group[i - 1].y}`, `${point.x},${point.y}`]
+          : [`${point.x},${point.y}`],
+      )
+      .join(" ");
     return {
       id: first.date,
       line,

@@ -1,3 +1,6 @@
+import { localNow } from "../../platform/browser/runtime";
+import { StatementPanel } from "./StatementPanel";
+import { cycleMonthForDate, reportWeekStart } from "@hamster-ledger/core";
 import { useMemo, useState } from "react";
 import {
   addDays,
@@ -20,6 +23,7 @@ const DATE_KEY_LENGTH = 10;
 const THREE_CYCLES = 3;
 const SIX_CYCLES = 6;
 interface ReportsPageProps {
+  onBudget?: () => void;
   ledger: Ledger;
   month: string;
   bookId?: string;
@@ -30,16 +34,22 @@ export function ReportsPage({
   ledger,
   month,
   bookId,
+  onBudget,
   onRecord,
   onReimburse,
 }: ReportsPageProps): React.JSX.Element {
+  const [billView, setBillView] = useState(false);
   const isHidden = Boolean(ledger.preferences?.hideAmounts);
   const cycleStartDay = ledger.preferences?.cycleStartDay ?? 1;
   const currentCycle = cycleRange(month, cycleStartDay);
+  const today = localNow().slice(0, 10);
   const currentEnd = addDays(currentCycle.end, -1);
+  const weekEnd =
+    today >= currentCycle.start && today <= currentEnd ? today : currentEnd;
   const [start, setStart] = useState(currentCycle.start);
   const [end, setEnd] = useState(currentEnd);
   const [showCustomRange, setShowCustomRange] = useState(false);
+
   const [kind, setKind] = useState<"支出" | "收入">("支出");
   const [dimension, setDimension] = useState<"category" | "tag">("category");
   const records = useMemo(
@@ -81,7 +91,42 @@ export function ReportsPage({
         <h1>看清钱花在哪里</h1>
         <p>查看任意时间段的收支、分类与标签。</p>
       </div>
+      <div
+        className="report-range-shortcuts"
+        role="group"
+        aria-label="报表视图"
+      >
+        <button
+          type="button"
+          aria-pressed={!billView}
+          onClick={() => setBillView(false)}
+        >
+          收支分析
+        </button>
+        <button
+          type="button"
+          aria-pressed={billView}
+          onClick={() => setBillView(true)}
+        >
+          收支账单
+        </button>
+        {onBudget && (
+          <button type="button" onClick={onBudget}>
+            预算管理
+          </button>
+        )}
+      </div>
       <div className="report-range-shortcuts" aria-label="报表时间范围">
+        <button
+          type="button"
+          aria-pressed={start === reportWeekStart(weekEnd) && end === weekEnd}
+          onClick={() => {
+            setStart(reportWeekStart(weekEnd));
+            setEnd(weekEnd);
+          }}
+        >
+          {weekEnd === today ? "本周" : "账期末周"}
+        </button>
         <button
           type="button"
           aria-pressed={start === startOfCycles(1) && end === currentEnd}
@@ -149,81 +194,95 @@ export function ReportsPage({
           结束日期应晚于开始日期。
         </p>
       ) : null}
-      <div className="report-summary">
-        <div>
-          <span>净支出</span>
-          <strong>{amountLabel(totals.expense)}</strong>
-        </div>
-        <div>
-          <span>收入</span>
-          <strong>{amountLabel(totals.income)}</strong>
-        </div>
-        <div>
-          <span>结余</span>
-          <strong>{amountLabel(totals.net)}</strong>
-        </div>
-      </div>
-      <div className="report-grid">
-        <section className="panel">
-          <div className="section-heading report-distribution-heading">
+      {billView ? (
+        <StatementPanel
+          ledger={ledger}
+          month={cycleMonthForDate(start, cycleStartDay)}
+          onMonth={(m) => {
+            const range = cycleRange(m, cycleStartDay);
+            setStart(range.start);
+            setEnd(addDays(range.end, -1));
+          }}
+        />
+      ) : (
+        <>
+          <div className="report-summary">
             <div>
-              <h2>收支分布</h2>
-              <p className="muted small">选择分类，查看对应账单</p>
+              <span>净支出</span>
+              <strong>{amountLabel(totals.expense)}</strong>
             </div>
-            <div className="report-controls">
-              <Choice
-                aria-label="统计方向"
-                value={kind}
-                onChange={(value) =>
-                  setKind(value === "收入" ? "收入" : "支出")
-                }
-              >
-                <option>支出</option>
-                <option>收入</option>
-              </Choice>
-              <Choice
-                aria-label="统计维度"
-                value={dimension}
-                onChange={(value) =>
-                  setDimension(value === "tag" ? "tag" : "category")
-                }
-              >
-                <option value="category">分类</option>
-                <option value="tag">标签</option>
-              </Choice>
+            <div>
+              <span>收入</span>
+              <strong>{amountLabel(totals.income)}</strong>
+            </div>
+            <div>
+              <span>结余</span>
+              <strong>{amountLabel(totals.net)}</strong>
             </div>
           </div>
-          <ReportDistribution
-            key={`${kind}:${dimension}:${start}:${end}`}
-            groups={groups}
-            records={records}
-            dimension={dimension}
-            kind={kind}
-            isHidden={isHidden}
-            onRecord={onRecord}
-          />
-        </section>
-        <section className="panel">
-          <h2>收支趋势</h2>
-          <CashFlowChart
+          <div className="report-grid">
+            <section className="panel">
+              <div className="section-heading report-distribution-heading">
+                <div>
+                  <h2>收支分布</h2>
+                  <p className="muted small">选择分类，查看对应账单</p>
+                </div>
+                <div className="report-controls">
+                  <Choice
+                    aria-label="统计方向"
+                    value={kind}
+                    onChange={(value) =>
+                      setKind(value === "收入" ? "收入" : "支出")
+                    }
+                  >
+                    <option>支出</option>
+                    <option>收入</option>
+                  </Choice>
+                  <Choice
+                    aria-label="统计维度"
+                    value={dimension}
+                    onChange={(value) =>
+                      setDimension(value === "tag" ? "tag" : "category")
+                    }
+                  >
+                    <option value="category">分类</option>
+                    <option value="tag">标签</option>
+                  </Choice>
+                </div>
+              </div>
+              <ReportDistribution
+                key={`${kind}:${dimension}:${start}:${end}`}
+                groups={groups}
+                records={records}
+                dimension={dimension}
+                kind={kind}
+                isHidden={isHidden}
+                onRecord={onRecord}
+              />
+            </section>
+            <section className="panel">
+              <h2>收支趋势</h2>
+              <CashFlowChart
+                records={records}
+                start={start}
+                end={end}
+                isHidden={isHidden}
+                onRecord={onRecord}
+              />
+            </section>
+          </div>
+          <ExtendedReports
+            ledger={ledger}
             records={records}
             start={start}
             end={end}
-            isHidden={isHidden}
+            kind={kind}
+            bookId={bookId}
             onRecord={onRecord}
+            onReimburse={onReimburse}
           />
-        </section>
-      </div>
-      <ExtendedReports
-        ledger={ledger}
-        records={records}
-        start={start}
-        end={end}
-        kind={kind}
-        bookId={bookId}
-        onRecord={onRecord}
-        onReimburse={onReimburse}
-      />
+        </>
+      )}
     </section>
   );
 }

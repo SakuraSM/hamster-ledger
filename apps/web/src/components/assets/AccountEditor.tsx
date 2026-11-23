@@ -1,3 +1,4 @@
+import { AccountIconPicker } from "./AccountIconPicker";
 const DECIMAL_BASE = 10;
 import { TextInput, Textarea, Button } from "@mantine/core";
 import { Choice } from "../../ui/Choice";
@@ -90,6 +91,7 @@ export function AccountEditor({
   const isDifferentBook = hasBookChanged || isBookMismatch;
   const isDifferentAccount =
     (account?.id ?? null) !== (expectedAccount?.id ?? null);
+  const [icon, setIcon] = useState<AssetAccount["icon"]>(expectedAccount?.icon);
   const [name, setName] = useState(expectedAccount?.name ?? "");
   const [kind, setKind] = useState<AccountKind>(
     expectedAccount?.kind ?? "asset",
@@ -148,6 +150,7 @@ export function AccountEditor({
       await onSave({
         account: {
           id: expectedAccount?.id ?? newEntityId(),
+          icon,
           name,
           kind,
           type,
@@ -195,6 +198,7 @@ export function AccountEditor({
       onClose={onClose}
     >
       <form onSubmit={handleSubmit}>
+        <AccountIconPicker value={icon} onChange={setIcon} />
         <div className="form-grid">
           <TextInput
             label={<>账户名称</>}

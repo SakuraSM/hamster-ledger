@@ -1,4 +1,11 @@
 import {
+  ForkKnifeIcon,
+  TrainIcon,
+  ShoppingCartIcon,
+  BriefcaseIcon,
+  TagIcon,
+} from "phosphor-react-native";
+import {
   ImageIcon,
   CameraIcon,
   FileMagnifyingGlassIcon,
@@ -54,6 +61,11 @@ import { ShieldCheckIcon as ShieldCheck } from "phosphor-react-native";
 import { QuestionIcon as Question } from "phosphor-react-native";
 import type { Icon, IconWeight } from "phosphor-react-native";
 const ICONS: Record<string, Icon> = {
+  "atlas-food": ForkKnifeIcon,
+  "atlas-transit": TrainIcon,
+  "atlas-cart": ShoppingCartIcon,
+  "atlas-work": BriefcaseIcon,
+  "atlas-tag": TagIcon,
   "home-outline": House,
   home: House,
   "format-list-bulleted": ListBullets,

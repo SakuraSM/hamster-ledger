@@ -8,6 +8,7 @@ import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "./styles.css";
 import "./ui/controls.css";
+import "./atlas.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

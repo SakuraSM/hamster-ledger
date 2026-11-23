@@ -25,6 +25,7 @@ import { ReportsScreen } from "../../apps/mobile/src/screens/ReportsScreen";
 import { EntryEditor } from "../../apps/mobile/src/screens/EntryEditor";
 const { client } = vi.hoisted(() => ({ client: { request: vi.fn() } }));
 vi.mock("react-native", () => ({
+  StyleSheet: { create: <T,>(styles: T) => styles, hairlineWidth: 1 },
   View: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 vi.mock("react-native-paper", () => ({
