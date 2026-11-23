@@ -1,0 +1,73 @@
+import { useState } from "react";
+import { View } from "react-native";
+import { Button, Text } from "react-native-paper";
+import {
+  statementMonths,
+  addMinor,
+  money,
+  type Ledger,
+} from "@hamster-ledger/core";
+export function StatementPanel({
+  ledger,
+  month,
+  onMonth,
+}: {
+  ledger: Ledger;
+  month: string;
+  onMonth: (m: string) => void;
+}) {
+  const [annual, setAnnual] = useState(false),
+    fmt = (v: number) =>
+      ledger.preferences?.hideAmounts ? "••••" : "¥" + money(v);
+  const rows = statementMonths(ledger, month.slice(0, 4)).filter(
+    (r) => annual || r.month === month,
+  );
+  const summary = rows.reduce(
+    (tot, r) => ({
+      income: addMinor(tot.income, r.income),
+      expense: addMinor(tot.expense, r.expense),
+      net: addMinor(tot.net, r.net),
+    }),
+    { income: 0, expense: 0, net: 0 },
+  );
+  return (
+    <View style={{ gap: 8 }}>
+      <Text accessibilityRole="header" variant="titleLarge">
+        收支账单
+      </Text>
+      <View style={{ flexDirection: "row" }}>
+        {["月账单", "年账单"].map((t, i) => (
+          <Button
+            key={t}
+            accessibilityState={{ selected: annual === Boolean(i) }}
+            mode={annual === Boolean(i) ? "contained-tonal" : "text"}
+            onPress={() => setAnnual(Boolean(i))}
+          >
+            {t}
+          </Button>
+        ))}
+      </View>
+      {annual && (
+        <Text variant="titleMedium">
+          {month.slice(0, 4)} 年 · 收入 {fmt(summary.income)}　支出{" "}
+          {fmt(summary.expense)}　结余 {fmt(summary.net)}
+        </Text>
+      )}
+      {rows.map((r) => (
+        <View key={r.month}>
+          <Button
+            onPress={() => {
+              onMonth(r.month);
+              setAnnual(false);
+            }}
+          >
+            {r.month}
+          </Button>
+          <Text>
+            收入 {fmt(r.income)}　支出 {fmt(r.expense)}　结余 {fmt(r.net)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}

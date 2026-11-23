@@ -24,12 +24,16 @@ import { DateField } from "../ui/DateField";
 import { localNow, newEntityId } from "../platform/runtime";
 import { ReceiptAction } from "./ReceiptAction";
 interface BudgetScreenProps {
+  initialMonth?: string;
   controller: LedgerController;
 }
 export function BudgetScreen({
   controller,
+  initialMonth,
 }: BudgetScreenProps): React.JSX.Element {
-  const [month, setMonth] = useState(localNow().slice(0, MONTH_KEY_LENGTH));
+  const [month, setMonth] = useState(
+    initialMonth ?? localNow().slice(0, MONTH_KEY_LENGTH),
+  );
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [period, setPeriod] =

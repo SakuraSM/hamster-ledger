@@ -161,6 +161,10 @@ export function AppPages(props: Props): React.JSX.Element {
     ),
     assets: () => (
       <AssetsPage
+        onBudget={(m) => {
+          onMonth(m);
+          onNavigate("budgets");
+        }}
         key={mode}
         onCommit={commitAsset}
         bookContext={bookContext}
@@ -248,6 +252,7 @@ export function AppPages(props: Props): React.JSX.Element {
     ),
     reports: () => (
       <ReportsPage
+        onBudget={() => onNavigate("budgets")}
         key={mode}
         ledger={ledger}
         month={month}

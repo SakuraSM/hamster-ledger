@@ -1,3 +1,4 @@
+import { valuationLabels, type ValuationMetric } from "@hamster-ledger/core";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Card, Text, useTheme } from "react-native-paper";
@@ -19,6 +20,7 @@ import {
 } from "../ui/net-worth-chart";
 
 interface NetWorthReportProps {
+  metric?: ValuationMetric;
   ledger: Ledger;
   start: string;
   end: string;
@@ -27,10 +29,12 @@ export function NetWorthReport({
   ledger,
   start,
   end,
+  metric = "netAssets",
 }: NetWorthReportProps): React.JSX.Element {
   const { client } = useNativeAccount(),
     theme = useTheme();
-  const report = useReportData({ ledger, start, end, client });
+  const label = valuationLabels[metric];
+  const report = useReportData({ ledger, start, end, client, metric });
   const [selectedDate, setSelectedDate] = useState("");
   const [isDetailVisible, setDetailVisible] = useState(false);
   const selected =
@@ -66,7 +70,7 @@ export function NetWorthReport({
       <Card.Content style={styles.content}>
         <View style={styles.heading}>
           <Text variant="titleMedium" accessibilityRole="header">
-            净资产趋势
+            {label}趋势
           </Text>
           <Text
             variant="labelSmall"
@@ -95,8 +99,8 @@ export function NetWorthReport({
               <Text variant="bodySmall">
                 {selected?.date} ·{" "}
                 {selectedIndex === report.rows.length - 1
-                  ? "期末净资产"
-                  : "当日净资产"}
+                  ? "期末" + label
+                  : "当日" + label}
               </Text>
               <Text variant="headlineMedium" style={styles.amount}>
                 {selected?.amount == null
@@ -107,6 +111,7 @@ export function NetWorthReport({
             </View>
             {hasValues ? (
               <NetWorthChart
+                label={label}
                 rows={report.rows}
                 selectedDate={selected?.date ?? ""}
                 onSelect={setSelectedDate}
@@ -124,7 +129,7 @@ export function NetWorthReport({
                   contentStyle={styles.control}
                   onPress={selectPrevious}
                   disabled={selectedIndex <= 0}
-                  accessibilityLabel="查看上一期净资产"
+                  accessibilityLabel={"查看上一期" + label}
                 >
                   上一期
                 </Button>
@@ -136,7 +141,7 @@ export function NetWorthReport({
                   contentStyle={styles.control}
                   onPress={selectNext}
                   disabled={selectedIndex >= report.rows.length - 1}
-                  accessibilityLabel="查看下一期净资产"
+                  accessibilityLabel={"查看下一期" + label}
                 >
                   下一期
                 </Button>
@@ -203,7 +208,7 @@ function ValueDetails({ rows }: ValueDetailsProps): React.JSX.Element {
         <Text
           key={row.date}
           variant="bodySmall"
-          accessibilityLabel={netWorthLabel(row)}
+          accessibilityLabel={netWorthLabel(row).replace("净资产", "估值")}
         >
           {row.date} ·{" "}
           {row.amount === null

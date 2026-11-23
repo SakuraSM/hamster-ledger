@@ -69,6 +69,11 @@ export function PreferencesPanel({
             <option value="night">深夜账本</option>
           </Choice>
           <Checkbox
+            label="流光动效"
+            checked={draft.atlasMotion !== false}
+            onChange={(e) => update({ atlasMotion: e.currentTarget.checked })}
+          />
+          <Checkbox
             label={<>隐藏金额</>}
             className="checkbox-label"
 

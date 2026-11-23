@@ -6,7 +6,11 @@ import {
   useBookMembers,
   useTransactionQuery,
 } from "@hamster-ledger/ledger-react";
-import { money, type ReimbursementState } from "@hamster-ledger/core";
+import {
+  dailyTotals,
+  money,
+  type ReimbursementState,
+} from "@hamster-ledger/core";
 import { useNetworkClient } from "../hooks/useNetworkController";
 import { BatchActions } from "./finance/BatchActions";
 import { RecordFilters } from "./finance/RecordFilters";
@@ -72,6 +76,7 @@ export function Transactions({
   );
   const result = useTransactionQuery(controller.ledger, queryFilter, records);
   const filtered = result.records;
+  const byDay = useMemo(() => dailyTotals(filtered), [filtered]);
   const batch = useBatchRecords(controller, filtered);
   function clearFilters(): void {
     onFilter({ source: "", category: "" });
@@ -257,6 +262,7 @@ export function Transactions({
         <span>点击“详情”查看原始流水与账户关联</span>
       </p>
       <TransactionTable
+        byDay={byDay}
         accounts={accounts}
         hideAmounts={Boolean(controller.ledger.preferences?.hideAmounts)}
         records={filtered.slice(

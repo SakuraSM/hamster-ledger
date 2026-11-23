@@ -1,3 +1,5 @@
+import { AtlasSpark } from "./AtlasSpark";
+import { AssetAllocation } from "./AssetAllocation";
 import { Button, Checkbox, TextInput, UnstyledButton } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import {
@@ -138,13 +140,34 @@ export function AssetOverview({
           <Icons.Plus size={19} /> 添加账户
         </Button>
       </div>
-      <AssetTotals
-        totals={totals}
-        comparison={comparison}
-        isDemo={isDemo}
-        isHidden={isHidden}
-        onToggleAmounts={onToggleAmounts}
-      />
+      <div className="atlas-overview-top">
+        <div className="atlas-worth">
+          <AssetTotals
+            totals={totals}
+            comparison={comparison}
+            isDemo={isDemo}
+            isHidden={isHidden}
+            onToggleAmounts={onToggleAmounts}
+          />
+          {!isHidden && (
+            <AtlasSpark
+              ledger={ledger}
+              date={valuationDate}
+              onOpen={() => {
+                onShowTrend(true);
+                requestAnimationFrame(() =>
+                  document.querySelector<HTMLElement>(".asset-trend")?.focus(),
+                );
+              }}
+            />
+          )}
+        </div>
+        <AssetAllocation
+          totals={totals}
+          hidden={isHidden}
+          onAccount={onSelect}
+        />
+      </div>
       <div ref={accountsRef} tabIndex={-1} className="asset-accounts-focus">
         {!ledger.accounts.length ? (
           <div className="asset-onboarding">

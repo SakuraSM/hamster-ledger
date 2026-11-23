@@ -1,3 +1,5 @@
+import { accountIcon } from "@hamster-ledger/core";
+import { accountGlyphs } from "./account-glyphs";
 import { UnstyledButton } from "@mantine/core";
 import { type AccountBalance, type AssetAccount } from "@hamster-ledger/core";
 import { accountAmount, assetAccountLabel } from "./asset-format";
@@ -37,12 +39,7 @@ export function AccountGroup({
       <div className="asset-account-list">
         {accounts.map(({ account, balance, baseline }) => {
           const change = changes[account.id];
-          const Icon =
-            account.kind === "liability"
-              ? Icons.Credit
-              : account.type === "银行卡"
-                ? Icons.Bank
-                : Icons.Wallet;
+          const Icon = accountGlyphs[accountIcon(account)];
           return (
             <UnstyledButton
               type="button"
