@@ -1,3 +1,4 @@
+import { CategoryIcon } from "./Icons";
 import { useEntrySuggestions } from "../hooks/useEntrySuggestions";
 import { QuickEntryTemplates } from "./QuickEntryTemplates";
 import { EntryFormActions } from "./EntryFormActions";
@@ -178,6 +179,23 @@ export function SimpleEntryEditor({
               setCategory(defaultCategory(ledger, { kind: nextKind }));
           }}
         />
+        {!record && (
+          <div className="atlas-entry-cats" role="group" aria-label="快捷分类">
+            {categoryNames(ledger, kind)
+              .slice(0, 12)
+              .map((c) => (
+                <button
+                  type="button"
+                  key={c}
+                  aria-pressed={category === c}
+                  onClick={() => setCategory(c)}
+                >
+                  <CategoryIcon category={c} />
+                  {c}
+                </button>
+              ))}
+          </div>
+        )}
         <TextInput
           label={<>金额（元）</>}
           type={ledger.preferences?.hideAmounts ? "password" : "text"}

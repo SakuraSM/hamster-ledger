@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, IconButton, Text, useTheme } from "react-native-paper";
 import { money } from "@hamster-ledger/core";
 import type { AssetSummaryController } from "@hamster-ledger/ledger-react";
 
 interface AssetSummaryProps {
+  trend?: ReactNode;
   valuationDate: string;
   totals: AssetSummaryController["totals"];
   comparison: AssetSummaryController["comparison"];
@@ -14,6 +16,7 @@ interface AssetSummaryProps {
 }
 export function AssetSummary({
   valuationDate,
+  trend,
   totals,
   comparison,
   isAmountHidden,
@@ -58,7 +61,15 @@ export function AssetSummary({
           账户
         </Button>
       </View>
-      <View style={styles.summary}>
+      <View
+        style={[
+          styles.summary,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+      >
         <View style={styles.summaryHeading}>
           <Text style={{ color: theme.colors.onSurfaceVariant }}>
             {totals.missingCurrencies.length || totals.missingBaselines.length
@@ -74,21 +85,31 @@ export function AssetSummary({
             onPress={onToggleAmounts}
           />
         </View>
-        <Text variant="displaySmall" style={styles.mainAmount}>
-          {amount(totals.netAssets)}
-        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <Text variant="displaySmall" style={styles.mainAmount}>
+            {amount(totals.netAssets)}
+          </Text>
+          {trend}
+        </View>
         <View
           style={[styles.metrics, { borderColor: theme.colors.outlineVariant }]}
         >
           <View style={styles.metric}>
             <Text style={{ color: theme.colors.onSurfaceVariant }}>总资产</Text>
-            <Text variant="headlineSmall" style={styles.strong}>
+            <Text variant="titleMedium" style={styles.strong}>
               {amount(totals.assets)}
             </Text>
           </View>
           <View style={styles.metric}>
             <Text style={{ color: theme.colors.onSurfaceVariant }}>总负债</Text>
-            <Text variant="headlineSmall" style={styles.strong}>
+            <Text variant="titleMedium" style={styles.strong}>
               {amount(totals.liabilities)}
             </Text>
           </View>
@@ -103,7 +124,7 @@ export function AssetSummary({
           variant="bodySmall"
           style={{ color: theme.colors.onSurfaceVariant }}
         >
-          相比 {comparison.previousDate} · 含校准与汇率变化
+          对比 {comparison.previousDate} · 含余额校准与估值变化
         </Text>
       </View>
       {totals.missingCurrencies.length ? (
@@ -137,7 +158,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
-  summary: { gap: 4 },
+  summary: {
+    gap: 2,
+    padding: 9,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   summaryHeading: {
     flexDirection: "row",
     alignItems: "center",
@@ -148,7 +174,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 16,
-    paddingVertical: 8,
+    paddingVertical: 3,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   metric: { flexGrow: 1, gap: 2 },

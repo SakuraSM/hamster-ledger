@@ -30,12 +30,46 @@ export const balanceCheckpointSchema = z.object({
   note: z.string(),
   recordedAt: dateTimeSchema,
 });
+export const accountIconLabels = {
+  bank: "银行卡",
+  cash: "现金",
+  wallet: "钱包",
+  card: "信用卡",
+  invest: "投资",
+  currency: "外币",
+  salary: "工资",
+  savings: "储蓄",
+  home: "家庭",
+  travel: "旅行",
+  reserve: "备用金",
+  other: "其他",
+} as const;
+export type AccountIconKey = keyof typeof accountIconLabels;
+export function accountIcon(account: AssetAccount): AccountIconKey {
+  return (
+    account.icon ??
+    (account.type === "信用卡"
+      ? "card"
+      : account.type === "银行卡"
+        ? "bank"
+        : account.type === "现金"
+          ? "cash"
+          : account.type === "投资"
+            ? "invest"
+            : "wallet")
+  );
+}
 export const assetAccountSchema = z
   .object({
     id: z.string().min(1),
     name: z.string().trim().min(1).max(MAX_ACCOUNT_NAME_LENGTH),
     kind: z.enum(["asset", "liability"]),
     type: z.enum([...ASSET_TYPES, ...LIABILITY_TYPES]),
+    icon: z
+      .enum(
+        Object.keys(accountIconLabels) as [AccountIconKey, ...AccountIconKey[]],
+      )
+      .optional(),
     openingBalance: z.number().int().safe(),
     balanceAt: dateTimeSchema,
     aliases: z.array(z.string()).default([]),

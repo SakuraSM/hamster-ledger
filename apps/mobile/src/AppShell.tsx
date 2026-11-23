@@ -1,3 +1,4 @@
+import { AtlasEffects } from "./ui/AtlasGlass";
 import { useBookMonth } from "./hooks/useBookMonth";
 import { LedgerSnackbar } from "./ui/LedgerSnackbar";
 import { LedgerViewBoundary } from "./ui/LedgerViewBoundary";
@@ -126,125 +127,140 @@ export function AppShell(): React.JSX.Element {
     insets.bottom + (hasNavigation ? NAVIGATION_BAR_HEIGHT : 0);
   const pageTitle = tool ? auxiliaryPageTitle(tool) : APP_ROUTES[index].header;
   return (
-    <LedgerProvider theme={theme}>
-      <SystemBars isDark={isDark} />
-      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader
-          key={fontScale}
-          title={!canUseApp ? "仓鼠记账" : pageTitle}
-          bookName={
-            canUseApp
-              ? controller.books.find((book) => book.id === controller.mode)
-                  ?.name
-              : undefined
-          }
-          canUndo={hasNavigation && controller.canUndo}
-          onUndo={controller.undo}
-          onBooks={hasNavigation ? () => openTool("books") : undefined}
-          onTools={hasNavigation ? () => openTool("tools-home") : undefined}
-          onBack={tool && canUseApp ? closeTool : undefined}
-          onAdd={
-            canUseApp && (hasNavigation || isReportPage) ? openEntry : undefined
-          }
-        />
-        <SafeAreaView
-          edges={
-            hasNavigation ? ["left", "right"] : ["left", "right", "bottom"]
-          }
-          style={{ flex: 1 }}
-        >
-          <Banner
-            visible={Boolean(controller.error)}
-            actions={[]}
-            icon="shield-check-outline"
-          >
-            {controller.error}
-          </Banner>
-          {controller.network?.isIdentityBlocked && !account.isLoading ? (
-            <AccountScreen />
-          ) : currentEntryState === "loading" ? (
-            <LedgerLoading error={controller.error} />
-          ) : currentEntryState === "account" ? (
-            <AccountScreen
-              onLocal={mustChangePassword ? undefined : () => undefined}
-            />
-          ) : (
-            <LedgerViewBoundary
-              resetKey={`${controller.mode}:${tool ?? index}`}
-              onRecovery={() => openTool("backup")}
-            >
-              <NavigationLayer
-                hasReducedMotion={hasReducedMotion}
-                transitionKey={tool ? `${controller.mode}:${tool}` : undefined}
-                tool={
-                  tool ? (
-                    <RetainedToolPages
-                      entries={toolHistory.entries}
-                      identity={navigationIdentity}
-                      renderPage={(page) => (
-                        <AuxiliaryPages
-                          tool={page}
-                          controller={controller}
-                          sync={sync}
-                          month={month}
-                          onMonth={setMonth}
-                          onRecord={setDetail}
-                          onReimburse={(record) =>
-                            setEditor({
-                              initialDraft: {
-                                type: "reimburse",
-                                relatedId: record.id,
-                                accountId: "",
-                                amount: "",
-                              },
-                            })
-                          }
-                          onReview={openReview}
-                          onAssets={openAssets}
-                          onAdd={(date) => setEditor({ date })}
-                          onOpen={openTool}
-                        />
-                      )}
-                    />
-                  ) : null
-                }
-              >
-                <AppNavigation
-                  index={index}
-                  onIndexChange={setIndex}
-                  renderScene={({ route }) => (
-                    <AppScenes
-                      route={route}
-                      controller={controller}
-                      onRecord={setDetail}
-                      onReview={openReview}
-                      onOpen={openTool}
-                    />
-                  )}
-                  hasReducedMotion={hasReducedMotion}
-                  bottomInset={insets.bottom}
-                />
-              </NavigationLayer>
-            </LedgerViewBoundary>
-          )}
-        </SafeAreaView>
-        {canUseApp ? (
-          <LedgerSnackbar controller={controller} bottom={navigationHeight} />
-        ) : null}
-        {canUseApp ? (
-          <AppEditors
-            controller={controller}
-            detail={detail}
-            editor={editor}
-            metadata={metadata}
-            onCloseDetail={() => setDetail(null)}
-            onEdit={edit}
-            onCloseEditor={() => setEditor(null)}
-            onCloseMetadata={() => setMetadata(null)}
-            onMonth={setMonth}
+    <AtlasEffects.Provider
+      value={
+        controller.ledger.preferences?.atlasMotion !== false &&
+        !hasReducedMotion
+      }
+    >
+      <LedgerProvider theme={theme}>
+        <SystemBars isDark={isDark} />
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <AppHeader
+            key={fontScale}
+            title={!canUseApp ? "仓鼠记账" : pageTitle}
+            bookName={
+              canUseApp
+                ? controller.books.find((book) => book.id === controller.mode)
+                    ?.name
+                : undefined
+            }
+            canUndo={hasNavigation && controller.canUndo}
+            onUndo={controller.undo}
+            onBooks={hasNavigation ? () => openTool("books") : undefined}
+            onTools={hasNavigation ? () => openTool("tools-home") : undefined}
+            onBack={tool && canUseApp ? closeTool : undefined}
+            onAdd={
+              canUseApp && (hasNavigation || isReportPage)
+                ? openEntry
+                : undefined
+            }
           />
-        ) : null}
-      </View>
-    </LedgerProvider>
+          <SafeAreaView
+            edges={
+              hasNavigation ? ["left", "right"] : ["left", "right", "bottom"]
+            }
+            style={{ flex: 1 }}
+          >
+            <Banner
+              visible={Boolean(controller.error)}
+              actions={[]}
+              icon="shield-check-outline"
+            >
+              {controller.error}
+            </Banner>
+            {controller.network?.isIdentityBlocked && !account.isLoading ? (
+              <AccountScreen />
+            ) : currentEntryState === "loading" ? (
+              <LedgerLoading error={controller.error} />
+            ) : currentEntryState === "account" ? (
+              <AccountScreen
+                onLocal={mustChangePassword ? undefined : () => undefined}
+              />
+            ) : (
+              <LedgerViewBoundary
+                resetKey={`${controller.mode}:${tool ?? index}`}
+                onRecovery={() => openTool("backup")}
+              >
+                <NavigationLayer
+                  hasReducedMotion={hasReducedMotion}
+                  transitionKey={
+                    tool ? `${controller.mode}:${tool}` : undefined
+                  }
+                  tool={
+                    tool ? (
+                      <RetainedToolPages
+                        entries={toolHistory.entries}
+                        identity={navigationIdentity}
+                        renderPage={(page) => (
+                          <AuxiliaryPages
+                            tool={page}
+                            controller={controller}
+                            sync={sync}
+                            month={month}
+                            onMonth={setMonth}
+                            onRecord={setDetail}
+                            onReimburse={(record) =>
+                              setEditor({
+                                initialDraft: {
+                                  type: "reimburse",
+                                  relatedId: record.id,
+                                  accountId: "",
+                                  amount: "",
+                                },
+                              })
+                            }
+                            onReview={openReview}
+                            onAssets={openAssets}
+                            onAdd={(date) => setEditor({ date })}
+                            onOpen={openTool}
+                          />
+                        )}
+                      />
+                    ) : null
+                  }
+                >
+                  <AppNavigation
+                    index={index}
+                    onIndexChange={setIndex}
+                    renderScene={({ route }) => (
+                      <AppScenes
+                        onBudget={(m) => {
+                          setMonth(m);
+                          openTool("budgets");
+                        }}
+                        route={route}
+                        controller={controller}
+                        onRecord={setDetail}
+                        onReview={openReview}
+                        onOpen={openTool}
+                      />
+                    )}
+                    hasReducedMotion={hasReducedMotion}
+                    bottomInset={insets.bottom}
+                  />
+                </NavigationLayer>
+              </LedgerViewBoundary>
+            )}
+          </SafeAreaView>
+          {canUseApp ? (
+            <LedgerSnackbar controller={controller} bottom={navigationHeight} />
+          ) : null}
+          {canUseApp ? (
+            <AppEditors
+              controller={controller}
+              detail={detail}
+              editor={editor}
+              metadata={metadata}
+              onCloseDetail={() => setDetail(null)}
+              onEdit={edit}
+              onCloseEditor={() => setEditor(null)}
+              onCloseMetadata={() => setMetadata(null)}
+              onMonth={setMonth}
+            />
+          ) : null}
+        </View>
+      </LedgerProvider>
+    </AtlasEffects.Provider>
   );
 }

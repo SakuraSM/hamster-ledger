@@ -4,7 +4,7 @@ export function ledgerTheme(isDark: boolean): MD3Theme {
   const base = isDark ? MD3DarkTheme : MD3LightTheme;
   return {
     ...base,
-    roundness: 3,
+    roundness: 4,
     animation: { ...base.animation },
     colors: {
       ...base.colors,
@@ -14,7 +14,7 @@ export function ledgerTheme(isDark: boolean): MD3Theme {
       onPrimaryContainer: isDark ? "#ffe2ce" : tokens.color.text,
       secondary: isDark ? "#cbb7a7" : tokens.color.muted,
       background: isDark ? "#201b17" : tokens.color.canvas,
-      surface: isDark ? "#28221d" : tokens.color.canvas,
+      surface: isDark ? "#28232d" : "#fffefd",
       surfaceVariant: isDark ? "#44382f" : tokens.color.sidebar,
       onSurface: isDark ? "#f3e4d5" : tokens.color.text,
       onSurfaceVariant: isDark ? "#cbb7a7" : tokens.color.muted,
@@ -25,8 +25,8 @@ export function ledgerTheme(isDark: boolean): MD3Theme {
       onTertiaryContainer: isDark ? "#e7eee0" : "#263b20",
       elevation: {
         level0: "transparent",
-        level1: isDark ? "#28221d" : "#f5f3ed",
-        level2: isDark ? "#30271f" : "#eeede4",
+        level1: isDark ? "#28232d" : "#fffefd",
+        level2: isDark ? "#302937" : "#f2eff2",
         level3: isDark ? "#34291f" : "#e9e9de",
         level4: isDark ? "#392c21" : "#e2e3d5",
         level5: isDark ? "#3e2f23" : "#d9dcca",

@@ -14,6 +14,7 @@ export interface NetWorthReport {
 }
 export function useReportData(input: {
   ledger: Ledger;
+  metric?: import("@hamster-ledger/core").ValuationMetric;
   start: string;
   end: string;
   client: NetworkClient;
@@ -63,6 +64,7 @@ export function useReportData(input: {
     input.ledger,
     dates,
     result.key === key ? result.rates : {},
+    input.metric,
   );
   return {
     rows,

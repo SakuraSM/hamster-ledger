@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import { type dailyTotals, money } from "@hamster-ledger/core";
 import { UnstyledButton, Button, Checkbox } from "@mantine/core";
 const MONTH_START = 5;
 const DAY_END = 10;
@@ -10,6 +12,7 @@ import {
   type AssetAccount,
 } from "@hamster-ledger/core";
 interface TransactionTableProps {
+  byDay?: ReturnType<typeof dailyTotals>;
   records: BillRecord[];
   onSelect: (record: BillRecord) => void;
   showStatus?: boolean;
@@ -27,6 +30,7 @@ export function TransactionTable({
   records,
   onSelect,
   showStatus = false,
+  byDay,
   hideAmounts = false,
   accounts = [],
   selected = [],
@@ -56,89 +60,108 @@ export function TransactionTable({
           </tr>
         </thead>
         <tbody>
-          {records.map((record) => {
+          {records.map((record, index) => {
+            const date = record.date.slice(0, 10),
+              sum = byDay?.get(date);
             const managed = resolveAssetAccount(record, accounts);
             return (
-              <tr key={record.id}>
-                {onToggle ? (
-                  <td>
-                    <Checkbox
-                      aria-label={`选择${record.merchant} ${record.date}账单`}
-                      checked={selected.includes(record.id)}
-                      onChange={() => onToggle(record)}
-                    />
-                  </td>
-                ) : null}
-                <td className="date-cell">
-                  {record.date.slice(MONTH_START, DAY_END).replace("-", ".")}
-                </td>
-                <td>
-                  <UnstyledButton
-                    type="submit"
-                    className="merchant-button"
-                    aria-label={`打开${record.merchant}账单`}
-                    onClick={() => onSelect(record)}
-                  >
-                    <span className="merchant-icon">
-                      <CategoryIcon
-                        category={record.category}
-                        merchant={record.merchant}
+              <Fragment key={record.id}>
+                {sum && date !== records[index - 1]?.date.slice(0, 10) && (
+                  <tr className="atlas-day">
+                    <th
+                      colSpan={
+                        6 + Number(Boolean(onToggle)) + Number(showStatus)
+                      }
+                    >
+                      {date}　收入 {hideAmounts ? "••••" : money(sum.income)}
+                      　支出 {hideAmounts ? "••••" : money(sum.expense)}
+                    </th>
+                  </tr>
+                )}
+                <tr>
+                  {onToggle ? (
+                    <td>
+                      <Checkbox
+                        aria-label={`选择${record.merchant} ${record.date}账单`}
+                        checked={selected.includes(record.id)}
+                        onChange={() => onToggle(record)}
                       />
-                    </span>
-                    <span className="merchant-copy">
-                      <strong>{record.merchant}</strong>
-                      <small>
-                        {[record.source, ...record.linkedSources].join(" + ")}
-                        {record.linkedSources.length ? " · 已关联" : ""}
-                      </small>
-                    </span>
-                  </UnstyledButton>
-                </td>
-                <td>
-                  <span className={`category-tag category-${record.category}`}>
-                    <CategoryIcon category={record.category} />
-                    {record.category}
-                  </span>
-                </td>
-                <td className="account-cell">
-                  {managed?.name ?? displayAccount(record)}
-                  {managed && managed.name !== record.account ? (
-                    <small>账单记载：{record.account || "未提供"}</small>
+                    </td>
                   ) : null}
-                  {record.kind === "转账" && record.transferToAccountId ? (
-                    <small>
-                      →{" "}
-                      {accounts.find(
-                        (account) => account.id === record.transferToAccountId,
-                      )?.name ?? "未知转入账户"}
-                    </small>
-                  ) : null}
-                </td>
-                {showStatus ? (
+                  <td className="date-cell">
+                    {record.date.slice(MONTH_START, DAY_END).replace("-", ".")}
+                  </td>
                   <td>
-                    <span className={`record-status ${record.status}`}>
-                      {STATUS_LABELS[record.status]}
+                    <UnstyledButton
+                      type="submit"
+                      className="merchant-button"
+                      aria-label={`打开${record.merchant}账单`}
+                      onClick={() => onSelect(record)}
+                    >
+                      <span className="merchant-icon">
+                        <CategoryIcon
+                          category={record.category}
+                          merchant={record.merchant}
+                        />
+                      </span>
+                      <span className="merchant-copy">
+                        <strong>{record.merchant}</strong>
+                        <small>
+                          {[record.source, ...record.linkedSources].join(" + ")}
+                          {record.linkedSources.length ? " · 已关联" : ""}
+                        </small>
+                      </span>
+                    </UnstyledButton>
+                  </td>
+                  <td>
+                    <span
+                      className={`category-tag category-${record.category}`}
+                    >
+                      <CategoryIcon category={record.category} />
+                      {record.category}
                     </span>
                   </td>
-                ) : null}
-                <td
-                  className={`amount-cell ${record.kind === "收入" || record.kind === "退款" ? "positive" : ""}`}
-                >
-                  {hideAmounts ? "••••" : signedMoney(record)}
-                </td>
-                <td className="detail-cell">
-                  <Button
-                    variant="subtle"
-                    type="submit"
-                    className="text-button record-detail-button"
-                    onClick={() => onSelect(record)}
-                    aria-label={`查看${record.merchant}账单详情`}
+                  <td className="account-cell">
+                    {managed?.name ?? displayAccount(record)}
+                    {managed && managed.name !== record.account ? (
+                      <small>账单记载：{record.account || "未提供"}</small>
+                    ) : null}
+                    {record.kind === "转账" && record.transferToAccountId ? (
+                      <small>
+                        →{" "}
+                        {accounts.find(
+                          (account) =>
+                            account.id === record.transferToAccountId,
+                        )?.name ?? "未知转入账户"}
+                      </small>
+                    ) : null}
+                  </td>
+                  {showStatus ? (
+                    <td>
+                      <span className={`record-status ${record.status}`}>
+                        {STATUS_LABELS[record.status]}
+                      </span>
+                    </td>
+                  ) : null}
+                  <td
+                    className={`amount-cell ${record.kind === "收入" || record.kind === "退款" ? "positive" : ""}`}
                   >
-                    详情
-                    <Icons.Caret size={16} />
-                  </Button>
-                </td>
-              </tr>
+                    {hideAmounts ? "••••" : signedMoney(record)}
+                  </td>
+                  <td className="detail-cell">
+                    <Button
+                      variant="subtle"
+                      type="submit"
+                      className="text-button record-detail-button"
+                      onClick={() => onSelect(record)}
+                      aria-label={`查看${record.merchant}账单详情`}
+                    >
+                      详情
+                      <Icons.Caret size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              </Fragment>
             );
           })}
         </tbody>

@@ -28,6 +28,7 @@ interface NetWorthRow {
   missingBaselines?: string[];
 }
 interface NetWorthVisualizationProps {
+  label?: string;
   rows: NetWorthRow[];
   isHidden: boolean;
   hasAccounts: boolean;
@@ -52,6 +53,7 @@ export function NetWorthVisualization({
   rows,
   isHidden,
   hasAccounts,
+  label = "净资产",
 }: NetWorthVisualizationProps): React.JSX.Element {
   const [selectedDate, setSelectedDate] = useState("");
   const gradientId = `worth-${useId().replace(/:/g, "")}`;
@@ -74,12 +76,12 @@ export function NetWorthVisualization({
     : [0, 1];
   if (isHidden)
     return (
-      <p className="empty-panel">金额已隐藏，净资产趋势与明细暂不展示。</p>
+      <p className="empty-panel">金额已隐藏，{label}趋势与明细暂不展示。</p>
     );
   if (!hasAccounts)
     return (
       <p className="empty-panel">
-        添加账户并设置余额基准后，即可查看净资产趋势。
+        添加账户并设置余额基准后，即可查看{label}趋势。
       </p>
     );
   if (!selected)
@@ -87,7 +89,9 @@ export function NetWorthVisualization({
   return (
     <>
       <div className="net-worth-selection" aria-live="polite">
-        <span>{selected.date} · 净资产</span>
+        <span>
+          {selected.date} · {label}
+        </span>
         <strong>
           {selected.amount === null ? "暂无估值" : `¥${money(selected.amount)}`}
         </strong>
@@ -101,7 +105,7 @@ export function NetWorthVisualization({
         <div
           className="asset-trend-chart"
           role="group"
-          aria-label="净资产趋势，可用下方按钮选择估值日期"
+          aria-label={`${label}趋势，可用下方按钮选择估值日期`}
         >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
@@ -160,9 +164,9 @@ export function NetWorthVisualization({
                 }
               />
               <Area
-                type="monotone"
+                type="stepAfter"
                 dataKey="value"
-                name="净资产"
+                name={label}
                 stroke="var(--positive)"
                 strokeWidth={2.5}
                 fill={`url(#${gradientId})`}
@@ -181,7 +185,7 @@ export function NetWorthVisualization({
         <button
           type="button"
           disabled={index <= 0}
-          aria-label="查看上一期净资产"
+          aria-label={`查看上一期${label}`}
           onClick={() => setSelectedDate(rows[index - 1].date)}
         >
           上一期
@@ -192,7 +196,7 @@ export function NetWorthVisualization({
         <button
           type="button"
           disabled={index >= rows.length - 1}
-          aria-label="查看下一期净资产"
+          aria-label={`查看下一期${label}`}
           onClick={() => setSelectedDate(rows[index + 1].date)}
         >
           下一期

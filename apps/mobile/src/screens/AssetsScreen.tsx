@@ -1,3 +1,6 @@
+import { AssetSpark } from "../ui/AssetSpark";
+import { AtlasSnapshot } from "./AtlasSnapshot";
+import { AssetAllocation } from "./AssetAllocation";
 import { DATE_KEY_LENGTH } from "../constants";
 import { useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet } from "react-native";
@@ -33,12 +36,14 @@ import { AssetValuationDialog } from "./AssetValuationDialog";
 import { localNow } from "../platform/runtime";
 
 interface AssetsScreenProps {
+  onBudget?: (month: string) => void;
   controller: LedgerController;
   onRecord: (record: BillRecord) => void;
 }
 export function AssetsScreen({
   controller,
   onRecord,
+  onBudget,
 }: AssetsScreenProps): React.JSX.Element {
   const theme = useTheme();
   const currentController = useRef(controller);
@@ -116,8 +121,17 @@ export function AssetsScreen({
   }
   return (
     <>
-      <Screen>
+      <Screen compact>
         <AssetSummary
+          trend={
+            !isAmountHidden && (
+              <AssetSpark
+                ledger={ledger}
+                date={valuationDate}
+                onOpen={() => setTrendOpen(true)}
+              />
+            )
+          }
           valuationDate={valuationDate}
           totals={totals}
           comparison={comparison}
@@ -129,6 +143,14 @@ export function AssetsScreen({
           onToggleAmounts={() => setAmountHidden(!isAmountHidden)}
           onAdd={() => setEditor("new")}
         />
+        <AssetAllocation
+          totals={totals}
+          hidden={isAmountHidden}
+          onAccount={(id) => {
+            setInitialHistoryMode("changes");
+            setSelected(id);
+          }}
+        />
         <ErrorMessage message={error} />
         <AssetAccountList
           ledger={ledger}
@@ -139,6 +161,13 @@ export function AssetsScreen({
             setInitialHistoryMode("changes");
             setSelected(id);
           }}
+        />
+        <AtlasSnapshot
+          ledger={ledger}
+          date={valuationDate}
+          hidden={isAmountHidden}
+          onRecord={onRecord}
+          onBudget={onBudget}
         />
         {unassigned.length ? (
           <Button

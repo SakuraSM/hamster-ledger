@@ -12,6 +12,9 @@ import { createDemoLedger } from "@hamster-ledger/fixtures";
 import type { AssetAccount, Ledger } from "@hamster-ledger/core";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { AccountEditor } from "../../apps/mobile/src/screens/AccountEditor";
+vi.mock("../../apps/mobile/src/screens/AccountIconPicker", () => ({
+  AccountIconPicker: () => null,
+}));
 vi.mock("react-native-paper", () => ({
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Button: ({

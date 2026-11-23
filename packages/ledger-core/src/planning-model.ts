@@ -38,6 +38,7 @@ export const recurringRuleSchema = z.object({
 });
 export const preferencesSchema = z.object({
   cycleStartDay: z.number().int().min(1).max(MAX_CYCLE_START_DAY).default(1),
+  atlasMotion: z.boolean().optional(),
   hideAmounts: z.boolean().default(false),
   theme: z.enum(["warm", "sage", "night"]).default("warm"),
   reminderTime: z

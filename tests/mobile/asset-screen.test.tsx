@@ -14,6 +14,12 @@ import type { AssetAccount, BillRecord, Ledger } from "@hamster-ledger/core";
 import type { LedgerController } from "@hamster-ledger/ledger-react";
 import { AssetsScreen } from "../../apps/mobile/src/screens/AssetsScreen";
 
+vi.mock("../../apps/mobile/src/ui/AssetSpark", () => ({
+  AssetSpark: () => null,
+}));
+vi.mock("../../apps/mobile/src/ui/AtlasBand", () => ({
+  AtlasBand: () => null,
+}));
 vi.mock("react-native", () => ({
   Alert: { alert: vi.fn() },
   View: ({ children }: { children: ReactNode }) => <div>{children}</div>,

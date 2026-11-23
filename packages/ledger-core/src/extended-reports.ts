@@ -126,6 +126,7 @@ export function netWorthSeries(
   ledger: Ledger,
   dates: string[],
   rates: Record<string, ExchangeRate[]>,
+  metric: import("./atlas.js").ValuationMetric = "netAssets",
 ): Array<{
   date: string;
   amount: number | null;
@@ -143,7 +144,7 @@ export function netWorthSeries(
       amount:
         value.missingCurrencies.length || value.missingBaselines.length
           ? null
-          : value.netAssets,
+          : value[metric],
       missing: value.missingCurrencies,
       missingBaselines: value.missingBaselines,
     };

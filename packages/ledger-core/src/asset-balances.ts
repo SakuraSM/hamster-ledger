@@ -13,6 +13,8 @@ export interface AccountBalance {
   account: AssetAccount;
   balance: number;
   change: number;
+  /** Signed CNY valuation in summarizeAssets; absent when the valuation is incomplete. */
+  netMinor?: number;
   movementCount: number;
   baseline: AccountBaseline | null;
 }
@@ -122,6 +124,7 @@ export function summarizeAssets(input: {
     const valued = convertToCny({ minor: projection.balance, currency, rate });
     const signedValue =
       projection.account.kind === ACCOUNT_KINDS.ASSET ? valued : -valued;
+    projection.netMinor = signedValue;
     if (signedValue >= 0) assets = addMinor(assets, signedValue);
     else liabilities = addMinor(liabilities, -signedValue);
   }

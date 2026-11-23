@@ -1,3 +1,4 @@
+import { AtlasActivity } from "./AtlasActivity";
 import { Button } from "@mantine/core";
 import { useState } from "react";
 import { useAssetSummary } from "@hamster-ledger/ledger-react";
@@ -21,6 +22,7 @@ import { AssetOverview } from "./AssetOverview";
 
 const DATE_KEY_LENGTH = 10;
 interface AssetsPageProps {
+  onBudget?: (month: string) => void;
   ledger: Ledger;
   isDemo: boolean;
   bookContext?: AssetBookContext;
@@ -44,6 +46,7 @@ export function AssetsPage({
   onSave,
   onArchive,
   onRecord,
+  onBudget,
   onUnassigned,
   onLoadExamples,
   onCommit,
@@ -178,21 +181,32 @@ export function AssetsPage({
             />
           )}
         </div>
-        <AssetContext
-          totals={summary.totals}
-          comparison={summary.comparison}
-          date={valuationDate}
-          isHidden={isHidden}
-          isDetail={Boolean(selected)}
-          onTrace={() => {
-            if (selected) setTraceRequest((value) => value + 1);
-            else setFocusAccounts(true);
-          }}
-          onSettings={(target) => {
-            setSelectedId(null);
-            setSettingsTarget(target);
-          }}
-        />
+        <div className="atlas-aside">
+          {!selected && (
+            <AtlasActivity
+              ledger={ledger}
+              date={valuationDate}
+              hidden={isHidden}
+              onRecord={onRecord}
+              onBudget={onBudget}
+            />
+          )}
+          <AssetContext
+            totals={summary.totals}
+            comparison={summary.comparison}
+            date={valuationDate}
+            isHidden={isHidden}
+            isDetail={Boolean(selected)}
+            onTrace={() => {
+              if (selected) setTraceRequest((value) => value + 1);
+              else setFocusAccounts(true);
+            }}
+            onSettings={(target) => {
+              setSelectedId(null);
+              setSettingsTarget(target);
+            }}
+          />
+        </div>
       </div>
       {editor?.isCalibration && editor.account ? (
         <BalanceCalibration
