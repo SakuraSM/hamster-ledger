@@ -4,8 +4,7 @@ import {
   loadDueRates,
   type LedgerController,
 } from "@hamster-ledger/ledger-react";
-import type { LedgerRepository } from "@hamster-ledger/core";
-import { createDemoLedger } from "@hamster-ledger/fixtures";
+import { EMPTY_LEDGER, type LedgerRepository } from "@hamster-ledger/core";
 import { ledgerRepository } from "../platform/browser/storage";
 import { localNow, newEntityId } from "../platform/browser/runtime";
 export type { LedgerController } from "@hamster-ledger/ledger-react";
@@ -14,7 +13,7 @@ export function useLedger(
 ): LedgerController {
   return useSharedLedger({
     repository,
-    createDemoLedger,
+    createDemoLedger: () => EMPTY_LEDGER,
     localNow,
     newEntityId,
     loadRates: (requests) =>

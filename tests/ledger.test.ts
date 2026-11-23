@@ -178,7 +178,7 @@ describe("重复识别与收支汇总", () => {
     expect(plan.ledger.reviews).toHaveLength(0);
     expect(plan.ledger.records[2].status).toBe("pending");
   });
-  it("示例总额与设计图一致且待核对记录不计入", () => {
+  it("合成账本的待核对记录不计入收支", () => {
     expect(summarize(createDemoLedger().records)).toEqual({
       expense: 141425,
       income: 420000,

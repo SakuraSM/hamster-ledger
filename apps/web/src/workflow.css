@@ -240,19 +240,6 @@
   color: var(--muted);
   margin: 12px 0;
 }
-.sample-links {
-  display: flex;
-  gap: 22px;
-  flex-wrap: wrap;
-  margin: 21px 0;
-}
-.sample-links a {
-  font-size: 13px;
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  text-underline-offset: 4px;
-}
 .import-file-heading {
   margin-top: 26px;
 }
@@ -492,9 +479,6 @@
   }
   .import-success p {
     font-size: 13px;
-  }
-  .sample-links {
-    gap: 15px;
   }
   .import-page .section-heading > span {
     font-size: 11px;
