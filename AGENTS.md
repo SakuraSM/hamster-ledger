@@ -28,6 +28,7 @@
 - Run `npm run check` before submitting changes. Add behavior tests for money, imports, duplicate handling and storage failure paths.
 - Keep components focused and respect the existing TypeScript and accessibility conventions.
 - Do not overwrite unrelated workspace changes or reset user data during verification.
+- For Web and Android UI changes, follow [the interaction and layout guidelines](docs/interaction-guidelines.md) and recheck the affected flows.
 - Start and verify local previews when changing UI. A successful build is not browser QA.
 - The optional Sites packaging files belong to `apps/web`; keep the Worker and packaging contract intact.
 - Keep screenshots and design evidence under `docs/`. If a verification step is blocked, record the scope honestly instead of marking it passed.

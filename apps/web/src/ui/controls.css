@@ -163,7 +163,14 @@
   .topbar {
     flex-wrap: wrap;
   }
+  .topbar .top-actions {
+    max-width: 100%;
+  }
+  .topbar .month-picker {
+    min-width: 0;
+  }
   .month-picker > .mantine-InputWrapper-root {
+    min-width: 0;
     width: 140px;
   }
   .filter-bar > .mantine-InputWrapper-root {

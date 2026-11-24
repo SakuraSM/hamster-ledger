@@ -67,22 +67,24 @@ export function AccountGroup({
                       : `本月 ${!isHidden && change >= 0 ? "+" : ""}${accountAmount({ minor: change, currency: account.currency ?? "CNY", isHidden })}`}
                 </small>
               </span>
-              <span className="account-row-balance">
-                {!isHidden && account.kind === "liability" && balance < 0 ? (
-                  <small>预存</small>
-                ) : null}
-                {baseline
-                  ? accountAmount({
-                      isHidden,
-                      minor:
-                        account.kind === "liability"
-                          ? Math.abs(balance)
-                          : balance,
-                      currency: account.currency ?? "CNY",
-                    })
-                  : "暂无基准"}
+              <span className="account-row-end">
+                <span className="account-row-balance">
+                  {!isHidden && account.kind === "liability" && balance < 0 ? (
+                    <small>预存</small>
+                  ) : null}
+                  {baseline
+                    ? accountAmount({
+                        isHidden,
+                        minor:
+                          account.kind === "liability"
+                            ? Math.abs(balance)
+                            : balance,
+                        currency: account.currency ?? "CNY",
+                      })
+                    : "暂无基准"}
+                </span>
+                <Icons.Caret size={18} />
               </span>
-              <Icons.Caret size={18} />
             </UnstyledButton>
           );
         })}

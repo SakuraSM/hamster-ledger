@@ -104,7 +104,7 @@ export function BudgetPage({
       <p className="muted">
         账期 {range.start} 至 {range.end}（不含结束日）
       </p>
-      <form className="panel inline-form" onSubmit={save}>
+      <form className="panel inline-form budget-form" onSubmit={save}>
         <Choice
           label="预算周期"
           value={period}
