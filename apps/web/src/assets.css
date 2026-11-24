@@ -542,6 +542,9 @@
   .asset-snapshot > div:first-child {
     flex-basis: 100%;
   }
+  .asset-snapshot > div:first-child strong {
+    font-size: clamp(22px, 7vw, 30px);
+  }
   .asset-snapshot > div {
     flex: 1;
     min-width: 120px;
@@ -715,12 +718,17 @@
   margin-top: 12px;
 }
 .asset-account-group {
+  --account-chevron-width: 18px;
+  --account-column-gap: 12px;
   margin-top: 22px;
 }
 .asset-account-group h2 {
   font-size: 15px;
 }
 .asset-account-group .section-heading > span {
+  margin-inline-end: calc(
+    var(--account-chevron-width) + var(--account-column-gap)
+  );
   color: var(--muted);
   font-size: 12px;
 }
@@ -728,9 +736,20 @@
   border-top: 0;
 }
 .asset-account-row {
-  grid-template-columns: 36px minmax(0, 1fr) auto 18px;
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--account-column-gap);
   padding: 13px 0;
+}
+.asset-account-row .account-name {
+  flex: 1 1 8em;
+}
+.account-row-end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--account-column-gap);
+  margin-inline-start: auto;
+  text-align: end;
 }
 .asset-account-row:hover {
   background: var(--sidebar);

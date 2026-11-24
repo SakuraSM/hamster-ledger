@@ -2,14 +2,14 @@
   "expo": {
     "name": "仓鼠记账",
     "slug": "hamster-ledger",
-    "version": "0.5.1",
+    "version": "0.5.2",
     "scheme": "hamster-ledger",
     "orientation": "default",
     "icon": "./assets/hamster-logo.png",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "top.nings.hamsterledger",
-      "versionCode": 6,
+      "versionCode": 7,
       "allowBackup": false,
       "predictiveBackGestureEnabled": true,
       "adaptiveIcon": {

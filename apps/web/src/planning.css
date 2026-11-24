@@ -56,6 +56,18 @@
   flex: 1;
   min-width: 140px;
 }
+.planning-page .budget-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+.planning-page .budget-form > *,
+.planning-page .budget-form label {
+  min-width: 0;
+}
+.planning-page .budget-form .mantine-Checkbox-input {
+  min-height: 0;
+  padding: 0;
+}
 .inline-field {
   width: max-content;
   margin-bottom: 12px;

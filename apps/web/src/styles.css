@@ -21,7 +21,6 @@
 }
 body {
   margin: 0;
-  min-width: 320px;
   -webkit-font-smoothing: antialiased;
 }
 button,
@@ -1281,6 +1280,8 @@ main:focus {
   }
 }
 .breadcrumb > button {
+  min-height: 32px;
+  min-width: 32px;
   padding: 0;
   color: #786151;
   border-radius: 2px;

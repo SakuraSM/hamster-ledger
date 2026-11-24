@@ -1,3 +1,4 @@
+import { MIN_TOUCH_TARGET } from "../constants";
 import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, IconButton, Text, useTheme } from "react-native-paper";
@@ -79,6 +80,11 @@ export function AssetSummary({
           <IconButton
             icon={isAmountHidden ? "eye-off-outline" : "eye-outline"}
             size={20}
+            style={{
+              width: MIN_TOUCH_TARGET,
+              height: MIN_TOUCH_TARGET,
+              margin: 0,
+            }}
             accessibilityLabel={
               isAmountHidden ? "显示资产金额" : "隐藏资产金额"
             }
@@ -179,5 +185,5 @@ const styles = StyleSheet.create({
   },
   metric: { flexGrow: 1, gap: 2 },
   strong: { fontWeight: "700" },
-  touch: { minHeight: 48 },
+  touch: { minHeight: MIN_TOUCH_TARGET },
 });

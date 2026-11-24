@@ -172,9 +172,6 @@
 .asset-account-row .account-symbol {
   border-radius: 8px;
 }
-.asset-account-list > * + * {
-  border-top: 1px solid var(--line);
-}
 .atlas-icon-picker {
   margin-bottom: 12px;
 }

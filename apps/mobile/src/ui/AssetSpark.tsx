@@ -1,3 +1,4 @@
+import { MIN_TOUCH_TARGET } from "../constants";
 import { useMemo } from "react";
 import { Pressable } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -19,7 +20,7 @@ export function AssetSpark({
       onPress={onOpen}
       accessibilityRole="button"
       accessibilityLabel="展开本月净资产走势"
-      style={{ minHeight: 44, alignItems: "flex-end" }}
+      style={{ minHeight: MIN_TOUCH_TARGET, alignItems: "flex-end" }}
     >
       <Text variant="labelSmall">本月走势</Text>
       <Svg width={82} height={30} viewBox="0 0 100 38">

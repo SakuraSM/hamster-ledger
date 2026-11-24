@@ -1,3 +1,4 @@
+import { MIN_TOUCH_TARGET } from "../constants";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, Text, useTheme } from "react-native-paper";
@@ -76,7 +77,12 @@ export function AssetAllocation({
         >
           资产构成
         </Text>
-        <Button textColor="#ffffff" compact onPress={() => setOpen(true)}>
+        <Button
+          contentStyle={{ minHeight: MIN_TOUCH_TARGET }}
+          textColor="#ffffff"
+          compact
+          onPress={() => setOpen(true)}
+        >
           资产分析
         </Button>
       </View>
@@ -86,6 +92,7 @@ export function AssetAllocation({
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {["资产", "负债", "净资产"].map((k) => (
               <Button
+                contentStyle={{ minHeight: MIN_TOUCH_TARGET }}
                 key={k}
                 mode={mode === k ? "contained-tonal" : "text"}
                 accessibilityState={{ selected: k === mode }}
@@ -121,6 +128,7 @@ export function AssetAllocation({
                   <Text accessibilityRole="header">{mode}账户排行</Text>
                   {allocationRows(totals.balances, mode === "负债").map((r) => (
                     <Button
+                      contentStyle={{ minHeight: MIN_TOUCH_TARGET }}
                       key={r.account.id}
                       onPress={() => {
                         setOpen(false);

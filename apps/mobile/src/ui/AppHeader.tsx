@@ -119,6 +119,10 @@ const styles = StyleSheet.create({
     marginLeft: HEADER_GUTTER,
     marginRight: BRAND_GAP,
   },
-  title: { gap: TITLE_GAP },
+  title: {
+    gap: TITLE_GAP,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: "center",
+  },
   action: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET },
 });

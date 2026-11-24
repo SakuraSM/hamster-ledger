@@ -1,3 +1,4 @@
+import { MIN_TOUCH_TARGET } from "../constants";
 import { accountIcon } from "@hamster-ledger/core";
 import { accountGlyphs } from "./account-glyphs";
 import { useState } from "react";
@@ -37,7 +38,7 @@ export function AssetAccountList({
   return (
     <View style={styles.groups}>
       <TextInput
-        dense
+        style={{ minHeight: MIN_TOUCH_TARGET }}
         mode="outlined"
         label="查找账户"
         accessibilityLabel="查找账户"

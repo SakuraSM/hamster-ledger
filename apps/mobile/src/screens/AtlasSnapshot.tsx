@@ -1,3 +1,4 @@
+import { MIN_TOUCH_TARGET } from "../constants";
 import { cycleMonthForDate } from "@hamster-ledger/core";
 import { useMemo } from "react";
 import { View } from "react-native";
@@ -38,6 +39,7 @@ export function AtlasSnapshot({
     >
       {onBudget && (
         <Button
+          contentStyle={{ minHeight: MIN_TOUCH_TARGET }}
           onPress={() =>
             onBudget(
               cycleMonthForDate(date, ledger.preferences?.cycleStartDay ?? 1),
@@ -57,7 +59,11 @@ export function AtlasSnapshot({
       </Text>
       {recent.length ? (
         recent.map((r) => (
-          <Button key={r.id} onPress={() => onRecord(r)}>
+          <Button
+            contentStyle={{ minHeight: MIN_TOUCH_TARGET }}
+            key={r.id}
+            onPress={() => onRecord(r)}
+          >
             {r.date.slice(5, 10)}　
             {hidden
               ? "账单　••••"
